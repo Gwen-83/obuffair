@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O'BUFFAIR - Portail Client</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #002A5C;
+            --primary-light: #004B9E;
+            --secondary: #003DA5;
+            --accent: #FFC72C;
+            --success: #2E7D32;
+            --light-gray: #EEEEEE;
+            --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+            --radius-lg: 8px;
+        }
+
+        body {
+            background-color: #F5F5F5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        .navbar.is-primary { background-color: var(--primary); }
+        
+        .hero-booking {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            padding: 3rem 1.5rem;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        .booking-card {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            margin-top: -2rem;
+        }
+
+        .card {
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover { transform: translateY(-3px); }
+
+        .button.is-primary { background-color: var(--primary); }
+        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; }
+        .button.is-accent:hover { background-color: #FFD700; }
+        
+        .tag.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <h1 style="color: white; font-size: 1.5rem; font-weight: 700;">
+                        <i class="fas fa-plane-departure" style="margin-right: 0.5rem; color: var(--accent);"></i>
+                        O'BUFFAIR
+                    </h1>
+                </a>
+            </div>
+            <div class="navbar-menu is-active">
+                <div class="navbar-end">
+                    <a class="navbar-item" href="#"><i class="fas fa-search mr-2"></i> Réserver</a>
+                    <a class="navbar-item" href="#"><i class="fas fa-suitcase mr-2"></i> Mes Voyages</a>
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a class="button is-accent">
+                                <strong><i class="fas fa-user mr-2"></i> Mon Espace</strong>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-booking">
+        <div class="container">
+            <h1 class="title has-text-white is-2">Où souhaitez-vous aller ?</h1>
+            <p class="subtitle has-text-white">Découvrez l'Europe avec O'buffair.</p>
+        </div>
+    </section>
+
+    <div class="container" style="max-width: 1200px;">
+        <div class="booking-card mb-6">
+            <form>
+                <div class="columns">
+                    <div class="column is-6">
+                        <div class="field">
+                            <label class="label" style="color: var(--primary);">Départ</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="text" placeholder="Paris (CDG)">
+                                <span class="icon is-small is-left"><i class="fas fa-plane-departure"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-6">
+                        <div class="field">
+                            <label class="label" style="color: var(--primary);">Arrivée</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="text" placeholder="Madrid (MAD)">
+                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="columns">
+                    <div class="column is-3">
+                        <div class="field">
+                            <label class="label" style="color: var(--primary);">Date aller</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="date">
+                                <span class="icon is-small is-left"><i class="fas fa-calendar"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="field">
+                            <label class="label" style="color: var(--primary);">Date retour</label>
+                            <div class="control has-icons-left">
+                                <input class="input" type="date">
+                                <span class="icon is-small is-left"><i class="fas fa-calendar"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <div class="field">
+                            <label class="label" style="color: var(--primary);">Classe</label>
+                            <div class="control">
+                                <div class="select is-fullwidth">
+                                    <select>
+                                        <option>Économique</option>
+                                        <option>Business</option>
+                                        <option>Première</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column is-3">
+                        <label class="label">&nbsp;</label>
+                        <button class="button is-primary is-fullwidth">
+                            <span class="icon"><i class="fas fa-search"></i></span>
+                            <span>Rechercher</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="columns is-variable is-6">
+            
+            <div class="column is-4">
+                <h3 class="title is-4" style="color: var(--primary);">Mon Profil Fidélité</h3>
+                <div class="card mb-5">
+                    <div class="card-content has-text-centered">
+                        <div style="font-size: 3rem; color: var(--accent); margin-bottom: 1rem;">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <p class="title is-4" style="color: var(--primary);">Antoine Hardy</p>
+                        <p class="subtitle is-6">Membre Gold</p>
+                        <hr>
+                        <div class="columns is-mobile">
+                            <div class="column">
+                                <p class="heading">Points Fidélité</p>
+                                <p class="title is-5" style="color: var(--primary);">12,450</p>
+                            </div>
+                            <div class="column">
+                                <p class="heading">Vols (2026)</p>
+                                <p class="title is-5" style="color: var(--primary);">8</p>
+                            </div>
+                        </div>
+                        <progress class="progress is-accent is-small" value="75" max="100">75%</progress>
+                        <p class="is-size-7 mt-2">Plus que 2,550 points avant le statut Platinum</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="column is-8">
+                <h3 class="title is-4" style="color: var(--primary);">Mon Prochain Voyage</h3>
+                <div class="card">
+                    <div class="card-content">
+                        <div class="media">
+                            <div class="media-left">
+                                <span class="icon is-large has-text-primary">
+                                    <i class="fas fa-ticket-alt fa-2x"></i>
+                                </span>
+                            </div>
+                            <div class="media-content">
+                                <p class="title is-5" style="color: var(--primary);">Paris (CDG) <i class="fas fa-arrow-right mx-2 is-size-6"></i> Rome (FCO)</p>
+                                <p class="subtitle is-6 mb-2"><strong>AF712</strong> • Départ le 14 Juin 2026 à 10h30 (UTC)</p>
+                                <span class="tag is-success mr-2"><i class="fas fa-check-circle mr-1"></i> Confirmé</span>
+                                <span class="tag is-accent">Classe Business</span>
+                            </div>
+                            <div class="media-right">
+                                <a href="#" class="button is-outlined is-primary is-small">
+                                    <i class="fas fa-download mr-2"></i> Mon Billet PDF
+                                </a>
+                            </div>
+                        </div>
+                        <hr>
+                        
+                        <h4 class="title is-6" style="color: var(--primary);">Personnaliser mon expérience</h4>
+                        <div class="columns is-multiline">
+                            <div class="column is-6">
+                                <div class="box" style="border: 1px solid var(--light-gray); box-shadow: none;">
+                                    <p class="is-size-6 mb-2"><strong><i class="fas fa-chair mr-2" style="color: var(--primary);"></i> Siège</strong></p>
+                                    <p class="is-size-7 mb-3">Siège actuel : <span class="tag is-light">Non assigné</span></p>
+                                    <button class="button is-small is-primary is-light is-fullwidth">Choisir mon siège</button>
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="box" style="border: 1px solid var(--light-gray); box-shadow: none;">
+                                    <p class="is-size-6 mb-2"><strong><i class="fas fa-utensils mr-2" style="color: var(--primary);"></i> Repas O'buffet</strong></p>
+                                    <p class="is-size-7 mb-3">Sélection : <span class="tag is-light">Standard</span></p>
+                                    <button class="button is-small is-primary is-light is-fullwidth">Ajouter un menu O'buffet</button>
+                                </div>
+                            </div>
+                            <div class="column is-12">
+                                <div class="box" style="border: 1px solid var(--light-gray); box-shadow: none;">
+                                    <p class="is-size-6 mb-2"><strong><i class="fas fa-suitcase-rolling mr-2" style="color: var(--primary);"></i> Bagages supplémentaires</strong></p>
+                                    <p class="is-size-7 mb-3">Inclus : 1 bagage cabine + 1 bagage en soute.</p>
+                                    <button class="button is-small is-primary is-light">Ajouter un bagage (+45€)</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
