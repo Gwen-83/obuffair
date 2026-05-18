@@ -37,12 +37,12 @@ def register():
     # Si le formulaire est soumis ET valide
     if form.validate_on_submit():
         try:
-            # Préparer les données (normalisation)
+            # Préparer les données
             email = form.email.data.strip().lower()
             prenom = form.prenom.data.strip() if form.prenom.data else ''
             nom = form.nom.data.strip() if form.nom.data else ''
             
-            # Hacher le mot de passe (méthode sécurisée)
+            # Hacher le mot de passe
             hashed_password = generate_password_hash(
                 form.password.data,
                 method='pbkdf2:sha256'
