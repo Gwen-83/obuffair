@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Mon Espace Premium - O'BUFFAIR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #002A5C; --primary-light: #004B9E; --secondary: #003DA5; 
+            --accent: #FFC72C; --accent-light: #FFD700; --dark: #1A1A1A; --gray: #757575;
+            --radius-lg: 12px; --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        body { background-color: #F4F7F9; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+        .navbar.is-primary { background-color: var(--primary); }
+        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border: none; }
+        
+        /* Carte de Fidélité "Miles & More" Style */
+        .loyalty-card {
+            background: linear-gradient(135deg, var(--dark), var(--primary));
+            border-radius: 16px; padding: 2rem; color: white; position: relative;
+            box-shadow: 0 10px 25px rgba(0, 42, 92, 0.3); overflow: hidden;
+        }
+        .loyalty-card::after {
+            content: "\f0fb"; font-family: "Font Awesome 6 Free"; font-weight: 900;
+            position: absolute; right: -20px; bottom: -40px; font-size: 150px; opacity: 0.1;
+        }
+        .loyalty-tier { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .loyalty-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 4px; margin: 1rem 0; }
+        
+        /* Menu Latéral */
+        .menu-list a { border-radius: 8px; font-weight: 500; color: var(--primary); }
+        .menu-list a.is-active { background-color: var(--primary); color: white; }
+        .menu-list a:hover:not(.is-active) { background-color: rgba(0, 42, 92, 0.05); }
+        
+        .box { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid rgba(0,0,0,0.02); }
+        .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar is-primary">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <h1 style="color: white; font-size: 1.5rem; font-weight: 700;">
+                        <i class="fas fa-plane-departure" style="margin-right: 0.5rem; color: var(--accent);"></i> O'BUFFAIR
+                    </h1>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="section" style="flex: 1;">
+        <div class="container" style="max-width: 1200px;">
+            <div class="columns is-variable is-6">
+                
+                <div class="column is-3">
+                    <aside class="menu box p-5">
+                        <p class="menu-label">Mon Compte</p>
+                        <ul class="menu-list">
+                            <li><a class="is-active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie mr-2"></i> Tableau de bord</a></li>
+                            <li><a onclick="switchTab('profil')"><i class="fas fa-user-edit mr-2"></i> Informations Personnelles</a></li>
+                            <li><a onclick="switchTab('preferences')"><i class="fas fa-sliders-h mr-2"></i> Préférences de voyage</a></li>
+                        </ul>
+                        <p class="menu-label mt-5">Fidélité</p>
+                        <ul class="menu-list">
+                            <li><a><i class="fas fa-history mr-2"></i> Historique des Miles</a></li>
+                            <li><a><i class="fas fa-gift mr-2"></i> Dépenser mes Miles</a></li>
+                        </ul>
+                    </aside>
+                </div>
+
+                <div class="column is-9">
+                    
+                    <div id="tab-dashboard" class="content-tab">
+                        <h2 class="title is-3" style="color: var(--primary);">Bienvenue, Antoine</h2>
+                        <div class="columns">
+                            <div class="column is-6">
+                                <div class="loyalty-card">
+                                    <p class="loyalty-tier">O'Buffair Gold</p>
+                                    <p class="loyalty-number">1034 5678 9012</p>
+                                    <p class="is-uppercase is-size-7 mt-4">Antoine Hardy</p>
+                                    <p class="is-size-7">Valide jusqu'au : 12/2026</p>
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="box h-100" style="height: 100%;">
+                                    <p class="heading">Miles de Prime Disponibles</p>
+                                    <p class="stat-value">42,500 <span class="is-size-5" style="color: var(--accent);"><i class="fas fa-star"></i></span></p>
+                                    <progress class="progress is-warning mt-4 mb-2" value="65" max="100">65%</progress>
+                                    <p class="is-size-7" style="color: var(--gray);">Plus que 17,500 miles statut pour atteindre <strong>Platinum</strong>.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="title is-5 mt-5" style="color: var(--primary);">Activité Récente</h3>
+                        <div class="box">
+                            <table class="table is-fullwidth is-hoverable">
+                                <tbody>
+                                    <tr>
+                                        <td><i class="fas fa-plane-arrival has-text-primary mr-3"></i> Vol AF712 (CDG - FCO)</td>
+                                        <td class="has-text-grey">14 Juin 2026</td>
+                                        <td class="has-text-right has-text-success font-weight-bold">+ 1,250 Miles</td>
+                                    </tr>
+                                    <tr>
+                                        <td><i class="fas fa-shopping-bag has-text-primary mr-3"></i> O'Buffet Premium Upgrade</td>
+                                        <td class="has-text-grey">14 Juin 2026</td>
+                                        <td class="has-text-right has-text-danger font-weight-bold">- 3,000 Miles</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="tab-profil" class="content-tab is-hidden">
+                        <h2 class="title is-3" style="color: var(--primary);">Informations Personnelles</h2>
+                        <div class="box p-5">
+                            <form>
+                                <div class="columns is-multiline">
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Prénom</label><div class="control"><input class="input" type="text" value="Antoine"></div></div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Nom</label><div class="control"><input class="input" type="text" value="Hardy"></div></div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Email de contact</label><div class="control"><input class="input" type="email" value="antoine.hardy.2025@enac.fr"></div></div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Téléphone</label><div class="control"><input class="input" type="tel" value="+33 6 12 34 56 78"></div></div>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h4 class="title is-5" style="color: var(--primary);">Documents de voyage</h4>
+                                <div class="columns is-multiline">
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Type de document</label><div class="select is-fullwidth"><select><option selected>Passeport</option><option>Carte d'Identité</option></select></div></div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field"><label class="label">Numéro du document</label><div class="control"><input class="input" type="text" value="12AB34567"></div></div>
+                                    </div>
+                                </div>
+                                <div class="field is-grouped mt-5">
+                                    <div class="control"><button type="button" class="button is-primary" onclick="alert('Modifications enregistrées !')">Enregistrer les modifications</button></div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        // JS simple pour changer d'onglet
+        function switchTab(tabId) {
+            document.querySelectorAll('.content-tab').forEach(t => t.classList.add('is-hidden'));
+            document.querySelectorAll('.menu-list a').forEach(a => a.classList.remove('is-active'));
+            document.getElementById('tab-' + tabId).classList.remove('is-hidden');
+            event.currentTarget.classList.add('is-active');
+        }
+    </script>
+</body>
+</html>

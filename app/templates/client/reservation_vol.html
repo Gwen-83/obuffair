@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Réservation Complète - O'BUFFAIR</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { 
+            --primary: #002A5C; 
+            --primary-light: #004B9E; 
+            --accent: #FFC72C; 
+            --bg-light: #F4F7F9; 
+            --radius: 12px;
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        body { background-color: var(--bg-light); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+        .navbar.is-primary { background-color: var(--primary); }
+        
+        /* Formulaire de recherche Haut */
+        .search-panel { background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; border-top: 4px solid var(--accent); }
+        
+        /* Styles du calendrier interactif */
+        .calendar-container { background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; height: 100%; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--primary); font-weight: bold; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .weekday { font-size: 0.8rem; color: #757575; font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
+        
+        .day { 
+            padding: 10px 5px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px;
+            transition: all 0.2s; position: relative;
+        }
+        .day:hover:not(.disabled) { border-color: var(--primary); background: #f0f4f8; }
+        .day.disabled { color: #ccc; cursor: not-allowed; background: #fafafa; }
+        
+        .day-price { font-size: 0.75rem; color: #2E7D32; font-weight: 700; margin-top: 4px; }
+        .day.disabled .day-price { display: none; }
+        
+        /* États de sélection du calendrier */
+        .day.selected { background-color: var(--primary); color: white; border-color: var(--primary); font-weight: bold;}
+        .day.selected .day-price { color: var(--accent); }
+        .day.in-range { background-color: rgba(0, 42, 92, 0.08); border-radius: 0; }
+        .day.range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+        .day.range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        
+        /* Panneau Récapitulatif */
+        .summary-box { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-radius: var(--radius); padding: 2rem; height: 100%; box-shadow: var(--shadow-md); }
+        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border: none; transition: transform 0.2s; }
+        .button.is-accent:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255,199,44,0.4); }
+        
+        /* Custom selects */
+        .select select { border-radius: 6px; border-color: #ddd; box-shadow: none; }
+        .select select:focus { border-color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar is-primary p-2">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item" href="#">
+                    <h1 class="title is-4 has-text-white m-0">
+                        <i class="fas fa-plane-departure mr-2" style="color: var(--accent);"></i> O'BUFFAIR
+                    </h1>
+                </a>
+            </div>
+            <div class="navbar-menu is-active">
+                <div class="navbar-end">
+                    <div class="navbar-item"><a class="button is-accent is-small" href="#"><strong><i class="fas fa-user mr-2"></i> Mon Espace</strong></a></div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <section class="section" style="flex: 1;">
+        <div class="container" style="max-width: 1200px;">
+            <h2 class="title is-3 mb-5" style="color: var(--primary);">Où souhaitez-vous voyager ?</h2>
+            
+            <div class="search-panel mb-6">
+                <div class="columns is-vcentered">
+                    <div class="column is-3">
+                        <div class="field">
+                            <label class="label is-small has-text-grey">De</label>
+                            <div class="control has-icons-left">
+                                <div class="select is-fullwidth">
+                                    <select id="selectDepart">
+                                        <option value="Paris (CDG)" selected>Paris (CDG)</option>
+                                        <option value="Lyon (LYS)">Lyon (LYS)</option>
+                                        <option value="Marseille (MRS)">Marseille (MRS)</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-departure has-text-primary"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="column is-3">
+                        <div class="field">
+                            <label class="label is-small has-text-grey">Vers</label>
+                            <div class="control has-icons-left">
+                                <div class="select is-fullwidth">
+                                    <select id="selectArrivee">
+                                        <option value="Rome (FCO)" selected>Rome (FCO)</option>
+                                        <option value="Madrid (MAD)">Madrid (MAD)</option>
+                                        <option value="Londres (LHR)">Londres (LHR)</option>
+                                        <option value="Berlin (BER)">Berlin (BER)</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival has-text-primary"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label is-small has-text-grey">Passagers</label>
+                            <div class="control has-icons-left">
+                                <div class="select is-fullwidth">
+                                    <select id="selectPassagers">
+                                        <option value="1" selected>1 Adulte</option>
+                                        <option value="2">2 Adultes</option>
+                                        <option value="3">3 Adultes</option>
+                                        <option value="4">Famille (4+)</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-users has-text-primary"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label is-small has-text-grey">Classe</label>
+                            <div class="control has-icons-left">
+                                <div class="select is-fullwidth">
+                                    <select id="selectClasse">
+                                        <option value="1" selected>Économique</option>
+                                        <option value="2.5">Business</option>
+                                        <option value="4">Première</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-gem has-text-primary"></i></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-2">
+                        <div class="field">
+                            <label class="label is-small has-text-white">.</label>
+                            <button class="button is-primary is-fullwidth is-outlined" id="btnResetDates">
+                                <i class="fas fa-sync-alt mr-2"></i> Réinitialiser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="columns is-variable is-6">
+                
+                <div class="column is-8">
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button class="button is-small is-light" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
+                            <span id="monthYearDisplay" class="is-size-5">Juin 2026</span>
+                            <button class="button is-small is-light" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="calendar-grid" id="calendarDays">
+                            <div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div>
+                            <div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="column is-4">
+                    <div class="summary-box">
+                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+                            <h3 class="title is-4 has-text-white m-0"><i class="fas fa-ticket-alt mr-2"></i> Résumé</h3>
+                            <span class="tag is-light is-rounded" id="resumeClasse">Économique</span>
+                        </div>
+                        
+                        <div class="box p-4 mb-4" style="background-color: rgba(255,255,255,0.1); border: none; border-radius: 8px;">
+                            <p class="is-size-7 has-text-grey-light is-uppercase mb-1">Itinéraire</p>
+                            <p class="is-size-5 has-text-white font-weight-bold" id="resumeItineraire">Paris (CDG) <i class="fas fa-arrow-right mx-2 is-size-6" style="color: var(--accent);"></i> Rome (FCO)</p>
+                        </div>
+                        
+                        <div class="columns is-mobile">
+                            <div class="column is-6">
+                                <p class="heading has-text-grey-light">Vol Aller</p>
+                                <p class="is-size-5 has-text-white font-weight-bold" id="allerDisplay">--</p>
+                            </div>
+                            <div class="column is-6 has-text-right">
+                                <p class="heading has-text-grey-light">Vol Retour</p>
+                                <p class="is-size-5 has-text-white font-weight-bold" id="retourDisplay">--</p>
+                            </div>
+                        </div>
+                        
+                        <hr style="background-color: rgba(255,255,255,0.2);">
+                        
+                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+                            <span class="is-size-6">Total estimé <span id="resumePassagers" class="is-size-7 has-text-grey-light block">(1 Passager)</span></span>
+                            <span class="title is-2 m-0" style="color: var(--accent);" id="priceDisplay">-- €</span>
+                        </div>
+                        
+                        <button class="button is-accent is-fullwidth is-medium" id="btnContinue" disabled>
+                            Continuer <i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer mt-6 pb-6 pt-6" style="background-color: var(--primary);">
+        <div class="content has-text-centered"><p style="color: white;">© 2026 O'BUFFAIR - Projet de Gestion de Compagnie Aérienne (ENAC)</p></div>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const calendarDays = document.getElementById('calendarDays');
+        const allerDisplay = document.getElementById('allerDisplay');
+        const retourDisplay = document.getElementById('retourDisplay');
+        const priceDisplay = document.getElementById('priceDisplay');
+        const btnContinue = document.getElementById('btnContinue');
+        
+        // Selects
+        const selectDepart = document.getElementById('selectDepart');
+        const selectArrivee = document.getElementById('selectArrivee');
+        const selectPassagers = document.getElementById('selectPassagers');
+        const selectClasse = document.getElementById('selectClasse');
+        
+        // Resume Elements
+        const resumeItineraire = document.getElementById('resumeItineraire');
+        const resumeClasse = document.getElementById('resumeClasse');
+        const resumePassagers = document.getElementById('resumePassagers');
+
+        // State
+        let currentDate = new Date(2026, 5, 1); // Juin 2026
+        let startDate = null;
+        let endDate = null;
+
+        // Générateur de prix qui prend en compte la CLASSE choisie
+        const getPriceForDay = (dayIndex) => {
+            const classMultiplier = parseFloat(selectClasse.value); // 1 (Eco), 2.5 (Biz), 4 (First)
+            
+            // On utilise une graine basée sur le jour pour que le prix d'un jour donné reste le même
+            const pseudoRandom = Math.sin(dayIndex) * 10000;
+            const fluctuation = Math.abs(Math.floor((pseudoRandom - Math.floor(pseudoRandom)) * 60));
+            
+            const basePrice = 45;
+            return Math.floor((basePrice + fluctuation) * classMultiplier);
+        };
+
+        function renderCalendar() {
+            const weekdays = `<div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div><div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>`;
+            calendarDays.innerHTML = weekdays;
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+            document.getElementById('monthYearDisplay').innerText = `${monthNames[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const startOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1; 
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            // Cases vides
+            for (let i = 0; i < startOffset; i++) {
+                calendarDays.innerHTML += `<div class="day disabled"></div>`;
+            }
+
+            // Génération des jours
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dateVal = new Date(year, month, i);
+                const price = getPriceForDay(i + month*30); // Prix stable
+                
+                // Griser avant le 10 Juin 2026
+                const isDisabled = i < 10 && month === 5 ? 'disabled' : '';
+                
+                const dayEl = document.createElement('div');
+                dayEl.className = `day ${isDisabled}`;
+                dayEl.dataset.date = dateVal.toISOString();
+                dayEl.dataset.price = price;
+                
+                dayEl.innerHTML = `
+                    <span class="day-number">${i}</span>
+                    <span class="day-price">${price}€</span>
+                `;
+
+                if (!isDisabled) {
+                    dayEl.addEventListener('click', () => handleDayClick(dateVal, price, dayEl));
+                }
+                calendarDays.appendChild(dayEl);
+            }
+            updateSelectionUI();
+        }
+
+        function handleDayClick(date, price, el) {
+            if (!startDate || (startDate && endDate)) {
+                startDate = { date: date, price: price };
+                endDate = null;
+            } else if (date < startDate.date) {
+                startDate = { date: date, price: price };
+            } else {
+                endDate = { date: date, price: price };
+            }
+            updateSelectionUI();
+        }
+
+        function updateSelectionUI() {
+            document.querySelectorAll('.day').forEach(el => {
+                if(el.classList.contains('disabled')) return;
+                
+                const elDate = new Date(el.dataset.date);
+                el.classList.remove('selected', 'in-range', 'range-start', 'range-end');
+
+                if (startDate && elDate.getTime() === startDate.date.getTime()) {
+                    el.classList.add('selected');
+                    if (endDate) el.classList.add('range-start');
+                }
+                
+                if (endDate && elDate.getTime() === endDate.date.getTime()) {
+                    el.classList.add('selected', 'range-end');
+                }
+                
+                if (startDate && endDate && elDate > startDate.date && elDate < endDate.date) {
+                    el.classList.add('in-range');
+                }
+            });
+
+            const formatDate = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+            
+            allerDisplay.innerText = startDate ? formatDate(startDate.date) : '--';
+            retourDisplay.innerText = endDate ? formatDate(endDate.date) : '--';
+            
+            const nbPassagers = parseInt(selectPassagers.value);
+
+            if (startDate && endDate) {
+                const totalPrixVol = parseInt(startDate.price) + parseInt(endDate.price);
+                priceDisplay.innerText = `${totalPrixVol * nbPassagers} €`;
+                btnContinue.removeAttribute('disabled');
+            } else if (startDate) {
+                priceDisplay.innerText = `dès ${parseInt(startDate.price) * nbPassagers} €`;
+                btnContinue.setAttribute('disabled', 'true');
+            } else {
+                priceDisplay.innerText = '-- €';
+                btnContinue.setAttribute('disabled', 'true');
+            }
+        }
+
+        function updateSummaryPanel() {
+            const dep = selectDepart.value.split(' ')[0]; // Récupère juste "Paris"
+            const arr = selectArrivee.value.split(' ')[0];
+            resumeItineraire.innerHTML = `${dep} <i class="fas fa-arrow-right mx-2 is-size-6" style="color: var(--accent);"></i> ${arr}`;
+            
+            resumeClasse.innerText = selectClasse.options[selectClasse.selectedIndex].text;
+            
+            const pax = selectPassagers.value;
+            resumePassagers.innerText = `(${pax} Passager${pax > 1 ? 's' : ''})`;
+            
+            // Re-render calendrier pour mettre à jour les prix si la classe change
+            renderCalendar(); 
+        }
+
+        // Event Listeners
+        document.getElementById('prevMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
+        document.getElementById('nextMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
+        
+        document.getElementById('btnResetDates').addEventListener('click', () => { startDate = null; endDate = null; updateSelectionUI(); });
+
+        // Update dynamique quand on touche au formulaire de recherche
+        selectDepart.addEventListener('change', updateSummaryPanel);
+        selectArrivee.addEventListener('change', updateSummaryPanel);
+        selectPassagers.addEventListener('change', updateSummaryPanel);
+        selectClasse.addEventListener('change', updateSummaryPanel); // Ceci déclenche un recalcul des prix !
+
+        // Initialisation
+        updateSummaryPanel();
+    </script>
+</body>
+</html>
