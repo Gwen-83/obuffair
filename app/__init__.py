@@ -4,10 +4,11 @@ Tout en un seul fichier pour la simplicité.
 """
 
 import os
-from flask import Flask
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
 from dotenv import load_dotenv
+from datetime import datetime
 
 load_dotenv()
 
@@ -106,5 +107,10 @@ def create_app():
             error_msg = str(e)
             print(f"❌ Erreur: {error_msg}")
             return {'status': 'Erreur', 'error': error_msg}, 500
+    
+    @app.route('/styleguide')
+    def styleguide():
+        """Afficher la charte UI / Design System"""
+        return render_template('styleguide.html', now=datetime.now())
     
     return app
