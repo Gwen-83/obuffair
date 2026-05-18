@@ -39,6 +39,7 @@ class StrongPasswordValidator:
         
         if errors:
             raise ValidationError(f'Mot de passe faible. Requis: {", ".join(errors)}')
+from app.portail_auth.models_auth import User
 
 
 class RegisterForm(FlaskForm):

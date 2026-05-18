@@ -7,10 +7,6 @@ from dotenv import load_dotenv
 from datetime import datetime
 
 load_dotenv()
-# On importe les blueprints créés par l'équipe
-from app.portail_client.routes import client_bp
-from app.portail_admin.routes import admin_bp
-from app.portail_auth.routes import auth_bp
 
 # Initialiser SQLAlchemy (vide d'abord, sera lié à l'app après)
 db = SQLAlchemy()
@@ -36,10 +32,14 @@ def create_app():
     # ========== INITIALISER LA DB ==========
     db.init_app(app)
 
-    # On "branche" les modules à l'application principale
+    # ========== ENREGISTRER LES BLUEPRINTS ==========
+    from app.portail_auth.routes import auth_bp
+    from app.portail_admin.routes import admin_bp
+    from app.portail_client.routes import client_bp
+    
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
     app.register_blueprint(client_bp)
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     @app.route('/')
     def index():
@@ -50,6 +50,4 @@ def create_app():
         """Afficher la charte UI / Design System"""
         return render_template('styleguide.html', now=datetime.now())
     
-    return app
-
     return app
