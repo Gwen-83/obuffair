@@ -6,7 +6,7 @@ Inclut validation côté serveur (vérification email/username unique, force du 
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
-from obuffair.app.portail_auth.models_auth import User
+from app.portail_auth.models_auth import User
 
 
 class RegisterForm(FlaskForm):

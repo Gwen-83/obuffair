@@ -6,10 +6,10 @@ Gère les redirects et messages flash selon l'état de session.
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from werkzeug.security import generate_password_hash
 from app import db
-from obuffair.app.portail_auth.models_auth import User
+from app.portail_auth.models_auth import User
 from app.portail_auth.forms import RegisterForm
 
-# blueprint
+# Blueprint
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
 
