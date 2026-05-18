@@ -8,8 +8,8 @@ from datetime import datetime
 
 load_dotenv()
 # On importe les blueprints créés par l'équipe
-from app.portail_client.routes import client_bp
-from app.portail_admin.routes import admin_bp
+#from app.portail_client.routes import client_bp
+#from app.portail_admin.routes import admin_bp
 from app.portail_auth.routes import auth_bp
 
 # Initialiser SQLAlchemy (vide d'abord, sera lié à l'app après)
