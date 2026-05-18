@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Charte UI - OBufFair Design System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Couleurs primaires inspirées d'Air France, KLM et Lufthansa */
+            --primary: #002A5C;           /* Bleu Air France foncé */
+            --primary-light: #004B9E;    /* Bleu moyen */
+            --primary-lighter: #0066CC;   /* Bleu KLM */
+            --secondary: #003DA5;         /* Bleu Lufthansa */
+            --accent: #FFC72C;            /* Jaune Lufthansa/Or */
+            --accent-light: #FFD700;      /* Or clair */
+            
+            /* Couleurs sémantiques */
+            --success: #2E7D32;           /* Vert foncé */
+            --success-light: #4CAF50;
+            --warning: #F57C00;           /* Orange */
+            --warning-light: #FF9800;
+            --danger: #C62828;            /* Rouge foncé */
+            --danger-light: #E53935;
+            --info: #1565C0;              /* Bleu info */
+            --info-light: #1976D2;
+            
+            /* Couleurs neutres */
+            --dark: #1A1A1A;
+            --dark-gray: #424242;
+            --medium-gray: #757575;
+            --light-gray: #EEEEEE;
+            --light: #F5F5F5;
+            --white: #FFFFFF;
+            
+            /* Espacements */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-xxl: 3rem;
+            
+            /* Typographie */
+            --font-family-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            --font-family-mono: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            
+            /* Ombres */
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+            --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10);
+            
+            /* Border radius */
+            --radius-sm: 2px;
+            --radius-md: 4px;
+            --radius-lg: 8px;
+            --radius-xl: 12px;
+            --radius-full: 50%;
+        }
+
+        body {
+            background-color: var(--light);
+            font-family: var(--font-family-primary);
+            color: var(--dark);
+        }
+
+        .styleguide-section {
+            background: var(--white);
+            margin-bottom: var(--spacing-xl);
+            padding: var(--spacing-xl);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border-top: 4px solid var(--primary);
+        }
+
+        .styleguide-section h2 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+            font-weight: 700;
+            font-size: 1.75rem;
+        }
+
+        .styleguide-section h3 {
+            color: var(--primary-light);
+            margin-top: var(--spacing-lg);
+        }
+
+        .example-box {
+            background: var(--light);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-md);
+            margin-bottom: var(--spacing-md);
+            border-left: 4px solid var(--primary);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .example-box:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .color-swatch {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            border-radius: var(--radius-lg);
+            margin-right: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            vertical-align: top;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .color-info {
+            display: inline-block;
+            width: calc(100% - 120px);
+            vertical-align: top;
+        }
+
+        .color-info strong {
+            display: block;
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .color-info code {
+            display: block;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .spacing-demo {
+            background: white;
+            border: 2px dashed var(--light-gray);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .spacing-item {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            font-weight: 600;
+        }
+
+        .grid-example {
+            background: var(--light);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            border-radius: var(--radius-md);
+        }
+
+        .grid-item {
+            background: var(--primary);
+            color: white;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            border-radius: var(--radius-md);
+            text-align: center;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .component-showcase {
+            margin-bottom: var(--spacing-xl);
+        }
+
+        .component-showcase h4 {
+            margin-top: var(--spacing-lg);
+            margin-bottom: var(--spacing-md);
+            color: var(--primary-light);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .toc {
+            background: var(--white);
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            position: sticky;
+            top: var(--spacing-md);
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--accent);
+        }
+
+        .toc h3 {
+            color: var(--primary);
+            margin-bottom: var(--spacing-md);
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .toc li {
+            margin-bottom: var(--spacing-sm);
+        }
+
+        .toc a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.2s, padding-left 0.2s;
+            display: block;
+            padding-left: var(--spacing-sm);
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+            padding-left: var(--spacing-md);
+        }
+
+        code {
+            background: var(--light);
+            color: var(--primary-light);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-sm);
+            font-size: 0.9em;
+            font-family: var(--font-family-mono);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        pre {
+            background: var(--dark);
+            color: #E8E8E8;
+            padding: var(--spacing-lg);
+            border-radius: var(--radius-lg);
+            overflow-x: auto;
+            margin-bottom: var(--spacing-md);
+            box-shadow: var(--shadow-md);
+            font-family: var(--font-family-mono);
+        }
+
+        pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: var(--spacing-md);
+        }
+
+        .status-wip {
+            background: #FFF3CD;
+            color: #856404;
+        }
+
+        .status-ready {
+            background: #D4EDDA;
+            color: #155724;
+        }
+
+        .status-stable {
+            background: #D1ECF1;
+            color: #0C5460;
+        }
+
+        .responsive-grid-demo {
+            display: grid;
+            gap: var(--spacing-md);
+        }
+
+        @media (min-width: 769px) {
+            .responsive-grid-demo {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        /* Navbar styling */
+        .navbar {
+            box-shadow: var(--shadow-md);
+        }
+
+        .navbar.is-primary {
+            background-color: var(--primary);
+        }
+
+        /* Button enhancements */
+        .button {
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .button.is-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .button.is-primary:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .button.is-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .button.is-secondary:hover {
+            background-color: #0033A0;
+            box-shadow: var(--shadow-md);
+        }
+
+        .button.is-accent {
+            background-color: var(--accent);
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .button.is-accent:hover {
+            background-color: var(--accent-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .button.is-outlined {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .button.is-outlined:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Card enhancements */
+        .card {
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        /* Form improvements */
+        .input, .textarea, .select select {
+            border-radius: var(--radius-md);
+            border: 2px solid var(--light-gray);
+            transition: border-color 0.3s ease;
+            font-family: var(--font-family-primary);
+        }
+
+        .input:focus, .textarea:focus, .select select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 42, 92, 0.1);
+        }
+
+        .label {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Notification styling */
+        .notification {
+            border-radius: var(--radius-lg);
+            border-left: 4px solid var(--primary);
+        }
+
+        .notification.is-info {
+            border-color: var(--info);
+        }
+
+        .notification.is-success {
+            border-color: var(--success);
+        }
+
+        .notification.is-warning {
+            border-color: var(--warning);
+        }
+
+        .notification.is-danger {
+            border-color: var(--danger);
+        }
+
+        /* Tag styling */
+        .tag {
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tag:hover {
+            transform: scale(1.05);
+        }
+
+        /* Table styling */
+        .table {
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table thead {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .table thead th {
+            border-color: var(--primary);
+            font-weight: 700;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 42, 92, 0.05);
+        }
+
+        /* Tabs styling */
+        .tabs {
+            border-bottom: 2px solid var(--light-gray);
+        }
+
+        .tabs a {
+            border-bottom-color: transparent;
+            color: var(--medium-gray);
+            font-weight: 600;
+        }
+
+        .tabs li.is-active a {
+            border-bottom-color: var(--accent);
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <div class="navbar-item">
+                <h1 style="color: white; font-size: 1.5rem; font-weight: 700;">
+                    <i class="fas fa-plane" style="margin-right: 0.5rem;"></i>
+                    OBufFair - Design System
+                </h1>
+            </div>
+        </div>
+        <div class="navbar-menu">
+            <div class="navbar-end">
+                <div class="navbar-item">
+                    <span class="status-badge status-stable">✓ Charte Air France, KLM & Lufthansa</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-6" style="max-width: 1400px;">
+        <div class="columns">
+            <!-- Table des matières -->
+            <div class="column is-3">
+                <aside class="toc">
+                    <h3 class="is-6"><strong>📑 Sommaire</strong></h3>
+                    <ul>
+                        <li><a href="#fondations"><strong>Fondations</strong></a>
+                            <ul style="margin-left: 1rem; font-size: 0.9em; margin-top: 0.5rem;">
+                                <li><a href="#palette">Palette Couleurs</a></li>
+                                <li><a href="#typographie">Typographie</a></li>
+                                <li><a href="#espacements">Espacements</a></li>
+                                <li><a href="#icones">Icônes</a></li>
+                                <li><a href="#ombres">Ombres & Élevation</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#composants"><strong>Composants</strong></a>
+                            <ul style="margin-left: 1rem; font-size: 0.9em; margin-top: 0.5rem;">
+                                <li><a href="#boutons">Boutons</a></li>
+                                <li><a href="#formulaires">Formulaires</a></li>
+                                <li><a href="#cartes">Cartes</a></li>
+                                <li><a href="#badges">Badges & Tags</a></li>
+                                <li><a href="#notifications">Notifications</a></li>
+                                <li><a href="#modals">Modals</a></li>
+                                <li><a href="#progress">Barres de Progression</a></li>
+                                <li><a href="#breadcrumbs">Breadcrumbs</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#mise-en-page"><strong>Mise en page</strong></a>
+                            <ul style="margin-left: 1rem; font-size: 0.9em; margin-top: 0.5rem;">
+                                <li><a href="#grille">Grille</a></li>
+                                <li><a href="#responsive">Responsive</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="#patterns"><strong>Patterns</strong></a>
+                            <ul style="margin-left: 1rem; font-size: 0.9em; margin-top: 0.5rem;">
+                                <li><a href="#formulaire-complet">Formulaire Complet</a></li>
+                                <li><a href="#recherche">Recherche</a></li>
+                                <li><a href="#tri-filtrage">Tri & Filtrage</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </aside>
+            </div>
+
+            <!-- Contenu principal -->
+            <div class="column is-9">
+
+                <!-- SECTION: FONDATIONS -->
+                <section id="fondations">
+                    <div class="styleguide-section">
+                        <h2>🎨 Fondations</h2>
+                        <p class="subtitle is-6">Éléments visuels fondamentaux inspirés des chartes Air France, KLM et Lufthansa</p>
+
+                        <!-- Palette de couleurs -->
+                        <h3 id="palette" class="title is-4">Palette de Couleurs</h3>
+                        <p class="subtitle is-6">Combinaison harmonie des identités visuelles aéronautiques</p>
+
+                        <div style="margin-bottom: 2rem;">
+                            <p class="mb-4"><strong>Couleurs Primaires</strong></p>
+                            
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #002A5C;"></span>
+                                <div class="color-info">
+                                    <strong>Bleu Air France</strong><br>
+                                    <code>#002A5C</code><br>
+                                    <small>Couleur principale, actions, navigation</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #0066CC;"></span>
+                                <div class="color-info">
+                                    <strong>Bleu KLM</strong><br>
+                                    <code>#0066CC</code><br>
+                                    <small>Variante, accents, liens</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #003DA5;"></span>
+                                <div class="color-info">
+                                    <strong>Bleu Lufthansa</strong><br>
+                                    <code>#003DA5</code><br>
+                                    <small>Couleur secondaire, emphase</small>
+                                </div>
+                            </div>
+
+                            <p class="mb-4 mt-5"><strong>Couleurs d'Accent</strong></p>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #FFC72C;"></span>
+                                <div class="color-info">
+                                    <strong>Jaune Lufthansa</strong><br>
+                                    <code>#FFC72C</code><br>
+                                    <small>Accent premium, appels à l'action importants</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #FFD700;"></span>
+                                <div class="color-info">
+                                    <strong>Or Clair</strong><br>
+                                    <code>#FFD700</code><br>
+                                    <small>Highlights, badges premium</small>
+                                </div>
+                            </div>
+
+                            <p class="mb-4 mt-5"><strong>Couleurs Sémantiques</strong></p>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #2E7D32;"></span>
+                                <div class="color-info">
+                                    <strong>Succès</strong><br>
+                                    <code>#2E7D32</code><br>
+                                    <small>Confirmations, validations positives</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #F57C00;"></span>
+                                <div class="color-info">
+                                    <strong>Avertissement</strong><br>
+                                    <code>#F57C00</code><br>
+                                    <small>Alertes, informations importantes</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #C62828;"></span>
+                                <div class="color-info">
+                                    <strong>Danger</strong><br>
+                                    <code>#C62828</code><br>
+                                    <small>Erreurs, actions destructrices</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #1565C0;"></span>
+                                <div class="color-info">
+                                    <strong>Information</strong><br>
+                                    <code>#1565C0</code><br>
+                                    <small>Messages informatifs, notifications</small>
+                                </div>
+                            </div>
+
+                            <p class="mb-4 mt-5"><strong>Couleurs Neutres</strong></p>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #1A1A1A;"></span>
+                                <div class="color-info">
+                                    <strong>Noir Texte</strong><br>
+                                    <code>#1A1A1A</code><br>
+                                    <small>Texte principal, conteneurs sombres</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #757575;"></span>
+                                <div class="color-info">
+                                    <strong>Gris Moyen</strong><br>
+                                    <code>#757575</code><br>
+                                    <small>Texte secondaire, légendes</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #EEEEEE; border: 1px solid #CCC;"></span>
+                                <div class="color-info">
+                                    <strong>Gris Clair</strong><br>
+                                    <code>#EEEEEE</code><br>
+                                    <small>Arrière-plans, séparations</small>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 1.5rem;">
+                                <span class="color-swatch" style="background: #FFFFFF; border: 2px solid #999;"></span>
+                                <div class="color-info">
+                                    <strong>Blanc</strong><br>
+                                    <code>#FFFFFF</code><br>
+                                    <small>Fond principal, cartes</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Typographie -->
+                        <h3 id="typographie" class="title is-4">Typographie</h3>
+                        <p class="subtitle is-6">Hiérarchie typographique et conventions</p>
+
+                        <div class="example-box">
+                            <p class="mb-3"><strong>Famille de polices:</strong></p>
+                            <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+                                -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif
+                            </p>
+                        </div>
+
+                        <div class="example-box">
+                            <h1 class="title" style="color: var(--primary);">Titre H1 (32px) - Main heading</h1>
+                            <p class="subtitle">Sous-titre pour H1</p>
+                        </div>
+
+                        <div class="example-box">
+                            <h2 class="title is-3" style="color: var(--primary);">Titre H2 (28px) - Section heading</h2>
+                            <p>Texte descriptif ou corps pour H2</p>
+                        </div>
+
+                        <div class="example-box">
+                            <h3 class="title is-4" style="color: var(--primary-light);">Titre H3 (24px) - Subsection</h3>
+                            <p>Texte descriptif ou corps pour H3</p>
+                        </div>
+
+                        <div class="example-box">
+                            <h4 class="title is-5" style="color: var(--primary-light);">Titre H4 (20px) - Component heading</h4>
+                            <p>Texte descriptif ou corps pour H4</p>
+                        </div>
+
+                        <div class="example-box">
+                            <p class="is-size-6"><strong>Texte normal (14px)</strong> - Corps de texte standard utilisé pour la plupart du contenu</p>
+                        </div>
+
+                        <div class="example-box">
+                            <p class="is-size-7"><strong>Petite texte (12px)</strong> - Utilisée pour les légendes, labels et textes secondaires</p>
+                        </div>
+
+                        <div class="example-box">
+                            <p><strong>Texte en gras</strong> pour l'emphase</p>
+                            <p><em>Texte en italique</em> pour l'accentuation</p>
+                            <p><u>Texte souligné</u> pour les liens ou accentuation</p>
+                            <p><code>Code inline</code> pour les références techniques</p>
+                        </div>
+
+                        <!-- Espacements -->
+                        <h3 id="espacements" class="title is-4">Espacements et Dimensions</h3>
+                        <p class="subtitle is-6">Système d'espacements cohérent et harmonieux</p>
+
+                        <p><strong>Échelle d'espacements (base: 8px):</strong></p>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li><code>xs: 0.25rem (4px)</code> - Micro-espacements entre éléments</li>
+                            <li><code>sm: 0.5rem (8px)</code> - Petit espacement interne</li>
+                            <li><code>md: 1rem (16px)</code> - Espacement standard</li>
+                            <li><code>lg: 1.5rem (24px)</code> - Grand espacement</li>
+                            <li><code>xl: 2rem (32px)</code> - Très grand espacement</li>
+                            <li><code>xxl: 3rem (48px)</code> - Espacement entre sections majeures</li>
+                        </ul>
+
+                        <p><strong>Rayons de bordure (border-radius):</strong></p>
+                        <div class="example-box">
+                            <div style="display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 0px; text-align: center; line-height: 80px; color: white; font-weight: 600;">0px</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Carré</code></p>
+                            </div>
+                            <div style="display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 2px; text-align: center; line-height: 80px; color: white; font-weight: 600;">2px</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Très léger</code></p>
+                            </div>
+                            <div style="display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 4px; text-align: center; line-height: 80px; color: white; font-weight: 600;">4px</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Léger</code></p>
+                            </div>
+                            <div style="display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 8px; text-align: center; line-height: 80px; color: white; font-weight: 600;">8px</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Moyen</code></p>
+                            </div>
+                            <div style="display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 12px; text-align: center; line-height: 80px; color: white; font-weight: 600;">12px</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Arrondi</code></p>
+                            </div>
+                            <div style="display: inline-block; margin-bottom: 0.5rem;">
+                                <div style="width: 80px; height: 80px; background: var(--primary); border-radius: 50%; text-align: center; line-height: 80px; color: white; font-weight: 600;">50%</div>
+                                <p style="text-align: center; font-size: 0.85rem; margin-top: 0.5rem;"><code>Cercle</code></p>
+                            </div>
+                        </div>
+
+                        <!-- Icônes -->
+                        <h3 id="icones" class="title is-4">Icônes et Symboles</h3>
+                        <p class="subtitle is-6">Font Awesome 6.4.0 intégré pour cohérence visuelle</p>
+
+                        <div class="example-box">
+                            <div style="margin-bottom: 1rem;">
+                                <p><strong>Icônes thématiques aéronautiques:</strong></p>
+                                <div style="font-size: 2rem; margin-top: 1rem;">
+                                    <i class="fas fa-plane" style="margin-right: 1rem; color: var(--primary);"></i>
+                                    <i class="fas fa-check-circle" style="margin-right: 1rem; color: var(--success);"></i>
+                                    <i class="fas fa-exclamation-triangle" style="margin-right: 1rem; color: var(--warning);"></i>
+                                    <i class="fas fa-times-circle" style="margin-right: 1rem; color: var(--danger);"></i>
+                                    <i class="fas fa-info-circle" style="margin-right: 1rem; color: var(--info);"></i>
+                                    <i class="fas fa-star" style="margin-right: 1rem; color: var(--accent);"></i>
+                                </div>
+                            </div>
+                            <p class="is-size-7">
+                                Plane, Check Circle, Warning, Error, Info, Star
+                            </p>
+                        </div>
+
+                        <div class="example-box">
+                            <p><strong>Tailles d'icônes:</strong></p>
+                            <div style="margin-top: 1rem;">
+                                <div style="display: inline-block; margin-right: 2rem;">
+                                    <i class="fas fa-plane" style="font-size: 0.875rem; color: var(--primary);"></i>
+                                    <p class="is-size-7">XS (0.875rem)</p>
+                                </div>
+                                <div style="display: inline-block; margin-right: 2rem;">
+                                    <i class="fas fa-plane" style="font-size: 1rem; color: var(--primary);"></i>
+                                    <p class="is-size-7">SM (1rem)</p>
+                                </div>
+                                <div style="display: inline-block; margin-right: 2rem;">
+                                    <i class="fas fa-plane" style="font-size: 1.5rem; color: var(--primary);"></i>
+                                    <p class="is-size-7">MD (1.5rem)</p>
+                                </div>
+                                <div style="display: inline-block; margin-right: 2rem;">
+                                    <i class="fas fa-plane" style="font-size: 2rem; color: var(--primary);"></i>
+                                    <p class="is-size-7">LG (2rem)</p>
+                                </div>
+                                <div style="display: inline-block;">
+                                    <i class="fas fa-plane" style="font-size: 3rem; color: var(--primary);"></i>
+                                    <p class="is-size-7">XL (3rem)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ombres -->
+                        <h3 id="ombres" class="title is-4">Ombres et Élevation</h3>
+                        <p class="subtitle is-6">Système d'ombres pour la profondeur et hiérarchie</p>
+
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-top: 1rem;">
+                            <div style="background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); text-align: center;">
+                                <p><strong>Petite ombre</strong></p>
+                                <p class="is-size-7" style="margin-top: 0.5rem;">Pour les éléments basiques</p>
+                            </div>
+                            <div style="background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.12); text-align: center;">
+                                <p><strong>Ombre moyenne</strong></p>
+                                <p class="is-size-7" style="margin-top: 0.5rem;">Pour les cartes et conteneurs</p>
+                            </div>
+                            <div style="background: white; padding: 2rem; border-radius: 4px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15), 0 3px 6px rgba(0, 0, 0, 0.10); text-align: center;">
+                                <p><strong>Grande ombre</strong></p>
+                                <p class="is-size-7" style="margin-top: 0.5rem;">Pour modals et overlays</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION: COMPOSANTS -->
+                <section id="composants">
+                    <div class="styleguide-section">
+                        <h2>🧩 Composants</h2>
+
+                        <h3 id="boutons" class="title is-4">Boutons</h3>
+                        <p class="subtitle is-6">Variations et états des boutons</p>
+
+                        <div class="component-showcase">
+                            <h4>Variantes de couleur</h4>
+                            <div class="example-box">
+                                <button class="button is-primary">
+                                    <span class="icon"><i class="fas fa-paper-plane"></i></span>
+                                    <span>Primaire</span>
+                                </button>
+                                <button class="button is-secondary">
+                                    <span>Secondaire</span>
+                                </button>
+                                <button class="button is-accent">
+                                    <span class="icon"><i class="fas fa-star"></i></span>
+                                    <span>Premium</span>
+                                </button>
+                                <button class="button is-success">
+                                    <span class="icon"><i class="fas fa-check"></i></span>
+                                    <span>Succès</span>
+                                </button>
+                                <button class="button is-info">Info</button>
+                                <button class="button is-warning">
+                                    <span class="icon"><i class="fas fa-exclamation"></i></span>
+                                    <span>Avertissement</span>
+                                </button>
+                                <button class="button is-danger">
+                                    <span class="icon"><i class="fas fa-trash"></i></span>
+                                    <span>Danger</span>
+                                </button>
+                            </div>
+
+                            <h4>Variantes de style</h4>
+                            <div class="example-box">
+                                <button class="button is-primary">Solide</button>
+                                <button class="button is-primary is-light">Light</button>
+                                <button class="button is-outlined" style="border-color: var(--primary); color: var(--primary);">Outlined</button>
+                                <button class="button" style="border: 2px solid var(--primary); background: transparent; color: var(--primary);">Ghost</button>
+                                <button class="button is-primary is-loading">Loading</button>
+                                <button class="button" disabled>Disabled</button>
+                            </div>
+
+                            <h4>Tailles</h4>
+                            <div class="example-box">
+                                <button class="button is-small is-primary">Small</button>
+                                <button class="button is-primary">Normal</button>
+                                <button class="button is-medium is-primary">Medium</button>
+                                <button class="button is-large is-primary">Large</button>
+                            </div>
+
+                            <h4>État pleine largeur</h4>
+                            <div class="example-box">
+                                <button class="button is-fullwidth is-primary">Bouton pleine largeur</button>
+                            </div>
+
+                            <h4>Groupes de boutons</h4>
+                            <div class="example-box">
+                                <div class="buttons">
+                                    <button class="button is-primary">
+                                        <span class="icon"><i class="fas fa-check"></i></span>
+                                        <span>Valider</span>
+                                    </button>
+                                    <button class="button">Annuler</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 id="formulaires" class="title is-4">Formulaires</h3>
+                        <p class="subtitle is-6">Éléments de formulaires et contrôles</p>
+
+                        <div class="component-showcase">
+                            <h4>Champs de texte</h4>
+                            <div class="example-box">
+                                <div class="field">
+                                    <label class="label">Email</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="email" placeholder="votre.email@airline.fr">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-envelope"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Numéro de vol</label>
+                                    <div class="control has-icons-left">
+                                        <input class="input" type="text" placeholder="AF/KL/LH + numéro">
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-plane"></i>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>Textarea</h4>
+                            <div class="example-box">
+                                <div class="field">
+                                    <label class="label">Commentaires</label>
+                                    <div class="control">
+                                        <textarea class="textarea" placeholder="Entrez vos commentaires..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>Sélects et Options</h4>
+                            <div class="example-box">
+                                <div class="field">
+                                    <label class="label">Compagnie aérienne</label>
+                                    <div class="control">
+                                        <div class="select">
+                                            <select>
+                                                <option selected>Sélectionnez une compagnie</option>
+                                                <option>Air France (AF)</option>
+                                                <option>KLM (KL)</option>
+                                                <option>Lufthansa (LH)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>Checkboxes et Radios</h4>
+                            <div class="example-box">
+                                <div class="field">
+                                    <div class="control">
+                                        <label class="checkbox">
+                                            <input type="checkbox" checked> J'accepte les conditions d'utilisation
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="field">
+                                    <div class="control">
+                                        <label class="checkbox">
+                                            <input type="checkbox"> S'abonner à la newsletter
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="field mt-4">
+                                    <div class="control">
+                                        <label class="radio">
+                                            <input type="radio" name="classe" checked> Économique
+                                        </label>
+                                        <label class="radio">
+                                            <input type="radio" name="classe"> Business
+                                        </label>
+                                        <label class="radio">
+                                            <input type="radio" name="classe"> Première
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h4>États de validation</h4>
+                            <div class="example-box">
+                                <div class="field">
+                                    <label class="label">Succès</label>
+                                    <div class="control has-icons-right">
+                                        <input class="input is-success" type="text" value="Email validé">
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-check-circle"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help is-success">Email valide et confirmé</p>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Erreur</label>
+                                    <div class="control has-icons-right">
+                                        <input class="input is-danger" type="text" value="Email invalide">
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help is-danger">Format d'email incorrect</p>
+                                </div>
+                                <div class="field">
+                                    <label class="label">Avertissement</label>
+                                    <div class="control has-icons-right">
+                                        <input class="input is-warning" type="text" value="Vérifier">
+                                        <span class="icon is-small is-right">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </span>
+                                    </div>
+                                    <p class="help is-warning">Attention requise</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 id="cartes" class="title is-4">Cartes (Cards)</h3>
+                        <p class="subtitle is-6">Conteneurs pour contenu groupé</p>
+
+                        <div class="example-box">
+                            <div class="columns">
+                                <div class="column is-6">
+                                    <div class="card">
+                                        <div class="card-image">
+                                            <figure class="image is-4by3" style="background: linear-gradient(135deg, var(--primary), var(--primary-light));">
+                                            </figure>
+                                        </div>
+                                        <div class="card-content">
+                                            <div class="media">
+                                                <div class="media-content">
+                                                    <p class="title is-5" style="color: var(--primary);">Paris → Amsterdam</p>
+                                                    <p class="subtitle is-7">Départ: 14:30 | Arrivée: 16:15</p>
+                                                </div>
+                                            </div>
+                                            <div class="content">
+                                                <p><strong>AF 1234</strong> - Airbus A320</p>
+                                                <p style="font-size: 0.9rem; margin-top: 0.5rem;">
+                                                    <i class="fas fa-clock" style="color: var(--accent); margin-right: 0.5rem;"></i>
+                                                    Durée: 1h45
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <footer class="card-footer">
+                                            <p class="card-footer-item">
+                                                <span><a href="#">Détails</a></span>
+                                            </p>
+                                            <p class="card-footer-item">
+                                                <span><a href="#">Réserver</a></span>
+                                            </p>
+                                        </footer>
+                                    </div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="card">
+                                        <div class="card-content">
+                                            <p class="title is-5" style="color: var(--primary);">
+                                                <i class="fas fa-star" style="color: var(--accent); margin-right: 0.5rem;"></i>
+                                                Vol Premium
+                                            </p>
+                                            <p class="subtitle is-7">Classe Business</p>
+                                            <div class="content">
+                                                <ul>
+                                                    <li>Siège côté hublot réservé</li>
+                                                    <li>Menu gastronomique</li>
+                                                    <li>Accès salon VIP</li>
+                                                </ul>
+                                            </div>
+                                            <button class="button is-accent" style="width: 100%;">Ajouter au panier</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 id="badges" class="title is-4">Badges et Tags</h3>
+                        <div class="example-box">
+                            <p class="mb-3"><strong>Tags standards:</strong></p>
+                            <div>
+                                <span class="tag">Direct</span>
+                                <span class="tag is-primary">Populaire</span>
+                                <span class="tag is-success">Disponible</span>
+                                <span class="tag is-warning">Peu de places</span>
+                                <span class="tag is-danger">Complet</span>
+                                <span class="tag" style="background-color: var(--accent); color: var(--primary);">Premium</span>
+                            </div>
+                            <p class="mb-3 mt-4"><strong>Tags avec icônes:</strong></p>
+                            <div>
+                                <span class="tag is-primary">
+                                    <i class="fas fa-plane"></i>
+                                    <span style="margin-left: 0.5rem;">Vol direct</span>
+                                </span>
+                                <span class="tag is-success">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span style="margin-left: 0.5rem;">Confirmé</span>
+                                </span>
+                                <span class="tag is-warning">
+                                    <i class="fas fa-clock"></i>
+                                    <span style="margin-left: 0.5rem;">En attente</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <h3 id="notifications" class="title is-4">Notifications et Alertes</h3>
+                        <p class="subtitle is-6">Messages et retours utilisateur</p>
+
+                        <div class="example-box">
+                            <div class="notification is-info">
+                                <button class="delete"></button>
+                                <i class="fas fa-info-circle"></i>
+                                <strong style="margin-left: 0.5rem;">Information:</strong> Votre vol a été reprogrammé. Consultez les détails.
+                            </div>
+
+                            <div class="notification is-success">
+                                <button class="delete"></button>
+                                <i class="fas fa-check-circle"></i>
+                                <strong style="margin-left: 0.5rem;">Succès:</strong> Votre réservation a été confirmée avec succès.
+                            </div>
+
+                            <div class="notification is-warning">
+                                <button class="delete"></button>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <strong style="margin-left: 0.5rem;">Avertissement:</strong> Vérifiez vos documents de voyage avant le départ.
+                            </div>
+
+                            <div class="notification is-danger">
+                                <button class="delete"></button>
+                                <i class="fas fa-times-circle"></i>
+                                <strong style="margin-left: 0.5rem;">Erreur:</strong> Une erreur s'est produite lors de la réservation.
+                            </div>
+                        </div>
+
+                        <h3 id="progress" class="title is-4">Barres de Progression</h3>
+                        <div class="example-box">
+                            <div class="field">
+                                <label class="label">Progression de la réservation</label>
+                                <progress class="progress is-primary" value="30" max="100">30%</progress>
+                            </div>
+                            <div class="field">
+                                <label class="label">Téléchargement en cours</label>
+                                <progress class="progress is-accent" value="65" max="100">65%</progress>
+                            </div>
+                            <div class="field">
+                                <label class="label">Traitement complet</label>
+                                <progress class="progress is-success" value="100" max="100">100%</progress>
+                            </div>
+                        </div>
+
+                        <h3 id="breadcrumbs" class="title is-4">Breadcrumbs</h3>
+                        <div class="example-box">
+                            <nav class="breadcrumb" aria-label="breadcrumbs">
+                                <ul>
+                                    <li><a href="#"><i class="fas fa-home"></i> <span style="margin-left: 0.5rem;">Accueil</span></a></li>
+                                    <li><a href="#">Réservations</a></li>
+                                    <li><a href="#">Détails du vol</a></li>
+                                    <li class="is-active"><a href="#" aria-current="page">Confirmation</a></li>
+                                </ul>
+                            </nav>
+                        </div>
+
+                        <h3 class="title is-4">Tables</h3>
+                        <div class="example-box">
+                            <table class="table is-fullwidth is-striped is-hoverable">
+                                <thead>
+                                    <tr style="background-color: var(--primary); color: white;">
+                                        <th style="color: white;">Vol</th>
+                                        <th style="color: white;">Départ</th>
+                                        <th style="color: white;">Arrivée</th>
+                                        <th style="color: white;">Durée</th>
+                                        <th style="color: white;">Prix</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>AF1234</strong></td>
+                                        <td>14:30</td>
+                                        <td>16:15</td>
+                                        <td>1h45</td>
+                                        <td><span class="tag is-primary">€289</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>KL567</strong></td>
+                                        <td>10:00</td>
+                                        <td>12:20</td>
+                                        <td>2h20</td>
+                                        <td><span class="tag is-success">€199</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h3 class="title is-4">Tabs (Onglets)</h3>
+                        <div class="example-box">
+                            <div class="tabs is-boxed">
+                                <ul>
+                                    <li class="is-active"><a href="#"><span class="icon"><i class="fas fa-search"></i></span> <span>Rechercher</span></a></li>
+                                    <li><a href="#"><span class="icon"><i class="fas fa-bookmark"></i></span> <span>Favoris</span></a></li>
+                                    <li><a href="#"><span class="icon"><i class="fas fa-history"></i></span> <span>Historique</span></a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION: MISE EN PAGE -->
+                <section id="mise-en-page">
+                    <div class="styleguide-section">
+                        <h2>📐 Mise en page</h2>
+
+                        <h3 id="grille" class="title is-4">Système de Grille</h3>
+                        <p class="subtitle is-6">Layout responsive avec Bulma columns</p>
+
+                        <h4>Grille 12 colonnes</h4>
+                        <div class="grid-example">
+                            <div class="columns">
+                                <div class="column is-full">
+                                    <div class="grid-item">12/12 - Pleine largeur</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div class="column is-6">
+                                    <div class="grid-item">6/12</div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="grid-item">6/12</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div class="column is-4">
+                                    <div class="grid-item">4/12</div>
+                                </div>
+                                <div class="column is-4">
+                                    <div class="grid-item">4/12</div>
+                                </div>
+                                <div class="column is-4">
+                                    <div class="grid-item">4/12</div>
+                                </div>
+                            </div>
+                            <div class="columns">
+                                <div class="column is-3">
+                                    <div class="grid-item">3/12</div>
+                                </div>
+                                <div class="column is-9">
+                                    <div class="grid-item">9/12</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h4>Espacements entre colonnes</h4>
+                        <div class="grid-example">
+                            <div class="columns is-multiline">
+                                <div class="column is-3">
+                                    <div class="grid-item">Colonne</div>
+                                </div>
+                                <div class="column is-3">
+                                    <div class="grid-item">Colonne</div>
+                                </div>
+                                <div class="column is-3">
+                                    <div class="grid-item">Colonne</div>
+                                </div>
+                                <div class="column is-3">
+                                    <div class="grid-item">Colonne</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 id="responsive" class="title is-4">Responsive Design</h3>
+                        <p class="subtitle is-6">Points de rupture et comportement adaptatif</p>
+
+                        <div class="example-box">
+                            <p><strong>Points de rupture Bulma:</strong></p>
+                            <ul style="margin: 1rem 0 1rem 2rem;">
+                                <li><code>mobile</code> - 0px à 768px (par défaut)</li>
+                                <li><code>tablet</code> - 769px et plus</li>
+                                <li><code>desktop</code> - 1024px et plus</li>
+                                <li><code>widescreen</code> - 1216px et plus</li>
+                                <li><code>fullhd</code> - 1408px et plus</li>
+                            </ul>
+                        </div>
+
+                        <h4>Exemple Responsive</h4>
+                        <div class="grid-example">
+                            <div class="columns is-multiline">
+                                <div class="column is-full-mobile is-half-tablet is-one-third-desktop">
+                                    <div class="grid-item">Mobile: full<br>Tablet: 1/2<br>Desktop: 1/3</div>
+                                </div>
+                                <div class="column is-full-mobile is-half-tablet is-one-third-desktop">
+                                    <div class="grid-item">Mobile: full<br>Tablet: 1/2<br>Desktop: 1/3</div>
+                                </div>
+                                <div class="column is-full-mobile is-full-tablet is-one-third-desktop">
+                                    <div class="grid-item">Mobile: full<br>Tablet: full<br>Desktop: 1/3</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION: PATTERNS -->
+                <section id="patterns">
+                    <div class="styleguide-section">
+                        <h2>🎭 Patterns Courants</h2>
+
+                        <h3 id="formulaire-complet" class="title is-4">Formulaire de Recherche de Vols</h3>
+                        <div class="example-box">
+                            <form>
+                                <div class="columns">
+                                    <div class="column is-6">
+                                        <div class="field">
+                                            <label class="label">Départ</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="text" placeholder="Ville ou code aéroport">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field">
+                                            <label class="label">Arrivée</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="text" placeholder="Ville ou code aéroport">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="columns">
+                                    <div class="column is-6">
+                                        <div class="field">
+                                            <label class="label">Date aller</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="date">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-calendar"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="column is-6">
+                                        <div class="field">
+                                            <label class="label">Date retour</label>
+                                            <div class="control has-icons-left">
+                                                <input class="input" type="date">
+                                                <span class="icon is-small is-left">
+                                                    <i class="fas fa-calendar"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="columns">
+                                    <div class="column is-4">
+                                        <div class="field">
+                                            <label class="label">Passagers</label>
+                                            <div class="control">
+                                                <div class="select">
+                                                    <select>
+                                                        <option>1 passager</option>
+                                                        <option>2 passagers</option>
+                                                        <option>3 passagers</option>
+                                                        <option>4 passagers</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="column is-4">
+                                        <div class="field">
+                                            <label class="label">Classe</label>
+                                            <div class="control">
+                                                <div class="select">
+                                                    <select>
+                                                        <option>Économique</option>
+                                                        <option>Premium Economy</option>
+                                                        <option>Business</option>
+                                                        <option>Première</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="column is-4">
+                                        <div class="field">
+                                            <label class="label">Type</label>
+                                            <div class="control">
+                                                <label class="radio">
+                                                    <input type="radio" name="type" checked> Aller-retour
+                                                </label>
+                                                <label class="radio">
+                                                    <input type="radio" name="type"> Aller simple
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="field is-grouped">
+                                    <p class="control">
+                                        <button class="button is-primary is-large">
+                                            <span class="icon"><i class="fas fa-search"></i></span>
+                                            <span>Rechercher vols</span>
+                                        </button>
+                                    </p>
+                                    <p class="control">
+                                        <button class="button is-light is-large">Réinitialiser</button>
+                                    </p>
+                                </div>
+                            </form>
+                        </div>
+
+                        <h3 id="recherche" class="title is-4">Barre de Recherche</h3>
+                        <div class="example-box">
+                            <div class="field has-addons">
+                                <p class="control is-expanded">
+                                    <input class="input" type="text" placeholder="Rechercher un vol, destination, compagnie...">
+                                </p>
+                                <p class="control">
+                                    <button class="button is-primary">
+                                        <span class="icon"><i class="fas fa-search"></i></span>
+                                    </button>
+                                </p>
+                            </div>
+                        </div>
+
+                        <h3 id="tri-filtrage" class="title is-4">Tri et Filtrage</h3>
+                        <div class="example-box">
+                            <div class="columns is-multiline">
+                                <div class="column is-12">
+                                    <p class="mb-3"><strong>Filtres actifs:</strong></p>
+                                </div>
+                                <div class="column is-4">
+                                    <div class="field">
+                                        <label class="label is-size-7">Compagnie</label>
+                                        <div class="control">
+                                            <label class="checkbox">
+                                                <input type="checkbox" checked> Air France
+                                            </label>
+                                            <label class="checkbox">
+                                                <input type="checkbox" checked> KLM
+                                            </label>
+                                            <label class="checkbox">
+                                                <input type="checkbox"> Lufthansa
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-4">
+                                    <div class="field">
+                                        <label class="label is-size-7">Prix maximum</label>
+                                        <div class="control">
+                                            <input class="input" type="range" min="0" max="1000" value="500">
+                                            <p class="is-size-7 mt-2">0 € - 500 €</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-4">
+                                    <div class="field">
+                                        <label class="label is-size-7">Trier par</label>
+                                        <div class="control">
+                                            <div class="select is-fullwidth">
+                                                <select>
+                                                    <option selected>Pertinence</option>
+                                                    <option>Prix croissant</option>
+                                                    <option>Prix décroissant</option>
+                                                    <option>Durée du vol</option>
+                                                    <option>Heure départ</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION: BONNES PRATIQUES -->
+                <section>
+                    <div class="styleguide-section">
+                        <h2>✨ Bonnes Pratiques & Directives</h2>
+
+                        <h3 class="title is-4">📋 Utilisation des couleurs</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li><strong>Bleu primaire (#002A5C):</strong> Actions principales, navigation, headers</li>
+                            <li><strong>Jaune/Or (#FFC72C):</strong> Appels à l'action importants, éléments premium</li>
+                            <li><strong>Vert (#2E7D32):</strong> Validations, confirmations positives</li>
+                            <li><strong>Rouge (#C62828):</strong> Erreurs, actions destructrices uniquement</li>
+                            <li><strong>Orange (#F57C00):</strong> Avertissements, attention requise</li>
+                            <li><strong>Gris (#757575):</strong> Texte secondaire, éléments inactifs</li>
+                        </ul>
+
+                        <h3 class="title is-4">♿ Accessibilité</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li>Contraste minimum 4.5:1 pour le texte normal, 3:1 pour le texte large</li>
+                            <li>Utiliser les balises sémantiques (<code>&lt;button&gt;</code>, <code>&lt;label&gt;</code>, <code>&lt;nav&gt;</code>)</li>
+                            <li>Ajouter <code>aria-label</code> pour les boutons sans texte visible</li>
+                            <li>Testable au clavier (Tab, Enter, Escape)</li>
+                            <li>Icônes accompagnées de texte ou d'une description</li>
+                            <li>Respecter l'ordre logique de la tabulation</li>
+                        </ul>
+
+                        <h3 class="title is-4">⚡ Performance</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li>Utiliser le CDN pour Bulma et Font Awesome (déjà intégrés)</li>
+                            <li>Minifier le CSS et JS en production</li>
+                            <li>Optimiser les images: format (WebP), compression, tailles appropriées</li>
+                            <li>Lazy-loading pour les images non-critiques</li>
+                            <li>Éviter les animations excessives</li>
+                        </ul>
+
+                        <h3 class="title is-4">📱 Mobile First</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li>Concevoir d'abord pour mobile, puis adapter aux plus grands écrans</li>
+                            <li>Utiliser les classes responsive de Bulma: <code>is-full-mobile</code>, <code>is-half-tablet</code>, etc.</li>
+                            <li>Menu mobile avec toggle (hamburger menu)</li>
+                            <li>Touch-friendly: zones cliquables d'au moins 44x44px</li>
+                            <li>Éviter le débordement horizontal</li>
+                        </ul>
+
+                        <h3 class="title is-4">🎯 Conventions de nommage</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li>Préférer les classes Bulma autant que possible</li>
+                            <li>Préfixer les classes custom: <code>.flight-card</code>, <code>.booking-form</code></li>
+                            <li>Éviter les styles inline (utiliser des classes CSS)</li>
+                            <li>Utiliser des variables CSS pour les valeurs répétées</li>
+                            <li>BEM ou conventions similaires pour les modifications</li>
+                        </ul>
+
+                        <h3 class="title is-4">🔗 Compatibilité navigateurs</h3>
+                        <ul style="margin: 1rem 0 1rem 2rem;">
+                            <li>Chrome/Chromium (latest)</li>
+                            <li>Firefox (latest)</li>
+                            <li>Safari (latest)</li>
+                            <li>Edge (latest)</li>
+                            <li>Mobile: iOS Safari 12+, Chrome Mobile</li>
+                        </ul>
+
+                        <h3 class="title is-4">📐 Espacements standard</h3>
+                        <div class="example-box">
+                            <p><strong>Classes Bulma:</strong></p>
+                            <pre><code>/* Marges */
+m-1 = 0.25rem    mt-2 = 0.5rem    mb-3 = 1rem
+ml-4 = 1.5rem    mr-5 = 2rem      mx-6 = 3rem
+
+/* Padding */
+p-1 = 0.25rem    pt-2 = 0.5rem    pb-3 = 1rem
+pl-4 = 1.5rem    pr-5 = 2rem      px-6 = 3rem</code></pre>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- SECTION: VERSION -->
+                <section>
+                    <div class="styleguide-section has-background-light">
+                        <p class="has-text-centered">
+                            <strong style="font-size: 1.2rem; color: var(--primary);">
+                                <i class="fas fa-plane"></i> OBufFair Design System
+                            </strong><br>
+                            <span style="color: var(--medium-gray);">Inspiré d'Air France, KLM & Lufthansa</span><br>
+                            Basé sur <strong>Bulma 0.9.4</strong> + <strong>Font Awesome 6.4.0</strong><br>
+                            <span class="status-badge status-stable mt-3">✓ Production Ready</span>
+                        </p>
+                    </div>
+                </section>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Fermer les notifications et messages
+        document.addEventListener('DOMContentLoaded', function() {
+            (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+                const $notification = $delete.parentNode;
+                $delete.addEventListener('click', () => {
+                    $notification.parentNode.removeChild($notification);
+                });
+            });
+
+            (document.querySelectorAll('.message .delete') || []).forEach(($delete) => {
+                const $message = $delete.parentNode.parentNode;
+                $delete.addEventListener('click', () => {
+                    $message.parentNode.removeChild($message);
+                });
+            });
+
+            // Modal demo (ne rien faire - c'est juste une démo statique)
+            // En production, ajouter des event listeners pour .modal-background et .modal-close
+        });
+    </script>
+</body>
+</html>
