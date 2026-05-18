@@ -30,7 +30,7 @@ def create_app():
         'mysql+pymysql://gwenael.drouet:password@enac.darties.fr/gwenael.drouet_Projet_obuffair'
     )
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['SQLALCHEMY_ECHO'] = True  # Affiche les requêtes SQL
+    app.config['SQLALCHEMY_ECHO'] = True
     
     # ========== INITIALISER LA DB ==========
     db.init_app(app)
