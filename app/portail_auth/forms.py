@@ -2,13 +2,13 @@
 Formulaires pour authentification.
 Validation robuste avec:
 - Email unique et valide
-- Username unique (3-20 caractères)
 - Mot de passe fort (min 8 caractères, majuscule, minuscule, chiffre, caractère spécial)
+- Nom et prénom requis
 """
 
 import re
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
+from wtforms import StringField, PasswordField, SubmitField, DateField
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError, Length
 from app.portail_auth.models_auth import User
 
@@ -39,19 +39,10 @@ class StrongPasswordValidator:
         
         if errors:
             raise ValidationError(f'Mot de passe faible. Requis: {", ".join(errors)}')
-from app.portail_auth.models_auth import User
 
 
 class RegisterForm(FlaskForm):
     """Formulaire d'enregistrement sécurisé"""
-    
-    username = StringField(
-        'Nom d\'utilisateur',
-        validators=[
-            DataRequired('Champ obligatoire'),
-            Length(min=3, max=20, message='Entre 3 et 20 caractères')
-        ]
-    )
     
     email = StringField(
         'Email',
@@ -59,6 +50,23 @@ class RegisterForm(FlaskForm):
             DataRequired('Champ obligatoire'),
             Email('Email invalide')
         ]
+    )
+    
+    prenom = StringField(
+        'Prénom',
+        validators=[DataRequired('Champ obligatoire')]
+    )
+    
+    nom = StringField(
+        'Nom',
+        validators=[DataRequired('Champ obligatoire')]
+    )
+    
+    date_naissance = DateField(
+        'Date de naissance',
+        format='%Y-%m-%d',
+        render_kw={'type': 'date'},
+        validators=[]
     )
     
     password = PasswordField(
@@ -77,16 +85,9 @@ class RegisterForm(FlaskForm):
         ]
     )
     
-    prenom = StringField('Prénom')
-    nom = StringField('Nom')
     submit = SubmitField('S\'inscrire')
     
     def validate_email(self, email):
         """Vérifier unicité de l'email"""
         if User.query.filter_by(email=email.data.lower()).first():
             raise ValidationError('Cet email est déjà associé à un compte')
-    
-    def validate_username(self, username):
-        """Vérifier unicité du username"""
-        if User.query.filter_by(username=username.data.lower()).first():
-            raise ValidationError('Ce nom d\'utilisateur n\'est pas disponible')

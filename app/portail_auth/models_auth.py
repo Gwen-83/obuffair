@@ -3,8 +3,8 @@ Modèles SQLAlchemy pour la base de données.
 
 Stockage sécurisé des utilisateurs avec:
 - Passwords hashés (PBKDF2-SHA256)
-- Usernames/emails normalisés en minuscules
-- Timestamps automatiques
+- Emails normalisés en minuscules
+- Intégration avec table clients existante
 """
 
 from app import db
@@ -15,30 +15,30 @@ class User(db.Model):
     """
     Modèle User - représente un client/utilisateur.
     
-    Attributes:
-        id: Identifiant unique
-        email: Email unique (minuscules)
-        username: Username unique (minuscules, 3-20 caractères)
-        password: Mot de passe hashé (jamais stocké en clair!)
-        nom: Nom de famille
-        prenom: Prénom
-        date_inscription: Timestamp de création
+    Correspond à la table clients réelle avec:
+    - id_client: Identifiant unique
+    - email: Email unique (minuscules)
+    - mot_de_passe: Mot de passe hashé (jamais stocké en clair!)
+    - nom: Nom de famille
+    - prenom: Prénom
+    - date_naissance: Date de naissance
+    - points_fidelite: Points de fidélité (défaut: 0)
     """
     __tablename__ = 'clients'
     
-    id = db.Column(db.Integer, primary_key=True)
+    id_client = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(255), nullable=False)
-    nom = db.Column(db.String(120))
-    prenom = db.Column(db.String(120))
-    date_inscription = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    mot_de_passe = db.Column(db.String(255), nullable=False)
+    nom = db.Column(db.String(120), nullable=False)
+    prenom = db.Column(db.String(120), nullable=False)
+    date_naissance = db.Column(db.Date)
+    points_fidelite = db.Column(db.Integer, default=0)
     
     def __repr__(self):
-        return f'<User: {self.username} ({self.email})>'
+        return f'<User: {self.prenom} {self.nom} ({self.email})>'
     
     def get_nom_complet(self):
         """Retourne le nom complet (prénom + nom)"""
         if self.prenom and self.nom:
             return f'{self.prenom} {self.nom}'
-        return self.prenom or self.nom or self.username
+        return self.prenom or self.nom or self.email

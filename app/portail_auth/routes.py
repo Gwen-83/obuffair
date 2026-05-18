@@ -39,7 +39,6 @@ def register():
         try:
             # Préparer les données (normalisation)
             email = form.email.data.strip().lower()
-            username = form.username.data.strip().lower()
             prenom = form.prenom.data.strip() if form.prenom.data else ''
             nom = form.nom.data.strip() if form.nom.data else ''
             
@@ -52,10 +51,11 @@ def register():
             # Créer l'utilisateur
             user = User(
                 email=email,
-                username=username,
-                password=hashed_password,
+                mot_de_passe=hashed_password,
                 prenom=prenom,
-                nom=nom
+                nom=nom,
+                date_naissance=form.date_naissance.data if form.date_naissance.data else None,
+                points_fidelite=0
             )
             
             # Sauvegarder en base de données
@@ -63,26 +63,24 @@ def register():
             db.session.commit()
             
             # Log de succès
-            logger.info(f'Nouvel utilisateur créé: {username} ({email})')
+            logger.info(f'Nouvel utilisateur créé: {email}')
             
             # Message de succès et redirection
             flash(
-                f'✓ Bienvenue {username}! Vous êtes inscrit avec succès. Connectez-vous maintenant.',
+                f'✓ Bienvenue {prenom}! Vous êtes inscrit avec succès. Connectez-vous maintenant.',
                 'success'
             )
             return redirect(url_for('auth.login'))
         
         except IntegrityError:
-            # Erreur de contrainte unique (email ou username duppliqué)
             db.session.rollback()
-            logger.warning(f'Tentative d\'inscription avec email/username existant')
+            logger.warning(f'Tentative d\'inscription avec email existant')
             flash(
-                '✗ Erreur: Cet email ou ce nom d\'utilisateur est déjà utilisé.',
+                '✗ Erreur: Cet email est déjà utilisé.',
                 'danger'
             )
         
         except Exception as e:
-            # Autres erreurs
             db.session.rollback()
             logger.error(f'Erreur lors de l\'inscription: {str(e)}')
             flash(
@@ -90,7 +88,6 @@ def register():
                 'danger'
             )
     
-    # Afficher le formulaire (GET ou POST avec erreurs de validation)
     return render_template('auth/register.html', form=form)
 
 

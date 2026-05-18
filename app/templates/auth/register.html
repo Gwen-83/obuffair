@@ -23,25 +23,6 @@
                     <form method="POST" novalidate class="needs-validation">
                         {{ form.hidden_tag() }}
                         
-                        <!-- Username -->
-                        <div class="mb-3">
-                            <label for="{{ form.username.id }}" class="form-label">
-                                Nom d'utilisateur *
-                                <small class="text-muted">(3-20 caractères)</small>
-                            </label>
-                            {% if form.username.errors %}
-                                {{ form.username(class="form-control is-invalid", autocomplete="off") }}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.username.errors %}
-                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.username(class="form-control", placeholder="johndoe", autocomplete="off") }}
-                                <small class="form-text text-muted">Entre 3 et 20 caractères alphanumériques</small>
-                            {% endif %}
-                        </div>
-                        
                         <!-- Email -->
                         <div class="mb-3">
                             <label for="{{ form.email.id }}" class="form-label">Email *</label>
@@ -60,14 +41,48 @@
                         
                         <!-- Prénom -->
                         <div class="mb-3">
-                            <label for="{{ form.prenom.id }}" class="form-label">Prénom</label>
-                            {{ form.prenom(class="form-control", placeholder="Jean") }}
+                            <label for="{{ form.prenom.id }}" class="form-label">Prénom *</label>
+                            {% if form.prenom.errors %}
+                                {{ form.prenom(class="form-control is-invalid") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.prenom.errors %}
+                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.prenom(class="form-control", placeholder="Jean") }}
+                            {% endif %}
                         </div>
                         
                         <!-- Nom -->
                         <div class="mb-3">
-                            <label for="{{ form.nom.id }}" class="form-label">Nom</label>
-                            {{ form.nom(class="form-control", placeholder="Dupont") }}
+                            <label for="{{ form.nom.id }}" class="form-label">Nom *</label>
+                            {% if form.nom.errors %}
+                                {{ form.nom(class="form-control is-invalid") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.nom.errors %}
+                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.nom(class="form-control", placeholder="Dupont") }}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Date de Naissance -->
+                        <div class="mb-3">
+                            <label for="{{ form.date_naissance.id }}" class="form-label">Date de naissance</label>
+                            {% if form.date_naissance.errors %}
+                                {{ form.date_naissance(class="form-control is-invalid") }}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.date_naissance.errors %}
+                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.date_naissance(class="form-control") }}
+                                <small class="form-text text-muted">Format: AAAA-MM-JJ</small>
+                            {% endif %}
                         </div>
                         
                         <!-- Password -->
