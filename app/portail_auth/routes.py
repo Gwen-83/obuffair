@@ -115,7 +115,7 @@ def login():
             else:
                 # echec auth
                 logger.warning(f'Echec de connexion: {email}')
-                flash('Email ou mot de passe incorrect.')
+                flash('Email ou mot de passe incorrect.','danger')
         
         except Exception as e:
             # Erreur sys
@@ -163,7 +163,7 @@ def forgot_password():
                 
                 # Expiration
                 user.reset_token = reset_token
-                user.reset_token_expiration = datetime.now(datetime.timezone.utc) + timedelta(minutes=15)
+                user.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
                 
                 db.session.commit()
                 
@@ -203,7 +203,7 @@ def reset_password(token):
     user = User.query.filter_by(reset_token=token).first()
     
     # Vérif user existe et token en vie
-    if not user or user.reset_token_expiration < datetime.now(datetime.timezone.utc):
+    if not user or user.reset_token_expiration < datetime.utcnow():
         logger.warning(f'Token invalide ou expiré: {token}')
         flash('Lien de réinitialisation invalide ou expiré', 'danger')
         return redirect(url_for('auth.login'))

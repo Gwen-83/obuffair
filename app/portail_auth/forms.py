@@ -71,7 +71,7 @@ class RegisterForm(FlaskForm):
     
     date_naissance = DateField(
         'Date de naissance',
-        format='%m-%d-%Y',
+        format='%Y-%m-%d',
         render_kw={'type': 'date'},
         validators=[DataRequired('Champ obligtoire')]
     )
