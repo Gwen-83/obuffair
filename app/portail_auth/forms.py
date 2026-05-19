@@ -71,9 +71,9 @@ class RegisterForm(FlaskForm):
     
     date_naissance = DateField(
         'Date de naissance',
-        format='%m-%d-%Y',  # MM-JJ-AAAA
-        render_kw={'type': 'date'},  # calendrier
-        validators=[]
+        format='%m-%d-%Y',
+        render_kw={'type': 'date'},
+        validators=[DataRequired('Champ obligtoire')]
     )
     
     # Mot de passe + validation ci dessus
@@ -90,7 +90,7 @@ class RegisterForm(FlaskForm):
         'Confirmer le mot de passe',
         validators=[
             DataRequired('Champ obligatoire'),
-            EqualTo('password', message='Les mots de passe ne correspondent pas')
+            EqualTo('password', message='mots de passe différents')
         ]
     )
     
@@ -107,6 +107,23 @@ class RegisterForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     """Formulaire de connexion"""
+
+    email = StringField(
+        'Email',
+        validators=[DataRequired('Champs obligatoire'),
+                    Email('Email invaldie')]
+    )
+    
+    password = PasswordField(
+        'Mot de passe',
+        validators=[DataRequired('Champ obligatoire')]
+    )
+    
+    submit = SubmitField('Se connecter')
+
+
+class ForgotPasswordForm(FlaskForm):
+    """Formulaire pour demander la réinitialisation du mot de passe"""
     
     email = StringField(
         'Email',
@@ -116,9 +133,31 @@ class LoginForm(FlaskForm):
         ]
     )
     
+    submit = SubmitField('Réinitialiser le mot de passe')
+    
+    def validate_email(self, email):
+        """Vérifier que l'email existe"""
+        if not User.query.filter_by(email=email.data.lower()).first():
+            raise ValidationError('Aucun compte associé à cet email')
+
+
+class ResetPasswordForm(FlaskForm):
+    """Formulaire pour réinitialiser le mot de passe"""
+    
     password = PasswordField(
-        'Mot de passe',
-        validators=[DataRequired('Champ obligatoire')]
+        'Nouveau mot de passe',
+        validators=[
+            DataRequired('Champ obligatoire'),
+            StrongPasswordValidator()
+        ]
     )
     
-    submit = SubmitField('Se connecter')
+    confirm_password = PasswordField(
+        'Confirmer le mot de passe',
+        validators=[
+            DataRequired('Champ obligatoire'),
+            EqualTo('password', message='mots de passe différents')
+        ]
+    )
+    
+    submit = SubmitField('Réinitialiser le mot de passe')

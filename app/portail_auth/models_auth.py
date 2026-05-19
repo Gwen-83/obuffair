@@ -5,9 +5,11 @@ Stockage sécurisé des utilisateurs avec:
 - Passwords hashés (PBKDF2-SHA256)
 - Emails normalisés en minuscules
 - Intégration avec table clients existante
+- Tokens de réinitialisation de mot de passe sécurisés
 """
 
 from app import db  # Instance SQLAlchemy pour accéder à la BD
+from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
 
 class User(db.Model):
     """
@@ -37,3 +39,9 @@ class User(db.Model):
     
     # Points de fidélité (par défaut 0)
     points_fidelite = db.Column(db.Integer, default=0)
+    
+    # Token pour réinitialiser le mot de passe (None si pas de reset en cours)
+    reset_token = db.Column(db.String(255), unique=True, nullable=True)
+    
+    # Expiration du token de réinitialisation
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)
