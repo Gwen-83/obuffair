@@ -506,19 +506,48 @@
 
                 <hr class="navbar-divider" style="margin: 0 0.5rem;">
 
-                <!-- Connexion / Compte -->
-                <div class="navbar-item">
-                    <div class="buttons">
-                        <a href="/auth/login" class="button" style="background-color: transparent; color: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 500;">
-                            <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
-                            <span>Connexion</span>
+                <!-- Connexion / Compte / Profil -->
+                {% if session.get('user_id') %}
+                    <!-- Utilisateur connecté -->
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            <i class="fas fa-user-circle" style="margin-right: 0.5rem;"></i>{{ session.get('prenom') }}
                         </a>
-                        <a href="/auth/register" class="button is-primary" style="font-weight: 600;">
-                            <span class="icon"><i class="fas fa-user-plus"></i></span>
-                            <span>S'inscrire</span>
-                        </a>
+                        <div class="navbar-dropdown is-right">
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-user"></i></span>
+                                <span>Mon profil</span>
+                            </a>
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-heart"></i></span>
+                                <span>Mes favoris</span>
+                            </a>
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-cog"></i></span>
+                                <span>Paramètres</span>
+                            </a>
+                            <hr class="navbar-divider">
+                            <a href="/auth/logout" class="navbar-item">
+                                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                                <span>Se déconnecter</span>
+                            </a>
+                        </div>
                     </div>
-                </div>
+                {% else %}
+                    <!-- Utilisateur non connecté -->
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a href="/auth/login" class="button" style="background-color: transparent; color: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 500;">
+                                <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
+                                <span>Connexion</span>
+                            </a>
+                            <a href="/auth/register" class="button is-primary" style="font-weight: 600;">
+                                <span class="icon"><i class="fas fa-user-plus"></i></span>
+                                <span>S'inscrire</span>
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </nav>

@@ -1,0 +1,108 @@
+{% extends "components/base.html" %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-5-tablet is-4-desktop">
+                <div class="box">
+                    <h2 class="title is-3 has-text-centered mb-5">Se connecter</h2>
+                    
+                    <!-- Affichage des messages flash -->
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="notification {% if category == 'danger' %}is-danger{% else %}is-success{% endif %}">
+                                    <button class="delete"></button>
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <form method="POST" novalidate>
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Email -->
+                        <div class="field">
+                            <label class="label">Email <span class="has-text-danger">*</span></label>
+                            <div class="control has-icons-left {% if form.email.errors %}has-icons-right{% endif %}">
+                                {% if form.email.errors %}
+                                    {{ form.email(class="input is-danger", type="email") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.email(class="input", placeholder="votre.email@example.com", type="email") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if form.email.errors %}
+                                <p class="help is-danger">
+                                    {% for error in form.email.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Password -->
+                        <div class="field">
+                            <label class="label">Mot de passe <span class="has-text-danger">*</span></label>
+                            <div class="control has-icons-left {% if form.password.errors %}has-icons-right{% endif %}">
+                                {% if form.password.errors %}
+                                    {{ form.password(class="input is-danger") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.password(class="input", placeholder="Votre mot de passe sécurisé") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if form.password.errors %}
+                                <p class="help is-danger">
+                                    {% for error in form.password.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="field is-grouped mt-5">
+                            <div class="control is-expanded">
+                                {{ form.submit(class="button is-primary is-fullwidth is-medium") }}
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <hr>
+                    <p class="has-text-centered mt-4">
+                        Pas encore inscrit? <a href="{{ url_for('auth.register') }}" class="has-text-weight-bold">Créer un compte</a>
+                    </p>
+                    <p class="has-text-centered">
+                        <a href="#" class="is-size-7 has-text-grey">Mot de passe oublié?</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    // Close notifications
+    document.addEventListener('DOMContentLoaded', () => {
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => {
+                $notification.parentNode.removeChild($notification);
+            });
+        });
+    });
+</script>
+{% endblock %}
