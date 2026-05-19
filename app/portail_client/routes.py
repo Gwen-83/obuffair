@@ -19,3 +19,8 @@ def accueil():
 def reserver():
     """Page de réservation"""
     return render_template('client/reserver.html')
+
+@client_bp.route('/profil')
+def profil():
+    """Page de profil"""
+    return render_template('client/profil.html')
