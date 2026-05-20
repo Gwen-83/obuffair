@@ -16,6 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # Has
 from app import db  # Accès à la base de données
 from app.portail_auth.models_auth import User  # Modèle User
 from app.portail_auth.forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm  # Formulaires
+from app.portail_auth.email_utils import send_reset_password_email  # Utilitaire pour envoyer les emails
 from sqlalchemy.exc import IntegrityError  # Exception si email dupliqué en BD
 
 # Créer un log pour afficher des messages lors du debug
@@ -145,7 +146,7 @@ def forgot_password():
     """
     Route pour demander la réinitialisation du mot de passe.
     GET = affiche le formulaire
-    POST = génère un token et l'affiche en dev (en prod, il faudrait l'envoyer par email)
+    POST = génère un token et envoie un email avec le lien de réinitialisation
     """
     if 'user_id' in session:
         return redirect(url_for('client.accueil'))
@@ -161,7 +162,7 @@ def forgot_password():
                 # token 64 car
                 reset_token = secrets.token_urlsafe(64)
                 
-                # Expiration
+                # Stocker le token et son expiration (1 heure)
                 user.reset_token = reset_token
                 user.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
                 
@@ -169,24 +170,24 @@ def forgot_password():
                 
                 logger.info(f'Token de réinitialisation généré pour: {email}')
                 
-                # dev = affichage du token a changer par envoi de mail en prod
-                reset_link = url_for('auth.reset_password', token=reset_token, _external=True)
+                # Envoyer l'email avec le lien de réinitialisation
+                from flask import current_app
+                if send_reset_password_email(email, reset_token, current_app):
+                    flash('Un email de réinitialisation a été envoyé à votre adresse email.', 'success')
+                    logger.info(f'Email de réinitialisation envoyé à: {email}')
+                else:
+                    flash('Erreur lors de l\'envoi de l\'email. Veuillez réessayer.', 'danger')
+                    logger.error(f'Erreur lors de l\'envoi d\'email à: {email}')
                 
-                flash(f'Cliquez <a href="{reset_link}">ici</a> pour réinitialiser votre mot de passe.','success')
-                
-                logger.info(f'Lien de réinitialisation: {reset_link}')
-                
-                return render_template('auth/forgot_password.html', 
-                                     form=form, 
-                                     reset_link=reset_link,
-                                     message_affiche=True)
+                # Rediriger vers login (même si l'email n'existe pas, pour des raisons de sécurité)
+                return redirect(url_for('auth.login'))
         
         except Exception as e:
             db.session.rollback()
             logger.error(f'Erreur lors de la réinitialisation: {str(e)}')
             flash('Erreur du système','danger')
     
-    return render_template('auth/forgot_password.html', form=form, message_affiche=False)
+    return render_template('auth/forgot_password.html', form=form)
 
 
 @auth_bp.route('/reset-password/<token>', methods=['GET', 'POST'])

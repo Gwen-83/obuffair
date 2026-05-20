@@ -2,6 +2,7 @@
 import os
 from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail
 from sqlalchemy import text
 from dotenv import load_dotenv
 from datetime import datetime
@@ -10,6 +11,8 @@ load_dotenv()
 
 # Initialiser SQLAlchemy (vide d'abord, sera lié à l'app après)
 db = SQLAlchemy()
+# Initialiser Flask-Mail
+mail = Mail()
 
 def create_app():
     app = Flask(__name__)
@@ -29,8 +32,19 @@ def create_app():
         'connect_args': {'connect_timeout': 5}
     }
     
+    # ========== CONFIGURATION EMAIL ==========
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True').lower() == 'true'
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'your_password')
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@obuffair.com')
+    
     # ========== INITIALISER LA DB ==========
     db.init_app(app)
+    
+    # ========== INITIALISER MAIL ==========
+    mail.init_app(app)
 
     # ========== ENREGISTRER LES BLUEPRINTS ==========
     from app.portail_auth.routes import auth_bp
