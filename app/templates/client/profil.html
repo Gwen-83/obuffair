@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Mon Espace Premium - O'BUFFAIR</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% extends "components/base.html" %}
+
+{% block title %}Mon Espace Premium - O'BUFFAIR{% endblock %}
+
+{% block extra_css %}
     <style>
         :root {
             --primary: #002A5C; --primary-light: #004B9E; --secondary: #003DA5; 
@@ -94,21 +92,9 @@
             border-radius: 8px; font-size: 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;
         }
     </style>
-</head>
-<body>
+{% endblock %}
 
-    <nav class="navbar is-primary p-2">
-        <div class="container">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="#">
-                    <h1 style="color: white; font-size: 1.5rem; font-weight: 700;">
-                        <i class="fas fa-plane-departure" style="margin-right: 0.5rem; color: var(--accent);"></i> O'BUFFAIR
-                    </h1>
-                </a>
-            </div>
-        </div>
-    </nav>
-
+{% block content %}
     <section class="section" style="flex: 1;">
         <div class="container" style="max-width: 1200px;">
             <div class="columns is-variable is-6">
@@ -306,15 +292,9 @@
             </div>
         </div>
     </section>
+{% endblock %}
 
-    <script>
-        // JS simple pour changer d'onglet
-        function switchTab(tabId) {
-            document.querySelectorAll('.content-tab').forEach(t => t.classList.add('is-hidden'));
-            document.querySelectorAll('.menu-list a').forEach(a => a.classList.remove('is-active'));
-            document.getElementById('tab-' + tabId).classList.remove('is-hidden');
-            event.currentTarget.classList.add('is-active');
-        }
-    </script>
-</body>
-</html>
+{% block extra_js %}
+    <!-- Link to the external JS file created to separate JS from HTML according to golden rules of coding -->
+    <script src="{{ url_for('static', filename='js/profil.js') }}"></script>
+{% endblock %}

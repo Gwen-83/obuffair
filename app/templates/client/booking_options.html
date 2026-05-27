@@ -1,0 +1,224 @@
+{% extends 'client/base_booking.html' %}
+{% set step = 4 %}
+
+{% block booking_css %}
+<style>
+    /* AeroLOPA Style Cabin Map */
+    .aerolopa-container { 
+        background: #F8F9FA; 
+        padding: 40px 0; 
+        border-radius: var(--radius-xl); 
+        border: 1px solid #E5E5EA; 
+        display: flex; justify-content: center; overflow-x: auto; 
+        margin-bottom: 24px;
+    }
+    
+    /* Animation et interactivité CSS pour le SVG AeroLOPA */
+    .aerolopa-seat rect:first-child { transition: fill 0.2s, opacity 0.2s; }
+    .aerolopa-seat:hover:not(.taken) rect:first-child { opacity: 1; filter: brightness(1.2); }
+    
+    /* État Sélectionné */
+    .aerolopa-seat.selected rect:first-child { fill: var(--accent) !important; opacity: 1 !important; stroke: var(--primary); stroke-width: 2px;}
+    .aerolopa-seat.selected text { fill: var(--primary) !important; }
+    
+    /* État Occupé */
+    .aerolopa-seat.taken rect:first-child { fill: #F2F2F7 !important; }
+    .aerolopa-seat.taken text { fill: #D1D1D6 !important; text-decoration: line-through; }
+    .aerolopa-seat.taken rect:last-child { cursor: not-allowed !important; }
+</style>
+{% endblock %}
+
+{% block booking_content %}
+<form action="{{ url_for('client.booking_payment') }}" method="POST" id="optionsForm">
+    <input type="hidden" name="siege_selectionne" id="input_seat" value="" required>
+
+    <div class="columns is-variable is-6">
+        
+        <div class="column is-6">
+            <h3 class="title is-4" style="color: var(--primary);">Choix du siège</h3>
+            <p class="is-size-7 mb-4 has-text-grey">Cabine Airbus A330-200 • Le sens de la marche est vers le haut.</p>
+            
+            <div class="aerolopa-container">
+                <svg viewBox="0 0 525 600" width="100%" style="max-width: 450px;">
+                    <path d="M 50 0 L 50 600 M 475 0 L 475 600" stroke="#D1D1D6" stroke-width="4" fill="none"/>
+                    
+                    <g class="aerolopa-seat" onclick="selectSeat('1A', this)">
+                        <rect x="80" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="102.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1A</text>
+                        <rect x="80" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat taken" onclick="selectSeat('1C', this)">
+                        <rect x="130" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="152.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1C</text>
+                        <rect x="130" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <g class="aerolopa-seat" onclick="selectSeat('1D', this)">
+                        <rect x="215" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="237.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1D</text>
+                        <rect x="215" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('1E', this)">
+                        <rect x="265" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="287.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1E</text>
+                        <rect x="265" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <g class="aerolopa-seat" onclick="selectSeat('1J', this)">
+                        <rect x="350" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="372.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1J</text>
+                        <rect x="350" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('1L', this)">
+                        <rect x="400" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
+                        <text x="422.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1L</text>
+                        <rect x="400" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <line x1="50" y1="150" x2="475" y2="150" stroke="#D1D1D6" stroke-width="2" stroke-dasharray="6,4"/>
+
+                    <g class="aerolopa-seat" onclick="selectSeat('20A', this)">
+                        <rect x="80" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="97.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20A</text>
+                        <rect x="80" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('20B', this)">
+                        <rect x="118" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="135.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20B</text>
+                        <rect x="118" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <g class="aerolopa-seat taken" onclick="selectSeat('20C', this)">
+                        <rect x="188" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="205.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20C</text>
+                        <rect x="188" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('20D', this)">
+                        <rect x="226" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="243.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20D</text>
+                        <rect x="226" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('20E', this)">
+                        <rect x="264" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="281.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20E</text>
+                        <rect x="264" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('20F', this)">
+                        <rect x="302" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="319.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20F</text>
+                        <rect x="302" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <g class="aerolopa-seat" onclick="selectSeat('20J', this)">
+                        <rect x="372" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="389.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20J</text>
+                        <rect x="372" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('20L', this)">
+                        <rect x="410" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
+                        <text x="427.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20L</text>
+                        <rect x="410" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                    <g class="aerolopa-seat" onclick="selectSeat('21A', this)">
+                        <rect x="80" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="97.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21A</text>
+                        <rect x="80" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21B', this)">
+                        <rect x="118" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="135.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21B</text>
+                        <rect x="118" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21C', this)">
+                        <rect x="188" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="205.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21C</text>
+                        <rect x="188" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21D', this)">
+                        <rect x="226" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="243.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21D</text>
+                        <rect x="226" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21E', this)">
+                        <rect x="264" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="281.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21E</text>
+                        <rect x="264" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat taken" onclick="selectSeat('21F', this)">
+                        <rect x="302" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="319.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21F</text>
+                        <rect x="302" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21J', this)">
+                        <rect x="372" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="389.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21J</text>
+                        <rect x="372" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+                    <g class="aerolopa-seat" onclick="selectSeat('21L', this)">
+                        <rect x="410" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
+                        <text x="427.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21L</text>
+                        <rect x="410" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
+                    </g>
+
+                </svg>
+            </div>
+            
+            <div class="is-flex is-justify-content-center gap-3">
+                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:var(--primary); border-radius:2px;"></span> Business</span>
+                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:#0A84FF; border-radius:2px;"></span> Eco Plus</span>
+                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:#E5E5EA; border-radius:2px;"></span> Economy</span>
+                <span class="is-size-7"><span style="display:inline-block; width:12px; height:12px; background:#F2F2F7; border-radius:2px;"></span> Occupé</span>
+            </div>
+        </div>
+
+        <div class="column is-6">
+            <h3 class="title is-4" style="color: var(--primary);">Services à bord</h3>
+            
+            <div class="flighty-card">
+                <h4 class="title is-6 mb-3"><i class="fas fa-suitcase-rolling mr-2" style="color: var(--flighty-blue);"></i> Bagages en soute</h4>
+                <div class="select is-fullwidth">
+                    <select name="bagages">
+                        <option value="0">Aucun (Inclus)</option>
+                        <option value="1">1 Bagage en soute 23kg (+ 45 €)</option>
+                        <option value="2">2 Bagages en soute 23kg (+ 80 €)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flighty-card">
+                <h4 class="title is-6 mb-3"><i class="fas fa-utensils mr-2" style="color: var(--flighty-blue);"></i> Restauration O'Buffet</h4>
+                <div class="select is-fullwidth">
+                    <select name="repas">
+                        <option value="standard">Collation Standard (Inclus)</option>
+                        <option value="premium">Menu Premium Chaud (+ 15 €)</option>
+                        <option value="vegetarien">Menu Végétarien Chaud (+ 15 €)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="has-text-right mt-6">
+                <button type="submit" class="button is-accent is-medium is-fullwidth">Procéder au Paiement <i class="fas fa-arrow-right ml-2"></i></button>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<script>
+    // Logique JavaScript pour gérer la superposition transparente d'AeroLOPA
+    function selectSeat(seatId, element) {
+        if(element.classList.contains('taken')) return;
+        
+        // Retirer la sélection de tous les autres sièges
+        document.querySelectorAll('.aerolopa-seat').forEach(s => s.classList.remove('selected'));
+        
+        // Ajouter la classe "selected" au siège cliqué
+        element.classList.add('selected');
+        
+        // Mettre à jour l'input caché pour le formulaire Flask
+        document.getElementById('input_seat').value = seatId;
+    }
+</script>
+
+{% endblock %}

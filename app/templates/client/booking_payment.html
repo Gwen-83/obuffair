@@ -1,0 +1,67 @@
+{% extends 'client/base_booking.html' %}
+{% set step = 5 %}
+
+{% block booking_content %}
+<div class="columns is-centered">
+    <div class="column is-8">
+        
+        <h2 class="title is-3" style="color: var(--primary);">Paiement sécurisé</h2>
+        
+        <div class="flighty-card mb-6" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white;">
+            <div class="is-flex is-justify-content-space-between mb-4">
+                <span class="is-size-5 font-weight-bold">Paris <i class="fas fa-arrow-right mx-2" style="color: var(--accent);"></i> Rome</span>
+                <span class="title is-4 m-0" style="color: var(--accent);">{{ session.get('cart_total', '124,00') }} €</span>
+            </div>
+            
+            <div class="is-flex is-justify-content-space-between is-size-7" style="color: rgba(255,255,255,0.7);">
+                <span>1 Adulte • Classe Eco • Siège 12A</span>
+                <span>Taxes & frais inclus</span>
+            </div>
+        </div>
+
+        <form action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card">
+            <h3 class="title is-5 mb-4"><i class="fas fa-lock mr-2" style="color: var(--flighty-green);"></i> Informations de paiement</h3>
+            
+            <div class="field">
+                <label class="label is-small">Nom sur la carte</label>
+                <div class="control">
+                    <input class="input" type="text" placeholder="EX: ANTOINE HARDY" value="{{ session.get('user_nom_complet', 'ANTOINE HARDY') }}" required>
+                </div>
+            </div>
+            
+            <div class="field">
+                <label class="label is-small">Numéro de carte</label>
+                <div class="control has-icons-left has-icons-right">
+                    <input class="input" type="text" placeholder="0000 0000 0000 0000" required>
+                    <span class="icon is-small is-left"><i class="fas fa-credit-card"></i></span>
+                    <span class="icon is-small is-right"><i class="fab fa-visa"></i></span>
+                </div>
+            </div>
+            
+            <div class="columns">
+                <div class="column is-6">
+                    <div class="field">
+                        <label class="label is-small">Date d'expiration</label>
+                        <div class="control">
+                            <input class="input" type="text" placeholder="MM/AA" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-6">
+                    <div class="field">
+                        <label class="label is-small">Cryptogramme (CVC)</label>
+                        <div class="control">
+                            <input class="input" type="password" placeholder="123" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="button is-accent is-large is-fullwidth mt-5">
+                <i class="fas fa-check-circle mr-2"></i> Confirmer le paiement
+            </button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

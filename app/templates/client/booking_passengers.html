@@ -1,0 +1,67 @@
+{% extends 'client/base_booking.html' %}
+{% set step = 3 %}
+
+{% block booking_content %}
+<h2 class="title is-3" style="color: var(--primary);">Passagers</h2>
+<p class="subtitle is-6 has-text-grey">Veuillez renseigner les informations exactement comme elles figurent sur vos documents de voyage.</p>
+
+<form action="{{ url_for('client.booking_options') }}" method="POST">
+    <div class="flighty-card mb-5">
+        <h3 class="title is-5 mb-4 border-bottom pb-2"><i class="fas fa-user-circle mr-2" style="color: var(--flighty-blue);"></i> Passager 1 (Adulte)</h3>
+        
+        <div class="columns is-multiline">
+            <div class="column is-2">
+                <div class="field">
+                    <label class="label is-small">Civilité</label>
+                    <div class="control">
+                        <div class="select is-fullwidth">
+                            <select name="civilite_1">
+                                <option>M.</option>
+                                <option>Mme</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-5">
+                <div class="field">
+                    <label class="label is-small">Prénom</label>
+                    <div class="control">
+                        <input class="input" type="text" name="prenom_1" value="{{ session.get('user_prenom', 'Antoine') }}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-5">
+                <div class="field">
+                    <label class="label is-small">Nom de famille</label>
+                    <div class="control">
+                        <input class="input" type="text" name="nom_1" value="{{ session.get('user_nom', 'Hardy') }}" required>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-6">
+                <div class="field">
+                    <label class="label is-small">Adresse Email (Pour le e-billet)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="email" name="email_1" value="{{ session.get('user_email', 'antoine.hardy.2025@enac.fr') }}" required>
+                        <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
+                    </div>
+                </div>
+            </div>
+            <div class="column is-6">
+                <div class="field">
+                    <label class="label is-small">Numéro de fidélité O'Buffair (Optionnel)</label>
+                    <div class="control has-icons-left">
+                        <input class="input" type="text" name="fidelite_1" value="1034 5678 9012">
+                        <span class="icon is-small is-left"><i class="fas fa-star" style="color: var(--accent);"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="has-text-right mt-5">
+        <button type="submit" class="button is-accent is-medium px-6">Continuer vers les options <i class="fas fa-arrow-right ml-2"></i></button>
+    </div>
+</form>
+{% endblock %}

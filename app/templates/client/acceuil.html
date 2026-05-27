@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>O'BUFFAIR - Portail Client</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+{% extends "components/base.html" %}
+
+{% block title %}O'BUFFAIR - Portail Client{% endblock %}
+
+{% block extra_css %}
     <style>
         :root {
             --primary: #002A5C;
@@ -54,36 +51,42 @@
         .button.is-accent:hover { background-color: #FFD700; }
         
         .tag.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; }
+
+        /* Animations GIF-like pour les destinations */
+        @keyframes animFadeText {
+            0%, 20% { opacity: 1; transform: translateY(0); }
+            22% { opacity: 0; transform: translateY(-2px); }
+            25%, 45% { opacity: 1; transform: translateY(0); }
+            47% { opacity: 0; transform: translateY(-2px); }
+            50%, 70% { opacity: 1; transform: translateY(0); }
+            72% { opacity: 0; transform: translateY(-2px); }
+            75%, 95% { opacity: 1; transform: translateY(0); }
+            97% { opacity: 0; transform: translateY(-2px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes animDepartContent {
+            0%, 23% { content: "Paris (CDG)"; }
+            25%, 48% { content: "Lyon (LYS)"; }
+            50%, 73% { content: "Marseille (MRS)"; }
+            75%, 98% { content: "Nice (NCE)"; }
+            100% { content: "Paris (CDG)"; }
+        }
+        @keyframes animArriveeContent {
+            0%, 23% { content: "Rome (FCO)"; }
+            25%, 48% { content: "Madrid (MAD)"; }
+            50%, 73% { content: "Londres (LHR)"; }
+            75%, 98% { content: "Berlin (BER)"; }
+            100% { content: "Rome (FCO)"; }
+        }
+        .anim-depart { display: inline-block; animation: animFadeText 8s infinite; }
+        .anim-depart::after { content: "Paris (CDG)"; animation: animDepartContent 8s infinite; }
+        .anim-arrivee { display: inline-block; animation: animFadeText 8s infinite; }
+        .anim-arrivee::after { content: "Rome (FCO)"; animation: animArriveeContent 8s infinite; }
+        .fake-input { background-color: #f9f9fb; border: 1px solid #ddd; border-radius: 6px; padding: 0.5rem 1rem 0.5rem 2.5rem; height: 2.5em; display: flex; align-items: center; color: #1c1c1e; font-weight: 500; width: 100%; box-sizing: border-box; cursor: not-allowed; }
     </style>
-</head>
-<body>
+{% endblock %}
 
-    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
-        <div class="container">
-            <div class="navbar-brand">
-                <a class="navbar-item" href="#">
-                    <h1 style="color: white; font-size: 1.5rem; font-weight: 700;">
-                        <i class="fas fa-plane-departure" style="margin-right: 0.5rem; color: var(--accent);"></i>
-                        O'BUFFAIR
-                    </h1>
-                </a>
-            </div>
-            <div class="navbar-menu is-active">
-                <div class="navbar-end">
-                    <a class="navbar-item" href="#"><i class="fas fa-search mr-2"></i> Réserver</a>
-                    <a class="navbar-item" href="#"><i class="fas fa-suitcase mr-2"></i> Mes Voyages</a>
-                    <div class="navbar-item">
-                        <div class="buttons">
-                            <a class="button is-accent">
-                                <strong><i class="fas fa-user mr-2"></i> Mon Espace</strong>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
+{% block content %}
     <section class="hero-booking">
         <div class="container">
             <h1 class="title has-text-white is-2">Où souhaitez-vous aller ?</h1>
@@ -93,69 +96,44 @@
 
     <div class="container" style="max-width: 1200px;">
         <div class="booking-card mb-6">
-            <form>
-                <div class="columns">
-                    <div class="column is-6">
-                        <div class="field">
-                            <label class="label" style="color: var(--primary);">Départ</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="text" placeholder="Paris (CDG)">
-                                <span class="icon is-small is-left"><i class="fas fa-plane-departure"></i></span>
+            <div class="columns is-vcentered">
+                <!-- Départ animé -->
+                <div class="column is-4">
+                    <div class="field">
+                        <label class="label" style="color: var(--primary);">De</label>
+                        <div class="control has-icons-left">
+                            <div class="fake-input">
+                                <span class="anim-depart"></span>
                             </div>
-                        </div>
-                    </div>
-                    <div class="column is-6">
-                        <div class="field">
-                            <label class="label" style="color: var(--primary);">Arrivée</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="text" placeholder="Madrid (MAD)">
-                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival"></i></span>
-                            </div>
+                            <span class="icon is-small is-left"><i class="fas fa-plane-departure"></i></span>
                         </div>
                     </div>
                 </div>
-                <div class="columns">
-                    <div class="column is-3">
-                        <div class="field">
-                            <label class="label" style="color: var(--primary);">Date aller</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="date">
-                                <span class="icon is-small is-left"><i class="fas fa-calendar"></i></span>
+                
+                <!-- Arrivée animée -->
+                <div class="column is-4">
+                    <div class="field">
+                        <label class="label" style="color: var(--primary);">Vers</label>
+                        <div class="control has-icons-left">
+                            <div class="fake-input">
+                                <span class="anim-arrivee"></span>
                             </div>
+                            <span class="icon is-small is-left"><i class="fas fa-plane-arrival"></i></span>
                         </div>
                     </div>
-                    <div class="column is-3">
-                        <div class="field">
-                            <label class="label" style="color: var(--primary);">Date retour</label>
-                            <div class="control has-icons-left">
-                                <input class="input" type="date">
-                                <span class="icon is-small is-left"><i class="fas fa-calendar"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="column is-3">
-                        <div class="field">
-                            <label class="label" style="color: var(--primary);">Classe</label>
-                            <div class="control">
-                                <div class="select is-fullwidth">
-                                    <select>
-                                        <option>Économique</option>
-                                        <option>Business</option>
-                                        <option>Première</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="column is-3">
+                </div>
+
+                <!-- Bouton Réserver -->
+                <div class="column is-4">
+                    <div class="field">
                         <label class="label">&nbsp;</label>
-                        <button class="button is-primary is-fullwidth">
+                        <a href="{{ url_for('client.booking') }}" class="button is-primary is-fullwidth is-large">
                             <span class="icon"><i class="fas fa-search"></i></span>
-                            <span>Rechercher</span>
-                        </button>
+                            <span>Réserver</span>
+                        </a>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
 
         <div class="columns is-variable is-6">
@@ -240,5 +218,4 @@
             </div>
         </div>
     </div>
-</body>
-</html>
+{% endblock %}
