@@ -45,3 +45,15 @@ class User(db.Model):
     
     # Expiration du token de réinitialisation
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Booléen pour vérifier si l'email est confirmé (False par défaut)
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Token pour vérifier l'email (None si email déjà vérifié)
+    email_verification_token = db.Column(db.String(255), unique=True, nullable=True)
+    
+    # Expiration du token de vérification d'email
+    email_verification_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Booléen pour indiquer si l'utilisateur est administrateur (False par défaut)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
