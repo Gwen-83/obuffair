@@ -5,40 +5,43 @@ Stockage sécurisé des utilisateurs avec:
 - Passwords hashés (PBKDF2-SHA256)
 - Emails normalisés en minuscules
 - Intégration avec table clients existante
+- Tokens de réinitialisation de mot de passe sécurisés
 """
 
-from app import db
-from datetime import datetime
-
+from app import db  # Instance SQLAlchemy pour accéder à la BD
+from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
 
 class User(db.Model):
     """
-    Modèle User - représente un client/utilisateur.
-    
-    Correspond à la table clients réelle avec:
-    - id_client: Identifiant unique
-    - email: Email unique (minuscules)
-    - mot_de_passe: Mot de passe hashé (jamais stocké en clair!)
-    - nom: Nom de famille
-    - prenom: Prénom
-    - date_naissance: Date de naissance
-    - points_fidelite: Points de fidélité (défaut: 0)
+    C'est la structure de la table 'clients' en BD.
+    Chaque instance User = une ligne dans la table.
     """
+    # Nom de la table en BD
     __tablename__ = 'clients'
     
+    # ID unique pour chaque user (auto-increment)
     id_client = db.Column(db.Integer, primary_key=True)
+    
+    # Email (deux users ne peuvent pas avoir le même email) index=True pour recherche rapide
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    
+    # Password hashé
     mot_de_passe = db.Column(db.String(255), nullable=False)
+    
+    # Nom
     nom = db.Column(db.String(120), nullable=False)
+    
+    # Prénom
     prenom = db.Column(db.String(120), nullable=False)
+    
+    # Date de naissance
     date_naissance = db.Column(db.Date)
+    
+    # Points de fidélité (par défaut 0)
     points_fidelite = db.Column(db.Integer, default=0)
     
-    def __repr__(self):
-        return f'<User: {self.prenom} {self.nom} ({self.email})>'
+    # Token pour réinitialiser le mot de passe (None si pas de reset en cours)
+    reset_token = db.Column(db.String(255), unique=True, nullable=True)
     
-    def get_nom_complet(self):
-        """Retourne le nom complet (prénom + nom)"""
-        if self.prenom and self.nom:
-            return f'{self.prenom} {self.nom}'
-        return self.prenom or self.nom or self.email
+    # Expiration du token de réinitialisation
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)
