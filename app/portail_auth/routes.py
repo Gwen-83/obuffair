@@ -13,7 +13,7 @@ import secrets  # Pour générer des tokens sécurisés
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from werkzeug.security import generate_password_hash, check_password_hash  # Hash et vérification password
-from templates.app import db  # Accès à la base de données
+from app import db  # Accès à la base de données
 from app.portail_auth.models_auth import User  # Modèle User
 from app.portail_auth.forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm  # Formulaires
 from app.portail_auth.email_utils import send_reset_password_email, send_verification_email  # Utilitaires pour envoyer les emails

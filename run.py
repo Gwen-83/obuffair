@@ -2,7 +2,7 @@
 Point d'entrée - Lance l'application Flask.
 """
 
-from templates.app import create_app
+from app import create_app
 
 app = create_app()
 

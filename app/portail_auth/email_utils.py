@@ -5,7 +5,7 @@ Gère l'envoi des emails de réinitialisation de mot de passe.
 
 import logging
 from flask_mail import Message
-from templates.app import mail
+from app import mail
 
 logger = logging.getLogger(__name__)
 
