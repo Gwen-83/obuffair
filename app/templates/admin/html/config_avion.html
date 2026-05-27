@@ -330,11 +330,17 @@ function supprimerAvion(immatriculation) {
     }
 }
 </script>
-<script src="/static/js/admin_avion.js?v=2"></script>
+<script src="/static/js/admin_avion.js?v=3"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function(){
-    // Initialize visualization for the add form
-    initCabinVisualizer({
+// Initialisation du visualiseur de cabine pour le formulaire d'ajout
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('cabin-svg-container');
+    if (!container) {
+        console.error('❌ Conteneur cabin-svg-container non trouvé');
+        return;
+    }
+    
+    window.initCabinVisualizer({
         nbRangeesSelector: 'input[name="nb_rangees"]',
         largeurRangeeSelector: 'input[name="largeur_rangee"]',
         ecoDeSelector: 'input[name="eco_rang_de"]',
@@ -343,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function(){
         busASelector: 'input[name="bus_rang_a"]',
         firstDeSelector: 'input[name="first_rang_de"]',
         firstASelector: 'input[name="first_rang_a"]',
-        container: document.getElementById('cabin-svg-container')
+        container: container
     });
 });
 </script>

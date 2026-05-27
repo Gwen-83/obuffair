@@ -15,7 +15,12 @@ db = SQLAlchemy()
 mail = Mail()
 
 def create_app():
-    app = Flask(__name__)
+    # Spécifier le chemin du dossier static situé dans le répertoire app/
+    app = Flask(
+        __name__,
+        static_folder='static',
+        static_url_path='/static'
+    )
     
     # ========== CONFIGURATION ==========
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')

@@ -5,7 +5,7 @@ Validation stricte des données critiques (horaires, capacités).
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError, NumberRange
+from wtforms.validators import DataRequired, Length, Regexp, ValidationError, NumberRange, Optional
 from app.portail_admin.modele_admin import Avion
 
 class FormAjouterAvion(FlaskForm):
@@ -20,7 +20,7 @@ class FormAjouterAvion(FlaskForm):
         validators=[
             DataRequired(message='L\'immatriculation requise'),
             Length(min=5, max=10, message='L\'immatriculation = 5 à 10 caractères'),
-            Regexp(r'^[A-Z]{1,2}-[A-Z0-9]{3,4}$', message='Format invalide (ex: F-ABCD)')
+            Regexp(r'^[A-Z]{1,2}-[A-Z0-9]{3,5}$', message='Format invalide (ex: F-ABCD ou F-OBUF3)')
         ]
     )
     
@@ -53,48 +53,48 @@ class FormAjouterAvion(FlaskForm):
     eco_rang_de = IntegerField(
         'Éco - rangée début',
         validators=[
-            DataRequired(message='La rangée de début pour l’éco est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
 
     eco_rang_a = IntegerField(
         'Éco - rangée fin',
         validators=[
-            DataRequired(message='La rangée de fin pour l’éco est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
 
     bus_rang_de = IntegerField(
         'Business - rangée début',
         validators=[
-            DataRequired(message='La rangée de début pour le business est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
 
     bus_rang_a = IntegerField(
         'Business - rangée fin',
         validators=[
-            DataRequired(message='La rangée de fin pour le business est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
 
     first_rang_de = IntegerField(
         'First - rangée début',
         validators=[
-            DataRequired(message='La rangée de début pour le first est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
 
     first_rang_a = IntegerField(
         'First - rangée fin',
         validators=[
-            DataRequired(message='La rangée de fin pour le first est requise'),
-            NumberRange(min=1, message='La rangée doit être supérieure ou égale à 1')
+            Optional(),
+            NumberRange(min=0, message='La rangée doit être supérieure ou égale à 0')
         ]
     )
     
@@ -112,6 +112,12 @@ class FormAjouterAvion(FlaskForm):
         if avion_existant:
             raise ValidationError('Cette immatriculation existe déjà dans la base de données')
     
+    def validate_eco_rang_de(self, field):
+        if self.bus_rang_a.data and field.data and field.data <= self.bus_rang_a.data:
+            raise ValidationError('La rangée de début de l’éco doit se trouver après le business')
+        if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
+            raise ValidationError('La rangée de début de l’éco doit être inférieure ou égale au nombre total de rangées')
+
     def validate_eco_rang_a(self, field):
         if self.eco_rang_de.data and field.data and field.data < self.eco_rang_de.data:
             raise ValidationError('La rangée de fin de l’éco doit être supérieure ou égale à la rangée de début')
@@ -119,25 +125,27 @@ class FormAjouterAvion(FlaskForm):
             raise ValidationError('La rangée de fin de l’éco doit être inférieure ou égale au nombre total de rangées')
 
     def validate_bus_rang_de(self, field):
-        if self.eco_rang_a.data and field.data and field.data <= self.eco_rang_a.data:
-            raise ValidationError('La rangée de début du business doit se trouver après l’éco')
+        if self.first_rang_a.data and field.data and field.data <= self.first_rang_a.data:
+            raise ValidationError('La rangée de début du business doit se trouver après le first')
         if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
             raise ValidationError('La rangée de début du business doit être inférieure ou égale au nombre total de rangées')
 
     def validate_bus_rang_a(self, field):
         if self.bus_rang_de.data and field.data and field.data < self.bus_rang_de.data:
             raise ValidationError('La rangée de fin du business doit être supérieure ou égale à la rangée de début')
+        if self.eco_rang_de.data and field.data and field.data >= self.eco_rang_de.data:
+            raise ValidationError('La rangée de fin du business doit se trouver avant l’éco')
         if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
             raise ValidationError('La rangée de fin du business doit être inférieure ou égale au nombre total de rangées')
 
     def validate_first_rang_de(self, field):
-        if self.bus_rang_a.data and field.data and field.data <= self.bus_rang_a.data:
-            raise ValidationError('La rangée de début du first doit se trouver après le business')
         if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
             raise ValidationError('La rangée de début du first doit être inférieure ou égale au nombre total de rangées')
 
     def validate_first_rang_a(self, field):
         if self.first_rang_de.data and field.data and field.data < self.first_rang_de.data:
             raise ValidationError('La rangée de fin du first doit être supérieure ou égale à la rangée de début')
+        if self.bus_rang_de.data and field.data and field.data >= self.bus_rang_de.data:
+            raise ValidationError('La rangée de fin du first doit se trouver avant le business')
         if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
             raise ValidationError('La rangée de fin du first doit être inférieure ou égale au nombre total de rangées')
