@@ -8,7 +8,7 @@ Stockage sécurisé des utilisateurs avec:
 - Tokens de réinitialisation de mot de passe sécurisés
 """
 
-from app import db  # Instance SQLAlchemy pour accéder à la BD
+from templates.app import db  # Instance SQLAlchemy pour accéder à la BD
 from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
 
 class User(db.Model):
