@@ -1,0 +1,220 @@
+{% extends "components/base.html" %}
+
+{% block title %}Tableau de bord Administrateur - OBufFair{% endblock %}
+
+
+{% block content %}
+<div class="section" style="background-color: var(--light); min-height: calc(100vh - 60px);">
+    <div class="container is-fluid">
+        
+        <div class="columns">
+            <div class="column is-2-desktop is-3-tablet mb-5">
+                <aside class="menu box admin-menu" style="height: 100%; position: sticky; top: 20px;">
+                    <p class="menu-label mt-0">
+                        Général
+                    </p>
+                    <ul class="menu-list">
+                        <li>
+                            <a href="/admin/dashboard" class="is-active">
+                                <span class="icon"><i class="fas fa-chart-pie"></i></span>
+                                <span>Vue d'ensemble</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <p class="menu-label">
+                        Gestion Opérationnelle
+                    </p>
+                    <ul class="menu-list">
+                        <li>
+                            <a href="/admin/vols">
+                                <span class="icon"><i class="fas fa-plane-departure"></i></span>
+                                <span>Vols & Plannings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/reservations">
+                                <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+                                <span>Réservations</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/passagers">
+                                <span class="icon"><i class="fas fa-users"></i></span>
+                                <span>Passagers</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <p class="menu-label">
+                        Administration
+                    </p>
+                    <ul class="menu-list">
+                        <li>
+                            <a href="/admin/flotte">
+                                <span class="icon"><i class="fas fa-plane"></i></span>
+                                <span>Flotte d'avions</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/admin/equipage">
+                                <span class="icon"><i class="fas fa-user-tie"></i></span>
+                                <span>Équipages</span>
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+            </div>
+
+            <div class="column is-10-desktop is-9-tablet">
+                
+                <div class="level mb-5">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <div>
+                                <h1 class="title is-3" style="color: var(--primary);">Tableau de bord</h1>
+                                <p class="subtitle is-6 mt-1">Bienvenue dans l'espace d'administration OBufFair.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <div class="buttons">
+                                <button class="button is-accent">
+                                    <span class="icon"><i class="fas fa-plus"></i></span>
+                                    <span>Nouveau Vol</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns is-multiline mb-5">
+                    <div class="column is-6">
+                        <div class="card stat-card">
+                            <div class="card-content">
+                                <div class="level is-mobile">
+                                    <div class="level-left">
+                                        <div>
+                                            <p class="heading" style="color: var(--medium-gray);">Vols du jour</p>
+                                            <p class="title is-3" style="color: var(--primary);">{{nb_vols}}</p>
+                                        </div>
+                                    </div>
+                                    <div class="level-right">
+                                        <div class="icon-box" style="background-color: rgba(0, 42, 92, 0.1); color: var(--primary);">
+                                            <i class="fas fa-plane-departure"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column is-6">
+                        <div class="card stat-card is-success">
+                            <div class="card-content">
+                                <div class="level is-mobile">
+                                    <div class="level-left">
+                                        <div>
+                                            <p class="heading" style="color: var(--medium-gray);">Réservations Actives</p>
+                                            <p class="title is-3" style="color: var(--success);">1,284</p>
+                                        </div>
+                                    </div>
+                                    <div class="level-right">
+                                        <div class="icon-box" style="background-color: rgba(46, 125, 50, 0.1); color: var(--success);">
+                                            <i class="fas fa-ticket-alt"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column is-12">
+                        <div class="card" style="border: none; box-shadow: var(--shadow-md);">
+                            <header class="card-header" style="background-color: var(--white); border-bottom: 2px solid var(--light-gray);">
+                                <p class="card-header-title" style="color: var(--primary); font-size: 1.2rem;">
+                                    <i class="fas fa-clock mr-2"></i> Vols de la journée (Départs imminents)
+                                </p>
+                                <a href="/admin/vols" class="card-header-icon" aria-label="more options" style="color: var(--primary-light); font-weight: 600; font-size: 0.9rem;">
+                                    Voir tout <i class="fas fa-arrow-right ml-2"></i>
+                                </a>
+                            </header>
+                            <div class="card-content p-0">
+                                <div class="table-container">
+                                    <table class="table is-fullwidth is-striped is-hoverable mb-0">
+                                        <thead>
+                                            <tr style="background-color: var(--primary);">
+                                                <th class="has-text-white">Vol</th>
+                                                <th class="has-text-white">Route</th>
+                                                <th class="has-text-white">Appareil</th>
+                                                <th class="has-text-white">Heure prévue</th>
+                                                <th class="has-text-white">Remplissage</th>
+                                                <th class="has-text-white">Statut</th>
+                                                <th class="has-text-white has-text-centered">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>OB101</strong></td>
+                                                <td>CDG <i class="fas fa-arrow-right mx-1 is-size-7"></i> TLS</td>
+                                                <td>Airbus A320</td>
+                                                <td>14:30</td>
+                                                <td>
+                                                    <progress class="progress is-success is-small mt-2" value="95" max="100" style="margin-bottom: 0;">95%</progress>
+                                                    <span class="is-size-7">168/174</span>
+                                                </td>
+                                                <td><span class="tag is-success"><i class="fas fa-check-circle mr-1"></i> À l'heure</span></td>
+                                                <td class="has-text-centered">
+                                                    <button class="button is-small is-outlined" title="Gérer le vol">
+                                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>OB204</strong></td>
+                                                <td>TLS <i class="fas fa-arrow-right mx-1 is-size-7"></i> LHR</td>
+                                                <td>Airbus A350</td>
+                                                <td>15:15</td>
+                                                <td>
+                                                    <progress class="progress is-primary is-small mt-2" value="75" max="100" style="margin-bottom: 0;">75%</progress>
+                                                    <span class="is-size-7">235/314</span>
+                                                </td>
+                                                <td><span class="tag is-primary"><i class="fas fa-plane mr-1"></i> Embarquement</span></td>
+                                                <td class="has-text-centered">
+                                                    <button class="button is-small is-outlined" title="Gérer le vol">
+                                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>OB312</strong></td>
+                                                <td>ORY <i class="fas fa-arrow-right mx-1 is-size-7"></i> NCE</td>
+                                                <td>Airbus A320</td>
+                                                <td>16:00</td>
+                                                <td>
+                                                    <progress class="progress is-success is-small mt-2" value="100" max="100" style="margin-bottom: 0;">100%</progress>
+                                                    <span class="is-size-7">174/174</span>
+                                                </td>
+                                                <td><span class="tag is-warning"><i class="fas fa-clock mr-1"></i> Retardé (15m)</span></td>
+                                                <td class="has-text-centered">
+                                                    <button class="button is-small is-outlined" title="Gérer le vol">
+                                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

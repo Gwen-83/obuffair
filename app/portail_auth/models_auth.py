@@ -57,3 +57,6 @@ class User(db.Model):
     
     # Booléen pour indiquer si l'utilisateur est administrateur (False par défaut)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+class Reservation(db.Model):
+    id_reservation = db.Column(db.Integer, primary_key = True)
