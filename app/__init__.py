@@ -39,6 +39,7 @@ def create_app():
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', 'your_email@gmail.com')
     app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', 'your_password')
     app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@obuffair.com')
+    app.config['SERVER_URL'] = os.getenv('SERVER_URL', 'http://localhost:5000')
     
     # ========== INITIALISER LA DB ==========
     db.init_app(app)
