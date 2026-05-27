@@ -25,9 +25,8 @@ def send_verification_email(user_email, verification_token, app):
     try:
         with app.app_context():
             # Construire le lien de vérification
-            verify_link = f"{app.config['SERVER_URL']}/auth/verify-email/{verification_token}" \
-                if 'SERVER_URL' in app.config \
-                else f"http://localhost:5000/auth/verify-email/{verification_token}"
+            server_url = app.config.get('SERVER_URL', 'http://localhost:5000')
+            verify_link = f"{server_url}/auth/verify-email/{verification_token}"
             
             # Créer le message
             msg = Message(
@@ -104,9 +103,8 @@ def send_reset_password_email(user_email, reset_token, app):
     try:
         with app.app_context():
             # Construire le lien de réinitialisation
-            reset_link = f"{app.config['SERVER_URL']}/auth/reset-password/{reset_token}" \
-                if 'SERVER_URL' in app.config \
-                else f"http://localhost:5000/auth/reset-password/{reset_token}"
+            server_url = app.config.get('SERVER_URL', 'http://localhost:5000')
+            reset_link = f"{server_url}/auth/reset-password/{reset_token}"
             
             # Créer le message
             msg = Message(

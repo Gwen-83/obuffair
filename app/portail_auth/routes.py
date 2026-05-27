@@ -62,6 +62,7 @@ def register():
                 nom=nom,
                 date_naissance=form.date_naissance.data if form.date_naissance.data else None,
                 points_fidelite=0,
+                is_admin=False,
                 email_verified=False,
                 email_verification_token=verification_token,
                 email_verification_token_expiration=datetime.utcnow() + timedelta(hours=24)
@@ -129,6 +130,7 @@ def login():
                 session['email'] = user.email
                 session['prenom'] = user.prenom
                 session['nom'] = user.nom
+                session['is_admin'] = user.is_admin
                 
                 logger.info(f'Utilisateur connecté: {email}')
                 flash(f'Connexion réussie','success')
@@ -160,7 +162,7 @@ def logout():
         flash(f'Déconnexion effectué','success')
         logger.info(f'Utilisateur déconnecté : {prenom}')
     
-    return redirect(url_for('index'))
+    return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/forgot-password', methods=['GET', 'POST'])
