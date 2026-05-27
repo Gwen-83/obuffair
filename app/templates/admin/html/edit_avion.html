@@ -1,0 +1,110 @@
+{% extends "components/base.html" %}
+
+{% block title %}Modifier Avion - OBufFair{% endblock %}
+
+{% block content %}
+<div class="container mt-6 mb-6" style="max-width: 900px;">
+    <div class="box" style="border-top: 4px solid var(--primary);">
+        <h1 class="title is-3" style="color: var(--primary);">Modifier l'avion {{ avion.immatriculation }}</h1>
+        <p class="subtitle is-6">Modifiez la configuration de la cabine et visualisez le plan en direct.</p>
+
+        <form method="POST" novalidate>
+            {{ form.hidden_tag() }}
+
+            <div id="cabin-visualization" style="margin-bottom:1.5rem; background-color: var(--light); border-radius: var(--radius-md); padding: 1rem;">
+                <div id="cabin-svg-container" style="width:100%; height:400px; min-height:400px;"></div>
+            </div>
+
+            <div class="field mb-4">
+                <label class="label">{{ form.immatriculation.label.text }}</label>
+                <div class="control">
+                    {{ form.immatriculation(class="input", readonly=true) }}
+                </div>
+            </div>
+
+            <div class="field mb-4">
+                <label class="label">{{ form.modele.label.text }}</label>
+                <div class="control">
+                    {{ form.modele(class="input") }}
+                </div>
+            </div>
+
+            <div class="columns is-mobile">
+                <div class="column">
+                    <label class="label is-small">{{ form.nb_rangees.label.text }}</label>
+                    {{ form.nb_rangees(class="input", type="number") }}
+                </div>
+                <div class="column">
+                    <label class="label is-small">{{ form.largeur_rangee.label.text }}</label>
+                    {{ form.largeur_rangee(class="input", type="number") }}
+                </div>
+            </div>
+
+            <hr>
+            <div class="columns is-mobile">
+                <div class="column">
+                    <label class="label is-small">Éco de</label>
+                    {{ form.eco_rang_de(class="input is-small", type="number") }}
+                </div>
+                <div class="column">
+                    <label class="label is-small">Éco à</label>
+                    {{ form.eco_rang_a(class="input is-small", type="number") }}
+                </div>
+            </div>
+
+            <div class="columns is-mobile">
+                <div class="column">
+                    <label class="label is-small">Bus. de</label>
+                    {{ form.bus_rang_de(class="input is-small", type="number") }}
+                </div>
+                <div class="column">
+                    <label class="label is-small">Bus. à</label>
+                    {{ form.bus_rang_a(class="input is-small", type="number") }}
+                </div>
+            </div>
+
+            <div class="columns is-mobile">
+                <div class="column">
+                    <label class="label is-small">First de</label>
+                    {{ form.first_rang_de(class="input is-small", type="number") }}
+                </div>
+                <div class="column">
+                    <label class="label is-small">First à</label>
+                    {{ form.first_rang_a(class="input is-small", type="number") }}
+                </div>
+            </div>
+
+            <div class="field mt-4">
+                <label class="checkbox">
+                    {{ form.actif() }} Actif
+                </label>
+            </div>
+
+            <div class="control">
+                {{ form.soumettre(class="button is-primary") }}
+                <a class="button" href="{{ url_for('admin.config_avion') }}">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/admin_avion.js?v=2"></script>
+<script>
+// Init visualization on edit page using current form values
+document.addEventListener('DOMContentLoaded', function(){
+    initCabinVisualizer({
+        nbRangeesSelector: 'input[name="nb_rangees"]',
+        largeurRangeeSelector: 'input[name="largeur_rangee"]',
+        ecoDeSelector: 'input[name="eco_rang_de"]',
+        ecoASelector: 'input[name="eco_rang_a"]',
+        busDeSelector: 'input[name="bus_rang_de"]',
+        busASelector: 'input[name="bus_rang_a"]',
+        firstDeSelector: 'input[name="first_rang_de"]',
+        firstASelector: 'input[name="first_rang_a"]',
+        container: document.getElementById('cabin-svg-container')
+    });
+});
+</script>
+{% endblock %}

@@ -39,18 +39,24 @@ def config_avion():
     # Formulaire ajout avins
     if form.validate_on_submit():
         # Unicité immat
-        avion_existant = Avion.query.filter_by(immatriculation=form.immatriculation.data.upper()).first()
+        immat_upper = form.immatriculation.data.upper() if form.immatriculation.data else ''
+        avion_existant = Avion.query.filter_by(immatriculation=immat_upper).first()
         if avion_existant:
             flash('Cette immatriculation existe déjà', 'danger')
         else:
             try:
                 nouvel_avion = Avion(
-                    immatriculation=form.immatriculation.data.upper(),
-                    modele=form.modele.data,
-                    capacite_eco=form.capacite_eco.data,
-                    capacite_business=form.capacite_business.data,
-                    capacite_first=form.capacite_first.data,
-                    actif=form.actif.data
+                    immatriculation=immat_upper,
+                    modele=form.modele.data or '',
+                    nb_rangees=form.nb_rangees.data or 0,
+                    largeur_rangee=form.largeur_rangee.data or 0,
+                    eco_rang_de=form.eco_rang_de.data or 0,
+                    eco_rang_a=form.eco_rang_a.data or 0,
+                    bus_rang_de=form.bus_rang_de.data or 0,
+                    bus_rang_a=form.bus_rang_a.data or 0,
+                    first_rang_de=form.first_rang_de.data or 0,
+                    first_rang_a=form.first_rang_a.data or 0,
+                    actif=form.actif.data if form.actif.data is not None else True
                 )
                 db.session.add(nouvel_avion)
                 db.session.commit()
@@ -85,12 +91,87 @@ def get_avions_json():
     return jsonify([{
         'immatriculation': a.immatriculation,
         'modele': a.modele,
-        'capacite_eco': a.capacite_eco,
-        'capacite_business': a.capacite_business,
-        'capacite_first': a.capacite_first,
+        'eco_capacite': a.eco_capacite,
+        'bus_capacite': a.bus_capacite,
+        'first_capacite': a.first_capacite,
+        'nb_rangees': a.nb_rangees,
+        'largeur_rangee': a.largeur_rangee,
+        'eco_rang_de': a.eco_rang_de,
+        'eco_rang_a': a.eco_rang_a,
+        'bus_rang_de': a.bus_rang_de,
+        'bus_rang_a': a.bus_rang_a,
+        'first_rang_de': a.first_rang_de,
+        'first_rang_a': a.first_rang_a,
         'capacite_totale': a.capacite_totale,
         'actif': a.actif
     } for a in avions])
+
+
+@admin_bp.route('/api/avion/<string:immatriculation>', methods=['GET'])
+@admin_required
+def get_avion_json(immatriculation):
+    a = Avion.query.get_or_404(immatriculation)
+    return jsonify({
+        'immatriculation': a.immatriculation,
+        'modele': a.modele,
+        'eco_capacite': a.eco_capacite,
+        'bus_capacite': a.bus_capacite,
+        'first_capacite': a.first_capacite,
+        'nb_rangees': a.nb_rangees,
+        'largeur_rangee': a.largeur_rangee,
+        'eco_rang_de': a.eco_rang_de,
+        'eco_rang_a': a.eco_rang_a,
+        'bus_rang_de': a.bus_rang_de,
+        'bus_rang_a': a.bus_rang_a,
+        'first_rang_de': a.first_rang_de,
+        'first_rang_a': a.first_rang_a,
+        'capacite_totale': a.capacite_totale,
+        'actif': a.actif
+    })
+
+
+@admin_bp.route('/avion/<string:immatriculation>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_avion(immatriculation):
+    """Modifier un avion existant"""
+    avion = Avion.query.get_or_404(immatriculation)
+    form = FormAjouterAvion(original_immatriculation=avion.immatriculation)
+
+    if request.method == 'GET':
+        # Pré-remplir le formulaire
+        form.immatriculation.data = avion.immatriculation
+        form.modele.data = avion.modele
+        form.nb_rangees.data = avion.nb_rangees
+        form.largeur_rangee.data = avion.largeur_rangee
+        form.eco_rang_de.data = avion.eco_rang_de
+        form.eco_rang_a.data = avion.eco_rang_a
+        form.bus_rang_de.data = avion.bus_rang_de
+        form.bus_rang_a.data = avion.bus_rang_a
+        form.first_rang_de.data = avion.first_rang_de
+        form.first_rang_a.data = avion.first_rang_a
+        form.actif.data = avion.actif
+
+    if form.validate_on_submit():
+        try:
+            # On n'autorise pas le changement d'immatriculation primaire
+            avion.modele = form.modele.data or ''
+            avion.nb_rangees = form.nb_rangees.data or 0
+            avion.largeur_rangee = form.largeur_rangee.data or 0
+            avion.eco_rang_de = form.eco_rang_de.data or 0
+            avion.eco_rang_a = form.eco_rang_a.data or 0
+            avion.bus_rang_de = form.bus_rang_de.data or 0
+            avion.bus_rang_a = form.bus_rang_a.data or 0
+            avion.first_rang_de = form.first_rang_de.data or 0
+            avion.first_rang_a = form.first_rang_a.data or 0
+            avion.actif = form.actif.data if form.actif.data is not None else True
+            db.session.commit()
+            flash(f'Avion {avion.immatriculation} modifié', 'success')
+            return redirect(url_for('admin.config_avion'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de la modification : {str(e)}', 'danger')
+
+    return render_template('admin/html/edit_avion.html', form=form, avion=avion)
 
 @admin_bp.route('/infrastructure')
 @admin_required

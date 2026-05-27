@@ -23,14 +23,17 @@ class Avion(db.Model):
     # Modèle de l'avion (ex: Boeing 737, Airbus A320)
     modele = db.Column(db.String(50), nullable=False)
     
-    # Capacité en classe économique
-    capacite_eco = db.Column(db.Integer, nullable=False)
-    
-    # Capacité en classe business
-    capacite_business = db.Column(db.Integer, nullable=False)
-    
-    # Capacité en classe first
-    capacite_first = db.Column(db.Integer, nullable=False)
+    # Configuration cabine: nombre de rangées et largeur de chaque rangée
+    nb_rangees = db.Column(db.Integer, nullable=False, default=0)
+    largeur_rangee = db.Column(db.Integer, nullable=False, default=0)
+
+    # Plages de rangées pour chaque classe
+    eco_rang_de = db.Column(db.Integer, nullable=False, default=1)
+    eco_rang_a = db.Column(db.Integer, nullable=False, default=1)
+    bus_rang_de = db.Column(db.Integer, nullable=False, default=1)
+    bus_rang_a = db.Column(db.Integer, nullable=False, default=1)
+    first_rang_de = db.Column(db.Integer, nullable=False, default=1)
+    first_rang_a = db.Column(db.Integer, nullable=False, default=1)
     
     # Statut de l'avion (True = actif, False = retiré de service)
     actif = db.Column(db.Boolean, default=True, nullable=False)
@@ -43,19 +46,40 @@ class Avion(db.Model):
         return f'<Avion {self.immatriculation} - {self.modele}>'
     
     @property
+    def eco_capacite(self):
+        """Capacité calculée en classe économique"""
+        if self.eco_rang_a >= self.eco_rang_de:
+            return max(0, self.eco_rang_a - self.eco_rang_de + 1) * self.largeur_rangee
+        return 0
+
+    @property
+    def bus_capacite(self):
+        """Capacité calculée en classe business"""
+        if self.bus_rang_a >= self.bus_rang_de:
+            return max(0, self.bus_rang_a - self.bus_rang_de + 1) * self.largeur_rangee
+        return 0
+
+    @property
+    def first_capacite(self):
+        """Capacité calculée en classe first"""
+        if self.first_rang_a >= self.first_rang_de:
+            return max(0, self.first_rang_a - self.first_rang_de + 1) * self.largeur_rangee
+        return 0
+
+    @property
     def capacite_totale(self):
-        """Calcule la capacité totale de l'avion"""
-        return self.capacite_eco + self.capacite_business + self.capacite_first
+        """Calcule la capacité totale par multiplication"""
+        return max(0, self.nb_rangees) * max(0, self.largeur_rangee)
 
 class Vols(db.Model):
     
     id_vol = db.Column(db.Integer, primary_key = True)
 
-    immatriculation_avion = db.Column(db.String(10), unique=True, nullable=False, index=True)
+    immatriculation_avion = db.Column(db.String(10), nullable=False, index=True)
 
-    id_aeroport_depart = db.Column(db.String(3), unique=True, nullable=False, index=True)
+    id_aeroport_depart = db.Column(db.String(3), nullable=False, index=True)
 
-    id_aeroport_arrivee = db.Column(db.String(3), unique=True, nullable=False, index=True)
+    id_aeroport_arrivee = db.Column(db.String(3), nullable=False, index=True)
 
     date_heure_dep_utc = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
