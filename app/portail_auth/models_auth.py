@@ -3,42 +3,57 @@ Modèles SQLAlchemy pour la base de données.
 
 Stockage sécurisé des utilisateurs avec:
 - Passwords hashés (PBKDF2-SHA256)
-- Usernames/emails normalisés en minuscules
-- Timestamps automatiques
+- Emails normalisés en minuscules
+- Intégration avec table clients existante
+- Tokens de réinitialisation de mot de passe sécurisés
 """
 
-from app import db
-from datetime import datetime
-
+from app import db  # Instance SQLAlchemy pour accéder à la BD
+from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
 
 class User(db.Model):
     """
-    Modèle User - représente un client/utilisateur.
-    
-    Attributes:
-        id: Identifiant unique
-        email: Email unique (minuscules)
-        username: Username unique (minuscules, 3-20 caractères)
-        password: Mot de passe hashé (jamais stocké en clair!)
-        nom: Nom de famille
-        prenom: Prénom
-        date_inscription: Timestamp de création
+    C'est la structure de la table 'clients' en BD.
+    Chaque instance User = une ligne dans la table.
     """
+    # Nom de la table en BD
     __tablename__ = 'clients'
     
-    id = db.Column(db.Integer, primary_key=True)
+    # ID unique pour chaque user (auto-increment)
+    id_client = db.Column(db.Integer, primary_key=True)
+    
+    # Email (deux users ne peuvent pas avoir le même email) index=True pour recherche rapide
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
-    username = db.Column(db.String(80), unique=True, nullable=False, index=True)
-    password = db.Column(db.String(255), nullable=False)
-    nom = db.Column(db.String(120))
-    prenom = db.Column(db.String(120))
-    date_inscription = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     
-    def __repr__(self):
-        return f'<User: {self.username} ({self.email})>'
+    # Password hashé
+    mot_de_passe = db.Column(db.String(255), nullable=False)
     
-    def get_nom_complet(self):
-        """Retourne le nom complet (prénom + nom)"""
-        if self.prenom and self.nom:
-            return f'{self.prenom} {self.nom}'
-        return self.prenom or self.nom or self.username
+    # Nom
+    nom = db.Column(db.String(120), nullable=False)
+    
+    # Prénom
+    prenom = db.Column(db.String(120), nullable=False)
+    
+    # Date de naissance
+    date_naissance = db.Column(db.Date)
+    
+    # Points de fidélité (par défaut 0)
+    points_fidelite = db.Column(db.Integer, default=0)
+    
+    # Token pour réinitialiser le mot de passe (None si pas de reset en cours)
+    reset_token = db.Column(db.String(255), unique=True, nullable=True)
+    
+    # Expiration du token de réinitialisation
+    reset_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Booléen pour vérifier si l'email est confirmé (False par défaut)
+    email_verified = db.Column(db.Boolean, default=False, nullable=False)
+    
+    # Token pour vérifier l'email (None si email déjà vérifié)
+    email_verification_token = db.Column(db.String(255), unique=True, nullable=True)
+    
+    # Expiration du token de vérification d'email
+    email_verification_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Booléen pour indiquer si l'utilisateur est administrateur (False par défaut)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)

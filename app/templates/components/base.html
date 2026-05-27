@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Obuffair - Réservation de vols{% endblock %}</title>
+    
+    <!-- Bulma CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
+    <!-- Base styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" role="navigation" aria-label="main navigation">
+        <div class="navbar-brand">
+            <a href="/" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
+                <span>✈️</span>
+                <span>OBUFFAIR</span>
+            </a>
+            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+            </a>
+        </div>
+        
+        <div id="navbarMenu" class="navbar-menu">
+            <div class="navbar-end">
+                <!-- Vols & Réservations -->
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">
+                        <i class="fas fa-plane" style="margin-right: 0.5rem;"></i>Vols & Réservations
+                    </a>
+                    <div class="navbar-dropdown">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-search"></i></span>
+                            <span>Rechercher un vol</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+                            <span>Gérer ma réservation</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-plus-circle"></i></span>
+                            <span>Ajouter une réservation</span>
+                        </a>
+                        <hr class="navbar-divider">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-percent"></i></span>
+                            <span>Tarifs spéciaux</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">
+                        <i class="fas fa-concierge-bell" style="margin-right: 0.5rem;"></i>Services
+                    </a>
+                    <div class="navbar-dropdown">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-check-circle"></i></span>
+                            <span>Enregistrement en ligne</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-suitcase"></i></span>
+                            <span>Bagages</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-chair"></i></span>
+                            <span>Choix des sièges</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-utensils"></i></span>
+                            <span>Services à bord</span>
+                        </a>
+                        <hr class="navbar-divider">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-info-circle"></i></span>
+                            <span>Conditions & Tarifs</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Infos Pratiques -->
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>Infos Pratiques
+                    </a>
+                    <div class="navbar-dropdown">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-video"></i></span>
+                            <span>État des vols</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-map-marked-alt"></i></span>
+                            <span>Aéroports</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-globe"></i></span>
+                            <span>Destinations</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-newspaper"></i></span>
+                            <span>Actualités</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- À propos -->
+                <div class="navbar-item has-dropdown is-hoverable">
+                    <a class="navbar-link">
+                        <i class="fas fa-building" style="margin-right: 0.5rem;"></i>À propos
+                    </a>
+                    <div class="navbar-dropdown">
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-history"></i></span>
+                            <span>Qui sommes-nous</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-leaf"></i></span>
+                            <span>Développement durable</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-briefcase"></i></span>
+                            <span>Emplois</span>
+                        </a>
+                        <a href="/" class="navbar-item">
+                            <span class="icon"><i class="fas fa-envelope"></i></span>
+                            <span>Contact</span>
+                        </a>
+                    </div>
+                </div>
+
+                <hr class="navbar-divider" style="margin: 0 0.5rem;">
+
+                <!-- Connexion / Compte / Profil -->
+                {% if session.get('user_id') %}
+                    <!-- Utilisateur connecté -->
+                    <div class="navbar-item has-dropdown is-hoverable">
+                        <a class="navbar-link">
+                            <i class="fas fa-user-circle" style="margin-right: 0.5rem;"></i>{{ session.get('prenom') }}
+                        </a>
+                        <div class="navbar-dropdown is-right">
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-user"></i></span>
+                                <span>Mon profil</span>
+                            </a>
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-heart"></i></span>
+                                <span>Mes favoris</span>
+                            </a>
+                            <a href="/" class="navbar-item">
+                                <span class="icon"><i class="fas fa-cog"></i></span>
+                                <span>Paramètres</span>
+                            </a>
+                            <hr class="navbar-divider">
+                            <a href="/auth/logout" class="navbar-item">
+                                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                                <span>Se déconnecter</span>
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <!-- Utilisateur non connecté -->
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            <a href="/auth/login" class="button" style="background-color: transparent; color: rgba(255, 255, 255, 0.85); border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 500;">
+                                <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
+                                <span>Connexion</span>
+                            </a>
+                            <a href="/auth/register" class="button is-primary" style="font-weight: 600;">
+                                <span class="icon"><i class="fas fa-user-plus"></i></span>
+                                <span>S'inscrire</span>
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="columns">
+                <!-- À propos -->
+                <div class="column is-4-desktop is-6-tablet">
+                    <div class="footer-section">
+                        <h4>À propos</h4>
+                        <p>
+                            <strong>OBUFFAIR</strong> est votre compagnie aérienne de confiance pour des voyages en toute sécurité et confort.
+                        </p>
+                        <p style="margin-top: 1rem; font-size: 0.85rem;">
+                            <strong>Licence d'exploitation :</strong> ENAC 2026<br>
+                            <strong>Certification :</strong> ISO 9001:2015
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="column is-4-desktop is-6-tablet">
+                    <div class="footer-section">
+                        <h4>Services</h4>
+                        <ul>
+                            <li><a href="/">Réserver un vol</a></li>
+                            <li><a href="/">Gérer ma réservation</a></li>
+                            <li><a href="/">Tarifs spéciaux</a></li>
+                            <li><a href="/">Statut du vol</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="column is-4-desktop is-12-tablet">
+                    <div class="footer-section">
+                        <h4>Nous contacter</h4>
+                        <p>
+                            <strong>Téléphone :</strong><br>
+                            +33 (0)1 XX XX XX XX<br>
+                            <em style="font-size: 0.8rem;">Lun-Ven : 8h-22h | Sam-Dim : 9h-20h</em>
+                        </p>
+                        <p style="margin-top: 0.75rem;">
+                            <strong>Email :</strong><br>
+                            <a href="mailto:contact@obuffair.com">contact@obuffair.com</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-divider"></div>
+
+            <!-- Réseaux sociaux -->
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.75rem;">Nous suivre</p>
+                <div class="social-links">
+                    <a href="#" title="Facebook" aria-label="Facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" title="Twitter" aria-label="Twitter">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                    <a href="#" title="Instagram" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" title="LinkedIn" aria-label="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bottom links -->
+            <div class="footer-links">
+                <a href="#">Conditions d'utilisation</a>
+                <a href="#">Politique de confidentialité</a>
+                <a href="#">Politique de cookies</a>
+                <a href="#">Accessibilité</a>
+                <a href="#">Plan du site</a>
+            </div>
+
+            <!-- Copyright -->
+            <div class="footer-bottom">
+                <p>&copy; 2026 <strong>OBUFFAIR</strong> - Tous droits réservés</p>
+                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Siège social : ENAC, Toulouse, France</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Navbar burger toggle for mobile
+        document.addEventListener('DOMContentLoaded', () => {
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            $navbarBurgers.forEach( el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+                });
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

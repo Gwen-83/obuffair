@@ -1,131 +1,220 @@
 {% extends "components/base.html" %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card shadow-sm">
-                <div class="card-body p-4">
-                    <h2 class="card-title text-center mb-4">Créer un compte</h2>
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-5-tablet is-4-desktop">
+                <div class="box">
+                    <h2 class="title is-3 has-text-centered mb-5">Créer un compte</h2>
                     
-                    <!-- Affichage des messages flash -->
+                    <!-- messages flash -->
                     {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' }} alert-dismissible fade show" role="alert">
+                                <div class="notification {% if category == 'danger' %}is-danger{% else %}is-success{% endif %}">
+                                    <button class="delete"></button>
                                     {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
                     {% endwith %}
                     
-                    <form method="POST" novalidate class="needs-validation">
+                    <form method="POST" novalidate>
                         {{ form.hidden_tag() }}
                         
-                        <!-- Username -->
-                        <div class="mb-3">
-                            <label for="{{ form.username.id }}" class="form-label">
-                                Nom d'utilisateur *
-                                <small class="text-muted">(3-20 caractères)</small>
-                            </label>
-                            {% if form.username.errors %}
-                                {{ form.username(class="form-control is-invalid", autocomplete="off") }}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.username.errors %}
-                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.username(class="form-control", placeholder="johndoe", autocomplete="off") }}
-                                <small class="form-text text-muted">Entre 3 et 20 caractères alphanumériques</small>
-                            {% endif %}
-                        </div>
-                        
                         <!-- Email -->
-                        <div class="mb-3">
-                            <label for="{{ form.email.id }}" class="form-label">Email *</label>
+                        <div class="field">
+                            <label class="label">Email *</label>
+                            <div class="control has-icons-left {% if form.email.errors %}has-icons-right{% endif %}">
+                                {% if form.email.errors %}
+                                    {{ form.email(class="input is-danger", type="email") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.email(class="input", placeholder="votre.email@example.com", type="email") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
                             {% if form.email.errors %}
-                                {{ form.email(class="form-control is-invalid", type="email") }}
-                                <div class="invalid-feedback d-block">
+                                <p class="help is-danger">
                                     {% for error in form.email.errors %}
-                                        <i class="bi bi-exclamation-circle"></i> {{ error }}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
                                     {% endfor %}
-                                </div>
+                                </p>
                             {% else %}
-                                {{ form.email(class="form-control", placeholder="votre.email@example.com", type="email") }}
-                                <small class="form-text text-muted">Nous ne partagerons jamais votre email</small>
+                                <p class="help">Nous ne partagerons jamais votre email</p>
                             {% endif %}
                         </div>
                         
                         <!-- Prénom -->
-                        <div class="mb-3">
-                            <label for="{{ form.prenom.id }}" class="form-label">Prénom</label>
-                            {{ form.prenom(class="form-control", placeholder="Jean") }}
+                        <div class="field">
+                            <label class="label">Prénom *</label>
+                            <div class="control has-icons-left {% if form.prenom.errors %}has-icons-right{% endif %}">
+                                {% if form.prenom.errors %}
+                                    {{ form.prenom(class="input is-danger") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.prenom(class="input", placeholder="Jean") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if form.prenom.errors %}
+                                <p class="help is-danger">
+                                    {% for error in form.prenom.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
                         </div>
                         
                         <!-- Nom -->
-                        <div class="mb-3">
-                            <label for="{{ form.nom.id }}" class="form-label">Nom</label>
-                            {{ form.nom(class="form-control", placeholder="Dupont") }}
+                        <div class="field">
+                            <label class="label">Nom *</label>
+                            <div class="control has-icons-left {% if form.nom.errors %}has-icons-right{% endif %}">
+                                {% if form.nom.errors %}
+                                    {{ form.nom(class="input is-danger") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.nom(class="input", placeholder="Dupont") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if form.nom.errors %}
+                                <p class="help is-danger">
+                                    {% for error in form.nom.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Date de Naissance -->
+                        <div class="field">
+                            <label class="label">Date de naissance *</label>
+                            <div class="control has-icons-left {% if form.date_naissance.errors %}has-icons-right{% endif %}">
+                                {% if form.date_naissance.errors %}
+                                    {{ form.date_naissance(class="input is-danger") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.date_naissance(class="input") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-calendar"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if form.date_naissance.errors %}
+                                <p class="help is-danger">
+                                    {% for error in form.date_naissance.errors %}
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
+                                    {% endfor %}
+                                </p>
+                            {% else %}
+                                <p class="help">Format: JJ-MM-AAAA</p>
+                            {% endif %}
                         </div>
                         
                         <!-- Password -->
-                        <div class="mb-3">
-                            <label for="{{ form.password.id }}" class="form-label">
-                                Mot de passe *
-                                <small class="text-muted">(Fort)</small>
+                        <div class="field">
+                            <label class="label">
+                                Mot de passe <small>(Fort)</small>
                             </label>
+                            <div class="control has-icons-left {% if form.password.errors %}has-icons-right{% endif %}">
+                                {% if form.password.errors %}
+                                    {{ form.password(class="input is-danger", autocomplete="off") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.password(class="input", placeholder="••••••••", autocomplete="new-password") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
                             {% if form.password.errors %}
-                                {{ form.password(class="form-control is-invalid", autocomplete="off") }}
-                                <div class="invalid-feedback d-block">
+                                <p class="help is-danger">
                                     {% for error in form.password.errors %}
-                                        <div><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
                                     {% endfor %}
-                                </div>
+                                </p>
                             {% else %}
-                                {{ form.password(class="form-control", placeholder="••••••••", autocomplete="new-password") }}
-                                <small class="form-text text-muted">
+                                <p class="help">
                                     <strong>Requis:</strong><br>
                                     • Minimum 8 caractères<br>
                                     • Au moins une MAJUSCULE<br>
                                     • Au moins une minuscule<br>
                                     • Au moins un chiffre (0-9)<br>
                                     • Au moins un caractère spécial (!@#$%^&* etc)
-                                </small>
+                                </p>
                             {% endif %}
                         </div>
                         
                         <!-- Confirm Password -->
-                        <div class="mb-3">
-                            <label for="{{ form.confirm_password.id }}" class="form-label">
-                                Confirmer le mot de passe *
-                            </label>
+                        <div class="field">
+                            <label class="label">Confirmer le mot de passe *</label>
+                            <div class="control has-icons-left {% if form.confirm_password.errors %}has-icons-right{% endif %}">
+                                {% if form.confirm_password.errors %}
+                                    {{ form.confirm_password(class="input is-danger", autocomplete="off") }}
+                                    <span class="icon is-small is-right">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </span>
+                                {% else %}
+                                    {{ form.confirm_password(class="input", placeholder="••••••••", autocomplete="new-password") }}
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
                             {% if form.confirm_password.errors %}
-                                {{ form.confirm_password(class="form-control is-invalid", autocomplete="off") }}
-                                <div class="invalid-feedback d-block">
+                                <p class="help is-danger">
                                     {% for error in form.confirm_password.errors %}
-                                        <div><i class="bi bi-exclamation-circle"></i> {{ error }}</div>
+                                        <i class="fas fa-exclamation-circle"></i> {{ error }}<br>
                                     {% endfor %}
-                                </div>
-                            {% else %}
-                                {{ form.confirm_password(class="form-control", placeholder="••••••••", autocomplete="new-password") }}
+                                </p>
                             {% endif %}
                         </div>
                         
                         <!-- Submit Button -->
-                        <div class="d-grid mt-4">
-                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        <div class="field is-grouped mt-5">
+                            <div class="control is-expanded">
+                                {{ form.submit(class="button is-primary is-fullwidth is-medium") }}
+                            </div>
                         </div>
                     </form>
                     
-                    <hr class="my-4">
-                    <p class="text-center text-muted">
-                        Déjà inscrit? <a href="{{ url_for('auth.login') }}" class="link-primary text-decoration-none"><strong>Se connecter</strong></a>
+                    <hr>
+                    <p class="has-text-centered mt-4">
+                        Déjà inscrit? <a href="{{ url_for('auth.login') }}" class="has-text-weight-bold">Se connecter</a>
                     </p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<script>
+    // Close notifications
+    document.addEventListener('DOMContentLoaded', () => {
+        (document.querySelectorAll('.notification .delete') || []).forEach(($delete) => {
+            const $notification = $delete.parentNode;
+            $delete.addEventListener('click', () => {
+                $notification.parentNode.removeChild($notification);
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -12,7 +12,7 @@ client_bp = Blueprint('client', __name__, url_prefix='/client')
 @client_bp.route('/')
 def accueil():
     """Page d'accueil client"""
-    return render_template('client/accueil.html')
+    return render_template('client/acceuil.html')
 
 
 @client_bp.route('/reserver')
