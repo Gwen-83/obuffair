@@ -51,15 +51,15 @@
                     </p>
                     <ul class="menu-list">
                         <li>
-                            <a href="/admin/flotte">
+                            <a href="/admin/config_avion">
                                 <span class="icon"><i class="fas fa-plane"></i></span>
-                                <span>Flotte d'avions</span>
+                                <span>Configuration de la Flotte </span>
                             </a>
                         </li>
                         <li>
-                            <a href="/admin/equipage">
+                            <a href="/admin/support">
                                 <span class="icon"><i class="fas fa-user-tie"></i></span>
-                                <span>Équipages</span>
+                                <span>Support</span>
                             </a>
                         </li>
                     </ul>
@@ -97,7 +97,7 @@
                                     <div class="level-left">
                                         <div>
                                             <p class="heading" style="color: var(--medium-gray);">Vols du jour</p>
-                                            <p class="title is-3" style="color: var(--primary);">{{nb_vols}}</p>
+                                            <p class="title is-3" style="color: var(--primary);">{{nb_vols[0]}}</p>
                                         </div>
                                     </div>
                                     <div class="level-right">
@@ -117,7 +117,7 @@
                                     <div class="level-left">
                                         <div>
                                             <p class="heading" style="color: var(--medium-gray);">Réservations Actives</p>
-                                            <p class="title is-3" style="color: var(--success);">1,284</p>
+                                            <p class="title is-3" style="color: var(--success);">{{nb_resa[0]}}</p>
                                         </div>
                                     </div>
                                     <div class="level-right">
@@ -151,60 +151,33 @@
                                                 <th class="has-text-white">Route</th>
                                                 <th class="has-text-white">Appareil</th>
                                                 <th class="has-text-white">Heure prévue</th>
-                                                <th class="has-text-white">Remplissage</th>
+                                                <th class="has-text-white">Arrivée prévue</th>
                                                 <th class="has-text-white">Statut</th>
                                                 <th class="has-text-white has-text-centered">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {% for vol in vols %}
                                             <tr>
-                                                <td><strong>OB101</strong></td>
-                                                <td>CDG <i class="fas fa-arrow-right mx-1 is-size-7"></i> TLS</td>
-                                                <td>Airbus A320</td>
-                                                <td>14:30</td>
+                                                <td><strong>{{ vol.id_vol }}</strong></td>
+                                                <td>{{ vol.id_aeroport_depart }} <i class="fas fa-arrow-right mx-1 is-size-7"></i> {{ vol.id_aeroport_arrivee }}</td>
                                                 <td>
-                                                    <progress class="progress is-success is-small mt-2" value="95" max="100" style="margin-bottom: 0;">95%</progress>
-                                                    <span class="is-size-7">168/174</span>
+                                                    {{ vol.modele or '—' }}<br>
+                                                    <small>{{ vol.immatriculation_avion or '' }}</small>
+                                                    <div class="mt-2">
+                                                        <progress class="progress is-primary" value="{{ vol.fill_percent }}" max="100">{{ vol.fill_percent }}%</progress>
+                                                    </div>
                                                 </td>
-                                                <td><span class="tag is-success"><i class="fas fa-check-circle mr-1"></i> À l'heure</span></td>
+                                                <td>{{ vol.date_heure_dep_utc }}</td>
+                                                <td>{{ vol.date_heure_arr_utc }}</td>
+                                                <td><span class="tag is-info">{{ vol.statut }}</span><br><small>{{ vol.nb_reservations or 0 }} / {{ vol.capacite_totale or 0 }}</small></td>
                                                 <td class="has-text-centered">
                                                     <button class="button is-small is-outlined" title="Gérer le vol">
                                                         <span class="icon is-small"><i class="fas fa-edit"></i></span>
                                                     </button>
                                                 </td>
                                             </tr>
-                                            <tr>
-                                                <td><strong>OB204</strong></td>
-                                                <td>TLS <i class="fas fa-arrow-right mx-1 is-size-7"></i> LHR</td>
-                                                <td>Airbus A350</td>
-                                                <td>15:15</td>
-                                                <td>
-                                                    <progress class="progress is-primary is-small mt-2" value="75" max="100" style="margin-bottom: 0;">75%</progress>
-                                                    <span class="is-size-7">235/314</span>
-                                                </td>
-                                                <td><span class="tag is-primary"><i class="fas fa-plane mr-1"></i> Embarquement</span></td>
-                                                <td class="has-text-centered">
-                                                    <button class="button is-small is-outlined" title="Gérer le vol">
-                                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><strong>OB312</strong></td>
-                                                <td>ORY <i class="fas fa-arrow-right mx-1 is-size-7"></i> NCE</td>
-                                                <td>Airbus A320</td>
-                                                <td>16:00</td>
-                                                <td>
-                                                    <progress class="progress is-success is-small mt-2" value="100" max="100" style="margin-bottom: 0;">100%</progress>
-                                                    <span class="is-size-7">174/174</span>
-                                                </td>
-                                                <td><span class="tag is-warning"><i class="fas fa-clock mr-1"></i> Retardé (15m)</span></td>
-                                                <td class="has-text-centered">
-                                                    <button class="button is-small is-outlined" title="Gérer le vol">
-                                                        <span class="icon is-small"><i class="fas fa-edit"></i></span>
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                            {% endfor %}
                                         </tbody>
                                     </table>
                                 </div>

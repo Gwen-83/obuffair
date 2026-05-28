@@ -281,7 +281,7 @@
                         <div class="column is-4-tablet is-12-mobile">
                             <div class="has-text-centered" style="padding: 1rem; background: var(--light); border-radius: var(--radius-md); border-bottom: 3px solid var(--primary-light);">
                                 <p class="heading mb-1" style="color: var(--medium-gray);">Capacité Totale</p>
-                                <p class="title is-3 mb-0" style="color: var(--primary-light);">{{ avions|selectattr('actif', 'equalto', True)|map(attribute='capacite_totale')|sum }}</p>
+                                <p class="title is-3 mb-0" style="color: var(--primary-light);">{{ avions|selectattr('actif', 'equalto', True)|map(attribute='capacite_totale')|map('int')|sum }}</p>
                             </div>
                         </div>
                         <div class="column is-4-tablet is-12-mobile">

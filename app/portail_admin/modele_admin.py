@@ -86,3 +86,5 @@ class Vols(db.Model):
     date_heure_arr_utc = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     prix_de_base = db.Column(db.Integer, nullable=False)
+
+    
