@@ -11,6 +11,7 @@ from app.portail_admin.forms import FormAjouterAvion
 from app.portail_admin.modele_admin import Vols
 from sqlalchemy import text
 from types import SimpleNamespace
+from datetime import datetime
 # Blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -20,44 +21,29 @@ def dashboard():
     """Tableau de bord administrateur"""
     nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols ")).fetchone()
     nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations ")).fetchone()
-    # Récupérer vols + modèle avion + capacité totale et nombre de réservations par vol
+    # Récupérer vols + model avion + capacité tot et nbr de résa/vol
     vols_rows = db.session.execute(text("""
-    SELECT v.*,
-           a.modele,
-           a.immatriculation AS immatriculation_avion,
-           (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
-           COUNT(b.id_billet) AS nb_reservations
-    FROM vols v
-    LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
-    LEFT JOIN billets b ON b.id_vol = v.id_vol
-    GROUP BY v.id_vol
-""")).mappings().all()
+        SELECT v.*,
+               a.modele,
+               (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
+               COALESCE(COUNT(b.id_billet), 0) AS nb_reservations
+        FROM vols v
+        LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
+        LEFT JOIN billets b ON b.id_vol = v.id_vol
+        GROUP BY v.id_vol
+    """)).mappings().all()
 
-    # Calculer le pourcentage de remplissage par vol
+    # calcul pourcentage remplissage/vol
     vols = []
     for row in vols_rows:
         d = dict(row)
         capacite = d.get('capacite_totale') or 0
         nb_resa_vol = d.get('nb_reservations') or 0
-        if capacite:
-            try:
-                fill_percent = int((nb_resa_vol / capacite) * 100)
-            except Exception:
-                fill_percent = 0
-        else:
-            fill_percent = 0
-        d['fill_percent'] = min(100, max(0, fill_percent))
+        d['fill_percent'] = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         vols.append(d)
     #for vol in vols:
     #    if vol.date_heure_dep_utc 
     return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
-
-
-@admin_bp.route('/gestion_flotte')
-@admin_required
-def gestion_flotte():
-    """gestion de flotte"""
-    return render_template('admin/html/flotte.html')
 
 @admin_bp.route('/config_avion', methods=['GET', 'POST'])
 @admin_required
@@ -98,7 +84,7 @@ def config_avion():
 @admin_bp.route('/api/avion/<string:immatriculation>', methods=['DELETE'])
 @admin_required
 def supprimer_avion(immatriculation):
-    """supprimer avion en désactivant"""
+    """supprimer avion en désactivant (actif = 0 bdd)"""
     result = db.session.execute(db.text("UPDATE avions SET actif = false WHERE immatriculation = :immat"),{"immat": immatriculation}
     )
     if result.rowcount == 0:
@@ -121,7 +107,7 @@ def edit_avion(immatriculation):
     form = FormAjouterAvion(original_immatriculation=avion.immatriculation)
 
     if request.method == 'GET':
-        # Pré-remplir le formulaire
+        # Pré-remplir formulaire avec info bdd
         form.immatriculation.data = avion.immatriculation
         form.modele.data = avion.modele
         form.nb_rangees.data = avion.nb_rangees
@@ -164,8 +150,175 @@ def edit_avion(immatriculation):
 
     return render_template('admin/html/edit_avion.html', form=form, avion=avion)
 
-@admin_bp.route('/infrastructure')
+@admin_bp.route('/vols')
 @admin_required
-def infrastructure_aeroportuaire():
-    """infrastructure des aéroports desservis"""
-    return render_template('admin/html/infrastructure.html')
+def gestion_vols():
+    """Affiche la page du calendrier des vols et la liste détaillée"""
+
+    avions = db.session.execute(text("SELECT immatriculation, modele FROM avions WHERE actif = true")).mappings().all()
+    aeroports = db.session.execute(text("SELECT id_aeroport, nom, ville, pays FROM aeroports ORDER BY ville")).mappings().all()
+    
+    # Récupération liste vols
+    vols_list = db.session.execute(text("""
+        SELECT v.*,
+               a_dep.ville AS ville_depart,
+               a_arr.ville AS ville_arrivee
+        FROM vols v
+        LEFT JOIN aeroports a_dep ON v.id_aeroport_depart = a_dep.id_aeroport
+        LEFT JOIN aeroports a_arr ON v.id_aeroport_arrivee = a_arr.id_aeroport
+        ORDER BY v.date_heure_dep_utc DESC
+    """)).mappings().all()
+
+    return render_template('admin/html/vols.html', avions=avions, aeroports=aeroports, vols_list=vols_list)
+
+@admin_bp.route('/api/vols', methods=['GET'])
+@admin_required
+def get_vols():
+    vols = db.session.execute(text("SELECT * FROM vols")).mappings().all()
+    events = []
+    for v in vols:
+        bg_color = '#002A5C'
+        if v.statut == 'retardé': bg_color = '#F57C00'
+        elif v.statut == 'annulé': bg_color = '#C62828'
+        elif v.statut == 'embarquement': bg_color = '#2E7D32'
+        
+        events.append({
+            'id': v.id_vol,
+            'title': f"{v.id_aeroport_depart} ✈ {v.id_aeroport_arrivee}",
+            'start': v.date_heure_dep_utc.isoformat() + 'Z',
+            'end': v.date_heure_arr_utc.isoformat() + 'Z' if v.date_heure_arr_utc else None,
+            'backgroundColor': bg_color,
+            'borderColor': '#FFC72C',
+            'extendedProps': {
+                'avion': v.immatriculation_avion,
+                'depart': v.id_aeroport_depart,
+                'arrivee': v.id_aeroport_arrivee,
+                'prix': str(v.prix_de_base),
+                'statut': v.statut
+            }
+        })
+    return jsonify(events)
+
+@admin_bp.route('/api/vols', methods=['POST'])
+@admin_required
+def create_vol():
+    """API : Créer un nouveau vol"""
+    data = request.json
+    try:
+        def clean_iso_date(date_str):
+            if not date_str:
+                return None
+            return date_str.replace('Z', '').split('.')[0]
+        
+        start_time = datetime.fromisoformat(clean_iso_date(data['start']))
+        end_time = datetime.fromisoformat(clean_iso_date(data['end']))
+        avion_immat = data['avion']
+        
+        # Pas de chevauchement d'horaire
+        conflits = db.session.execute(text("""
+            SELECT * FROM vols 
+            WHERE immatriculation_avion = :avion_immat
+              AND date_heure_dep_utc < :end_time
+              AND date_heure_arr_utc > :start_time
+            LIMIT 1
+        """), {
+            "avion_immat": avion_immat,
+            "end_time": end_time,
+            "start_time": start_time
+        }).mappings().first()
+        
+        if conflits:
+            return jsonify({
+                'success': False,
+                'message': f"Conflit détecté : l'avion {avion_immat} a déjà un vol programmé pendant cette période (Vol #{conflits.id_vol})"
+            }), 409 #code error de con
+        
+        nouveau_vol = Vols(
+            immatriculation_avion=avion_immat,
+            id_aeroport_depart=data['depart'].upper(),
+            id_aeroport_arrivee=data['arrivee'].upper(),
+            date_heure_dep_utc=start_time,
+            date_heure_arr_utc=end_time,
+            prix_de_base=float(data['prix']),
+            statut=data.get('statut', "à l'heure")
+        )
+            
+        db.session.add(nouveau_vol)
+        db.session.commit()
+        return jsonify({'success': True, 'id': nouveau_vol.id_vol})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@admin_bp.route('/api/vols/<int:id_vol>', methods=['PUT'])
+@admin_required
+def update_vol(id_vol):
+    """API : Maj vol"""
+    data = request.json
+    vol = db.session.execute(text("SELECT * FROM vols WHERE id_vol = :id_vol LIMIT 1"),{"id_vol": id_vol}).mappings().all()
+
+    if not vol:
+        return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
+        
+    try:
+        def clean_iso_date(date_str):
+            if not date_str:
+                return None
+            return date_str.replace('Z', '').split('.')[0]
+        
+        nouvel_avion = data.get('avion', vol.immatriculation_avion)
+        nouveau_start = vol.date_heure_dep_utc
+        nouveau_end = vol.date_heure_arr_utc
+        
+        if 'start' in data and data['start']:
+            nouveau_start = datetime.fromisoformat(clean_iso_date(data['start']))
+        if 'end' in data and data['end']:
+            nouveau_end = datetime.fromisoformat(clean_iso_date(data['end']))
+        
+        conflits = Vols.query.filter(
+            Vols.immatriculation_avion == nouvel_avion,
+            Vols.id_vol != id_vol,
+            Vols.date_heure_dep_utc < nouveau_end,
+            Vols.date_heure_arr_utc > nouveau_start
+        ).first()
+        
+        if conflits:
+            return jsonify({
+                'success': False,
+                'message': f"Conflit détecté : l'avion {nouvel_avion} a déjà un vol programmé pendant cette période (Vol #{conflits.id_vol})"
+            }), 409
+        
+        if 'depart' in data: 
+            vol.id_aeroport_depart = data['depart'].upper()
+        if 'arrivee' in data: 
+            vol.id_aeroport_arrivee = data['arrivee'].upper()
+        if 'avion' in data: 
+            vol.immatriculation_avion = data['avion']
+        if 'prix' in data:
+            vol.prix_de_base = float(data['prix'])
+        if 'statut' in data and data['statut']: 
+            vol.statut = data['statut']
+        
+        vol.date_heure_dep_utc = nouveau_start
+        vol.date_heure_arr_utc = nouveau_end
+            
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400
+
+@admin_bp.route('/api/vols/<int:id_vol>', methods=['DELETE'])
+@admin_required
+def delete_vol(id_vol):
+    """API : Supprimer un vol"""
+    vol = Vols.query.get(id_vol)
+    if not vol:
+        return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
+    try:
+        db.session.delete(vol)
+        db.session.commit()
+        return jsonify({'success': True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 400

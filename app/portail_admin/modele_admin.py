@@ -47,21 +47,21 @@ class Avion(db.Model):
     
     @property
     def eco_capacite(self):
-        """Capacité calculée en classe économique"""
+        """Capacité classe éco"""
         if self.eco_rang_a >= self.eco_rang_de:
             return max(0, self.eco_rang_a - self.eco_rang_de + 1) * self.largeur_rangee
         return 0
 
     @property
     def bus_capacite(self):
-        """Capacité calculée en classe business"""
+        """Capacité  classe business"""
         if self.bus_rang_a >= self.bus_rang_de:
             return max(0, self.bus_rang_a - self.bus_rang_de + 1) * self.largeur_rangee
         return 0
 
     @property
     def first_capacite(self):
-        """Capacité calculée en classe first"""
+        """Capacité classe first"""
         if self.first_rang_a >= self.first_rang_de:
             return max(0, self.first_rang_a - self.first_rang_de + 1) * self.largeur_rangee
         return 0
@@ -87,4 +87,7 @@ class Vols(db.Model):
 
     prix_de_base = db.Column(db.Integer, nullable=False)
 
-    
+    statut = db.Column(db.String(20), default="à l'heure", nullable=False)
+
+    def __repr__(self):
+        return f'<Vol {self.id_vol}: {self.id_aeroport_depart} -> {self.id_aeroport_arrivee}>'
