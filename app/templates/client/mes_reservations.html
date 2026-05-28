@@ -1,0 +1,193 @@
+{% extends "components/base.html" %}
+
+{% block title %}Mes Réservations - O'Buffair{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Harmonisation des variables globales (Flighty x O'Buffair) */
+        :root {
+            --primary: #002A5C; 
+            --primary-light: #004B9E; 
+            --accent: #FFC72C; 
+            --bg-light: #F2F2F7; /* Gris Flighty iOS */
+            --flighty-text: #1C1C1E;
+            --flighty-gray: #8E8E93;
+            --flighty-green: #34C759;
+            --flighty-red: #FF3B30;
+            --flighty-orange: #FF9500;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        
+        body { 
+            background-color: var(--bg-light); 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        /* --- FLIGHTY APP CARDS (Vols & Formulaires) --- */
+        .flighty-card {
+            background: white; border-radius: var(--radius-xl);
+            padding: 24px; box-shadow: var(--shadow-soft);
+            margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        /* En-tête vol Flighty */
+        .flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .flighty-airline { font-size: 14px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
+        .flighty-status { padding: 4px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+        .status-ontime { background: #E5F8EB; color: #248A3D; }
+        .status-delayed { background: #FFF4E5; color: #E67E22; }
+
+        /* Itinéraire Flighty */
+        .flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .flighty-iata { font-size: 40px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; }
+        .flighty-time { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-bottom: 4px; }
+        .flighty-time.delayed { color: var(--flighty-red); }
+        .flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+        
+        .flighty-path {
+            flex-grow: 1; margin: 20px 24px 0 24px; height: 2px;
+            background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px);
+            display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .flighty-path i { color: var(--flighty-gray); font-size: 16px; background: white; padding: 0 10px; }
+        .flighty-stop { position: absolute; background: white; color: var(--flighty-orange); font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--flighty-orange); top: -20px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+
+        /* Grille Infos (Porte, Siège) */
+        .flighty-footer {
+            display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-light); padding: 16px 20px; border-radius: var(--radius-lg); flex-wrap: wrap; gap: 16px;
+        }
+        .flighty-info-group { display: flex; flex-direction: column; }
+        .flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;}
+        .flighty-value { font-size: 18px; font-weight: 800; color: var(--flighty-text); }
+        .flighty-gate { background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 8px; font-size: 18px; font-weight: 800; }
+        .flighty-subvalue { font-size: 12px; color: var(--flighty-gray); font-weight: 600; margin-top: 2px; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="section" style="flex: 1; padding-top: 2rem;">
+    <div class="container" style="max-width: 900px;">
+        
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5" style="flex-wrap: wrap; gap: 1rem;">
+            <h2 class="title is-3 m-0" style="color: var(--primary); font-weight: 800;">Mes Réservations</h2>
+            <a href="{{ url_for('client.profil') }}" class="button is-light is-rounded font-weight-bold">
+                <i class="fas fa-arrow-left mr-2"></i> Retour au profil
+            </a>
+        </div>
+        
+        <!-- Vol 1 : À venir, direct -->
+        <div class="flighty-card">
+            <div class="flighty-header">
+                <div class="flighty-airline">
+                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
+                </div>
+                <div class="flighty-status status-ontime">À l'heure</div>
+            </div>
+
+            <div class="flighty-route">
+                <div style="width: 100px;">
+                    <div class="flighty-time">10:30</div>
+                    <div class="flighty-iata">CDG</div>
+                    <div class="flighty-city">Paris</div>
+                </div>
+                <div class="flighty-path">
+                    <i class="fas fa-plane"></i>
+                </div>
+                <div style="width: 100px; text-align: right;">
+                    <div class="flighty-time">12:35</div>
+                    <div class="flighty-iata">FCO</div>
+                    <div class="flighty-city">Rome</div>
+                </div>
+            </div>
+
+            <div class="flighty-footer">
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Terminal</span>
+                    <span class="flighty-value">2F</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Siège</span>
+                    <span class="flighty-value">12A</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Repas à bord</span>
+                    <span class="flighty-value"><i class="fas fa-utensils is-size-6 mr-1" style="color: var(--primary);"></i> Standard</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Bagages</span>
+                    <span class="flighty-value"><i class="fas fa-suitcase-rolling is-size-6 mr-1" style="color: var(--primary);"></i> 2 en soute</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">PNR (Billet)</span>
+                    <span class="flighty-value" style="font-family: monospace;">X8B9Q2</span>
+                </div>
+            </div>
+            <div class="mt-4 has-text-right">
+                <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
+                    Gérer ma réservation <i class="fas fa-chevron-right ml-2 is-size-7"></i>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Vol 2 : À venir, avec escale, retardé -->
+        <div class="flighty-card">
+            <div class="flighty-header">
+                <div class="flighty-airline">
+                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF1409 • 20 Août 2026
+                </div>
+                <div class="flighty-status status-delayed">Retardé</div>
+            </div>
+
+            <div class="flighty-route">
+                <div style="width: 100px;">
+                    <div class="flighty-time delayed">16:15 <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">15:45</span></div>
+                    <div class="flighty-iata">CDG</div>
+                    <div class="flighty-city">Paris</div>
+                </div>
+                <div class="flighty-path">
+                    <div class="flighty-stop">1 Escale: AMS (1h15)</div>
+                    <i class="fas fa-plane"></i>
+                </div>
+                <div style="width: 100px; text-align: right;">
+                    <div class="flighty-time delayed">20:45 <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">20:15</span></div>
+                    <div class="flighty-iata">FCO</div>
+                    <div class="flighty-city">Rome</div>
+                </div>
+            </div>
+
+            <div class="flighty-footer">
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Terminal</span>
+                    <span class="flighty-value">2E</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Siège</span>
+                    <span class="flighty-value">24C</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Repas à bord</span>
+                    <span class="flighty-value"><i class="fas fa-leaf is-size-6 mr-1" style="color: var(--flighty-green);"></i> Végétarien</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">Bagages</span>
+                    <span class="flighty-value"><i class="fas fa-suitcase-rolling is-size-6 mr-1" style="color: var(--flighty-gray);"></i> 0 en soute</span>
+                </div>
+                <div class="flighty-info-group">
+                    <span class="flighty-label">PNR (Billet)</span>
+                    <span class="flighty-value" style="font-family: monospace;">A1C2E3</span>
+                </div>
+            </div>
+            <div class="mt-4 has-text-right">
+                <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
+                    Gérer ma réservation <i class="fas fa-chevron-right ml-2 is-size-7"></i>
+                </a>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

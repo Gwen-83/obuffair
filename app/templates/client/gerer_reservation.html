@@ -1,0 +1,141 @@
+{% extends "components/base.html" %}
+
+{% block title %}Gérer ma réservation - O'Buffair{% endblock %}
+
+{% block extra_css %}
+    <style>
+        /* Harmonisation des variables globales (Flighty x O'Buffair) */
+        :root {
+            --primary: #002A5C; 
+            --primary-light: #004B9E; 
+            --accent: #FFC72C; 
+            --bg-light: #F2F2F7; /* Gris Flighty iOS */
+            --flighty-text: #1C1C1E;
+            --flighty-gray: #8E8E93;
+            --flighty-green: #34C759;
+            --flighty-red: #FF3B30;
+            --flighty-orange: #FF9500;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+        }
+        
+        body { 
+            background-color: var(--bg-light); 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        /* --- FLIGHTY APP CARDS (Vols & Formulaires) --- */
+        .flighty-card {
+            background: white; border-radius: var(--radius-xl);
+            padding: 24px; box-shadow: var(--shadow-soft);
+            margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        .option-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #E5E5EA;
+        }
+
+        /* Style pour les options (siège, repas) */
+        .option-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid #E5E5EA;
+            border-radius: var(--radius-lg);
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .option-box .current-selection {
+            font-weight: 600;
+        }
+
+        .option-box .current-selection .tag {
+            font-size: 0.85rem;
+        }
+
+        /* Zone de danger pour l'annulation */
+        .danger-zone {
+            border: 2px solid var(--flighty-red);
+            background-color: rgba(255, 59, 48, 0.05);
+        }
+
+        .danger-zone .option-title {
+            color: var(--flighty-red);
+            border-bottom-color: rgba(255, 59, 48, 0.2);
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<section class="section" style="flex: 1; padding-top: 2rem;">
+    <div class="container" style="max-width: 900px;">
+        
+        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5" style="flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h2 class="title is-3 m-0" style="color: var(--primary); font-weight: 800;">Gérer ma réservation</h2>
+                <p class="subtitle is-6 has-text-grey">Vol O'Buffair AF712 pour Rome (FCO) - PNR: <strong style="font-family: monospace; color: var(--flighty-text);">X8B9Q2</strong></p>
+            </div>
+            <a href="{{ url_for('client.mes_reservations') }}" class="button is-light is-rounded font-weight-bold">
+                <i class="fas fa-arrow-left mr-2"></i> Retour aux réservations
+            </a>
+        </div>
+        
+        <!-- Options de la réservation -->
+        <div class="flighty-card">
+            <h3 class="option-title"><i class="fas fa-chair mr-2"></i> Siège</h3>
+            <div class="option-box">
+                <div>
+                    <p class="has-text-grey mb-1">Sélection actuelle</p>
+                    <p class="current-selection">Siège <span class="tag is-primary is-light">12A</span> (Business, Hublot)</p>
+                </div>
+                <button class="button is-primary is-light font-weight-bold">Changer de siège</button>
+            </div>
+        </div>
+
+        <div class="flighty-card">
+            <h3 class="option-title"><i class="fas fa-utensils mr-2"></i> Repas à bord</h3>
+            <div class="option-box">
+                <div>
+                    <p class="has-text-grey mb-1">Sélection actuelle</p>
+                    <p class="current-selection">Menu <span class="tag is-info is-light">Standard</span></p>
+                </div>
+                <button class="button is-primary is-light font-weight-bold">Modifier le repas</button>
+            </div>
+        </div>
+
+        <div class="flighty-card">
+            <h3 class="option-title"><i class="fas fa-suitcase-rolling mr-2"></i> Bagages</h3>
+            <div class="option-box">
+                <div>
+                    <p class="has-text-grey mb-1">Franchise incluse</p>
+                    <p class="current-selection">2 bagages en soute (23kg max)</p>
+                </div>
+                <button class="button is-primary is-light font-weight-bold">Ajouter un bagage</button>
+            </div>
+        </div>
+
+        <!-- Zone de danger -->
+        <div class="flighty-card danger-zone mt-6">
+            <h3 class="option-title"><i class="fas fa-exclamation-triangle mr-2"></i> Zone de danger</h3>
+            <div class="option-box" style="border-color: rgba(255, 59, 48, 0.2);">
+                <div>
+                    <p class="has-text-grey mb-1 font-weight-bold">Annuler la réservation</p>
+                    <p class="is-size-7">Cette action est irréversible. Veuillez consulter les conditions tarifaires avant de continuer.</p>
+                </div>
+                <button class="button is-danger font-weight-bold">Annuler ce vol</button>
+            </div>
+        </div>
+
+    </div>
+</section>
+{% endblock %}
