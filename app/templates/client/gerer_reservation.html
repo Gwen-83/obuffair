@@ -83,7 +83,7 @@
         <div class="is-flex is-justify-content-space-between is-align-items-center mb-5" style="flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h2 class="title is-3 m-0" style="color: var(--primary); font-weight: 800;">Gérer ma réservation</h2>
-                <p class="subtitle is-6 has-text-grey">Vol O'Buffair AF712 pour Rome (FCO) - PNR: <strong style="font-family: monospace; color: var(--flighty-text);">X8B9Q2</strong></p>
+                <p class="subtitle is-6 has-text-grey">Vol O'Buffair {{ reservation.flight_number }} pour {{ reservation.arr_city }} ({{ reservation.arr_iata }}) - PNR: <strong style="font-family: monospace; color: var(--flighty-text);">{{ reservation.pnr }}</strong></p>
             </div>
             <a href="{{ url_for('client.mes_reservations') }}" class="button is-light is-rounded font-weight-bold">
                 <i class="fas fa-arrow-left mr-2"></i> Retour aux réservations
@@ -96,7 +96,7 @@
             <div class="option-box">
                 <div>
                     <p class="has-text-grey mb-1">Sélection actuelle</p>
-                    <p class="current-selection">Siège <span class="tag is-primary is-light">12A</span> (Business, Hublot)</p>
+                    <p class="current-selection">Siège <span class="tag {{ reservation.seat_class }} is-light">{{ reservation.seat }}</span> ({{ reservation.seat_details }})</p>
                 </div>
                 <button class="button is-primary is-light font-weight-bold">Changer de siège</button>
             </div>
@@ -107,7 +107,7 @@
             <div class="option-box">
                 <div>
                     <p class="has-text-grey mb-1">Sélection actuelle</p>
-                    <p class="current-selection">Menu <span class="tag is-info is-light">Standard</span></p>
+                    <p class="current-selection">Menu <span class="tag {{ reservation.meal_class }} is-light">{{ reservation.meal }}</span></p>
                 </div>
                 <button class="button is-primary is-light font-weight-bold">Modifier le repas</button>
             </div>
@@ -118,7 +118,7 @@
             <div class="option-box">
                 <div>
                     <p class="has-text-grey mb-1">Franchise incluse</p>
-                    <p class="current-selection">2 bagages en soute (23kg max)</p>
+                    <p class="current-selection">{{ reservation.baggage }}</p>
                 </div>
                 <button class="button is-primary is-light font-weight-bold">Ajouter un bagage</button>
             </div>

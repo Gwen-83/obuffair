@@ -23,16 +23,16 @@ class User(db.Model):
     id_client = db.Column(db.Integer, primary_key=True)
     
     # Email (deux users ne peuvent pas avoir le même email) index=True pour recherche rapide
-    email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    email = db.Column(db.String(150), unique=True, nullable=False, index=True)
     
     # Password hashé
     mot_de_passe = db.Column(db.String(255), nullable=False)
     
     # Nom
-    nom = db.Column(db.String(120), nullable=False)
+    nom = db.Column(db.String(100), nullable=False)
     
     # Prénom
-    prenom = db.Column(db.String(120), nullable=False)
+    prenom = db.Column(db.String(100), nullable=False)
     
     # Date de naissance
     date_naissance = db.Column(db.Date)
@@ -40,8 +40,19 @@ class User(db.Model):
     # Points de fidélité (par défaut 0)
     points_fidelite = db.Column(db.Integer, default=0)
     
+    # Statut du programme de fidélité
+    fidelite_ouvert = db.Column(db.Boolean, default=False)
+    
     # Token pour réinitialiser le mot de passe (None si pas de reset en cours)
     reset_token = db.Column(db.String(255), unique=True, nullable=True)
     
     # Expiration du token de réinitialisation
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Vérification d'email
+    email_verified = db.Column(db.Boolean, nullable=False, default=False)
+    email_verification_token = db.Column(db.String(255), unique=True, nullable=True, index=True)
+    email_verification_token_expiration = db.Column(db.DateTime, nullable=True)
+    
+    # Rôles
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
