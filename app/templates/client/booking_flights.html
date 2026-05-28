@@ -3,85 +3,279 @@
 
 {% block booking_css %}
 <style>
-    /* Flighty Desktop Adaptation */
-    .flight-option { display: flex; align-items: stretch; padding: 0; overflow: hidden; }
-    .flight-details { flex: 1; padding: 24px; }
-    .flight-tariffs { display: flex; background: #F9F9FB; border-left: 1px solid #E5E5EA; }
+    /* Variables locales basées sur Flighty et O'Buffair */
+    :root {
+        --flighty-bg: #FFFFFF;
+        --flighty-text: #1C1C1E;
+        --flighty-gray: #8E8E93;
+        --flighty-light-gray: #F2F2F7;
+        --flighty-green: #34C759;
+        --flighty-orange: #FF9500;
+        --flighty-blue: #0A84FF;
+    }
+
+    /* Conteneur principal de la carte de vol */
+    .flighty-booking-card { 
+        background: var(--flighty-bg); 
+        border-radius: 16px; 
+        box-shadow: 0 4px 16px rgba(0,0,0,0.04); 
+        margin-bottom: 20px; 
+        border: 1px solid rgba(0,0,0,0.03);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
     
-    .flighty-iata { font-size: 32px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; }
-    .flighty-time { font-size: 18px; font-weight: 700; color: var(--flighty-text); }
-    .flighty-city { font-size: 12px; color: var(--flighty-gray); font-weight: 600; }
+    @media (min-width: 1024px) {
+        .flighty-booking-card { flex-direction: row; }
+    }
+
+    /* --- SECTION GAUCHE : INFOS DU VOL --- */
+    .flight-info-section { 
+        flex: 1 1 55%; 
+        padding: 16px 20px; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center;
+    }
     
-    .flight-path-container { flex-grow: 1; margin: 0 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .flight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .airline-info { font-size: 13px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
+    
+    /* Badges (Direct vs Escale) */
+    .badge { padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge.direct { background: #E5F8EB; color: #248A3D; }
+    .badge.stop { background: #FFF4E5; color: #E67E22; }
+
+    /* Itinéraire (Gros IATA) */
+    .flight-route { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .flighty-time { font-size: 20px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; }
+    .flighty-iata { font-size: 32px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1.1; margin: 0;}
+    .flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; }
+    
+    /* Ligne de vol (Flighty style pointillés) */
+    .flight-path-wrapper { flex-grow: 1; margin: 0 20px; position: relative; display: flex; flex-direction: column; align-items: center; }
     .flight-path-line { 
-        width: 100%; height: 2px; position: relative;
+        width: 100%; height: 2px; position: relative; top: 10px; z-index: 1;
         background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); 
     }
-    .flight-duration { font-size: 11px; color: var(--flighty-gray); font-weight: 700; margin-bottom: 4px; background: white; padding: 0 10px; z-index: 1;}
+    .flight-duration { font-size: 11px; font-weight: 800; color: var(--flighty-text); background: var(--flighty-bg); padding: 0 8px; z-index: 2; border-radius: 10px;}
+    .flight-stop-info { font-size: 10px; font-weight: 600; color: var(--flighty-gray); margin-top: 12px; text-align: center;}
 
-    /* Air France Style Price Tiles */
-    .tariff-tile { 
-        padding: 24px 20px; display: flex; flex-direction: column; justify-content: space-between; 
-        cursor: pointer; transition: background 0.2s; border-left: 1px solid #E5E5EA; min-width: 150px;
+    /* Équipements (Wi-Fi, USB...) */
+    .flight-amenities { display: flex; gap: 12px; font-size: 11px; font-weight: 600; color: var(--flighty-gray); border-top: 1px solid #E5E5EA; padding-top: 12px;}
+    .flight-amenities i { color: var(--primary); font-size: 14px;}
+
+    /* --- SECTION DROITE : TARIFS (ECO/BIZ/FIRST) --- */
+    .flight-tariffs-section { 
+        flex: 1 1 45%; 
+        display: flex; 
+        background: #F9F9FB; 
+        border-left: 1px solid #D1D1D6;
     }
-    .tariff-tile:hover { background: #F2F2F7; }
-    .tariff-class { font-size: 13px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 15px;}
-    .tariff-price { font-size: 22px; font-weight: 800; color: var(--flighty-text); }
+    
+    .tariff-form { display: contents; }
+    .tariff-btn { 
+        flex: 1; padding: 16px 12px; border: none; background: transparent; 
+        border-right: 1px solid #D1D1D6; display: flex; flex-direction: column; 
+        align-items: flex-start; justify-content: flex-start; gap: 4px;
+        cursor: pointer; transition: all 0.2s; text-align: left;
+    }
+    .tariff-btn:last-child { border-right: none; }
+    
+    /* Hover effects (Sélection de la classe) */
+    .tariff-btn.eco:hover { background: rgba(10, 132, 255, 0.05); }
+    .tariff-btn.biz:hover { background: rgba(0, 42, 92, 0.05); }
+    .tariff-btn.first:hover { background: rgba(255, 199, 44, 0.1); }
+
+    .t-header { display: flex; justify-content: space-between; width: 100%; align-items: baseline; gap: 4px;}
+    .t-class { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+    .t-class.eco { color: var(--flighty-blue); }
+    .t-class.biz { color: var(--primary); }
+    .t-class.first { color: var(--accent); }
+
+    .t-price { font-size: 18px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; margin: 0;}
+
+    .t-seats-left { font-size: 10px; font-weight: 700; color: var(--flighty-orange); margin: 2px 0; }
+    
+    .t-features { font-size: 11px; color: var(--flighty-gray); font-weight: 500; line-height: 1.4; list-style: none; margin: 2px 0 0 0; padding: 0;}
+    .t-features li { position: relative; padding-left: 12px; margin-bottom: 2px; }
+    .t-features li::before {
+        content: '•'; position: absolute; left: 0; color: var(--flighty-gray); font-size: 10px; top: 1px;
+    }
 </style>
 {% endblock %}
 
 {% block booking_content %}
 <h2 class="title is-3" style="color: var(--primary);">Sélectionnez votre vol aller</h2>
-<p class="subtitle is-6 has-text-grey">Paris (CDG) vers Rome (FCO) • Mer. 14 Juin 2026</p>
+<p class="subtitle is-6 has-text-grey mb-6">Paris (CDG) vers Rome (FCO) • Mercredi 14 Juin 2026</p>
 
-<div class="flighty-card flight-option">
-    <div class="flight-details">
-        <p class="is-size-7 has-text-grey font-weight-bold mb-3"><i class="fas fa-plane"></i> O'BUFFAIR AF712 • Airbus A320</p>
-        <div class="is-flex is-align-items-center">
-            <div class="has-text-left" style="width: 80px;">
+<div class="flighty-booking-card">
+    
+    <div class="flight-info-section">
+        <div class="flight-header">
+            <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair AF712 • Airbus A320</span>
+            <span class="badge direct">Direct</span>
+        </div>
+        
+        <div class="flight-route">
+            <div style="width: 75px;">
                 <div class="flighty-time">10:30</div>
                 <div class="flighty-iata">CDG</div>
                 <div class="flighty-city">Paris</div>
             </div>
             
-            <div class="flight-path-container">
+            <div class="flight-path-wrapper">
                 <div class="flight-duration">2h 05m</div>
                 <div class="flight-path-line"></div>
-                <div class="is-size-7 has-text-primary mt-1">Direct</div>
+                <div class="flight-stop-info">Sans escale</div>
             </div>
             
-            <div class="has-text-right" style="width: 80px;">
+            <div class="has-text-right" style="width: 75px;">
                 <div class="flighty-time">12:35</div>
                 <div class="flighty-iata">FCO</div>
                 <div class="flighty-city">Rome</div>
             </div>
         </div>
+
+        <div class="flight-amenities">
+            <span><i class="fas fa-wifi"></i> Wi-Fi payant</span>
+            <span><i class="fas fa-plug"></i> Prise USB</span>
+            <span><i class="fas fa-video"></i> Écrans persos</span>
+        </div>
     </div>
     
-    <div class="flight-tariffs">
-        <form action="{{ url_for('client.booking_passengers') }}" method="POST" style="display:contents;">
+    <div class="flight-tariffs-section">
+        
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
             <input type="hidden" name="id_vol" value="1">
             <input type="hidden" name="classe" value="Eco">
-            <button type="submit" class="tariff-tile" style="border: none; background: transparent;">
-                <div class="tariff-class">Economy</div>
-                <div>
-                    <div class="tariff-price">124 €</div>
-                    <div class="is-size-7 has-text-grey mt-1">1 bagage cabine</div>
+            <button type="submit" class="tariff-btn eco">
+                <div class="t-header">
+                    <div class="t-class eco">Economy</div>
+                    <div class="t-price">124 €</div>
                 </div>
+                <ul class="t-features">
+                    <li>1 Bagage cabine</li>
+                    <li>Siège standard</li>
+                </ul>
             </button>
         </form>
 
-        <form action="{{ url_for('client.booking_passengers') }}" method="POST" style="display:contents;">
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
             <input type="hidden" name="id_vol" value="1">
             <input type="hidden" name="classe" value="Business">
-            <button type="submit" class="tariff-tile" style="background: rgba(0, 42, 92, 0.05); border: none;">
-                <div class="tariff-class" style="color: var(--accent);">Business</div>
-                <div>
-                    <div class="tariff-price">340 €</div>
-                    <div class="is-size-7 has-text-grey mt-1">Siège Premium + Repas</div>
+            <button type="submit" class="tariff-btn biz">
+                <div class="t-header">
+                    <div class="t-class biz">Business</div>
+                    <div class="t-price">340 €</div>
+                </div>
+                <div class="t-seats-left">Plus que 3 sièges !</div>
+                <ul class="t-features">
+                    <li>2 Bagages soute</li>
+                    <li>Siège Premium</li>
+                    <li>Repas chaud</li>
+                </ul>
+            </button>
+        </form>
+
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
+            <input type="hidden" name="id_vol" value="1">
+            <input type="hidden" name="classe" value="First">
+            <button type="submit" class="tariff-btn first">
+                <div class="t-header">
+                    <div class="t-class first">First</div>
+                    <div class="t-price">850 €</div>
+                </div>
+                <ul class="t-features">
+                    <li>3 Bagages soute</li>
+                    <li>Siège Lit / Suite</li>
+                    <li>Accès Salon VIP</li>
+                </ul>
+            </button>
+        </form>
+        
+    </div>
+</div>
+
+<div class="flighty-booking-card">
+    
+    <div class="flight-info-section">
+        <div class="flight-header">
+            <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair AF1409 • Boeing 737</span>
+            <span class="badge stop">1 Escale</span>
+        </div>
+        
+        <div class="flight-route">
+            <div style="width: 75px;">
+                <div class="flighty-time">15:45</div>
+                <div class="flighty-iata">CDG</div>
+                <div class="flighty-city">Paris</div>
+            </div>
+            
+            <div class="flight-path-wrapper">
+                <div class="flight-duration">4h 30m</div>
+                <div class="flight-path-line"></div>
+                <div class="flight-stop-info">1h 15m à AMS</div>
+            </div>
+            
+            <div class="has-text-right" style="width: 75px;">
+                <div class="flighty-time">20:15</div>
+                <div class="flighty-iata">FCO</div>
+                <div class="flighty-city">Rome</div>
+            </div>
+        </div>
+
+        <div class="flight-amenities">
+            <span><i class="fas fa-wifi"></i> Pas de Wi-Fi</span>
+            <span><i class="fas fa-plug"></i> Prise AC</span>
+        </div>
+    </div>
+    
+    <div class="flight-tariffs-section">
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
+            <input type="hidden" name="id_vol" value="2">
+            <input type="hidden" name="classe" value="Eco">
+            <button type="submit" class="tariff-btn eco">
+                <div class="t-header">
+                    <div class="t-class eco">Economy</div>
+                    <div class="t-price">98 €</div>
+                </div>
+                <ul class="t-features">
+                    <li>1 Bagage cabine</li>
+                </ul>
+            </button>
+        </form>
+
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
+            <input type="hidden" name="id_vol" value="2">
+            <input type="hidden" name="classe" value="Business">
+            <button type="submit" class="tariff-btn biz">
+                <div class="t-header">
+                    <div class="t-class biz">Business</div>
+                    <div class="t-price">280 €</div>
+                </div>
+                <ul class="t-features">
+                    <li>2 Bagages soute</li>
+                    <li>Siège Premium</li>
+                </ul>
+            </button>
+        </form>
+
+        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
+            <input type="hidden" name="id_vol" value="2">
+            <input type="hidden" name="classe" value="First">
+            <button type="submit" class="tariff-btn first" disabled style="opacity: 0.5; cursor: not-allowed;">
+                <div class="t-header">
+                    <div class="t-class first">First</div>
+                    <div class="t-price" style="font-size: 14px;">Complet</div>
+                </div>
+                <div class="t-features mt-1" style="padding-left: 0;">
+                    Plus de sièges disponibles dans cette classe.
                 </div>
             </button>
         </form>
     </div>
 </div>
+
 {% endblock %}

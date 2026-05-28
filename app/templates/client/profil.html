@@ -1,300 +1,297 @@
 {% extends "components/base.html" %}
 
-{% block title %}Mon Espace Premium - O'BUFFAIR{% endblock %}
+{% block title %}Mon Espace Premium - O'Buffair{% endblock %}
 
 {% block extra_css %}
     <style>
+        /* Harmonisation des variables globales (Flighty x O'Buffair) */
         :root {
-            --primary: #002A5C; --primary-light: #004B9E; --secondary: #003DA5; 
-            --accent: #FFC72C; --accent-light: #FFD700; --dark: #1A1A1A; --gray: #757575;
-            --radius-lg: 12px; --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
-            
-            /* Couleurs spécifiques Flighty */
-            --flighty-bg: #FFFFFF;
+            --primary: #002A5C; 
+            --primary-light: #004B9E; 
+            --accent: #FFC72C; 
+            --bg-light: #F2F2F7; /* Gris Flighty iOS */
             --flighty-text: #1C1C1E;
             --flighty-gray: #8E8E93;
-            --flighty-light-gray: #F2F2F7;
-            --flighty-gate: #FFCC00;
             --flighty-green: #34C759;
             --flighty-red: #FF3B30;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+            --shadow-premium: 0 16px 40px rgba(0, 42, 92, 0.15);
         }
         
-        body { background-color: #F4F7F9; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; display: flex; flex-direction: column; min-height: 100vh; -webkit-font-smoothing: antialiased; }
-        .navbar.is-primary { background-color: var(--primary); }
-        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border: none; }
-        
-        /* Carte de Fidélité "Miles & More" Style */
-        .loyalty-card {
-            background: linear-gradient(135deg, var(--dark), var(--primary));
-            border-radius: 16px; padding: 2rem; color: white; position: relative;
-            box-shadow: 0 10px 25px rgba(0, 42, 92, 0.3); overflow: hidden; height: 100%;
+        body { 
+            background-color: var(--bg-light); 
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+            -webkit-font-smoothing: antialiased; 
         }
-        .loyalty-card::after {
-            content: "\f0fb"; font-family: "Font Awesome 6 Free"; font-weight: 900;
-            position: absolute; right: -20px; bottom: -40px; font-size: 150px; opacity: 0.1;
-        }
-        .loyalty-tier { color: var(--accent); font-weight: 800; font-size: 1.2rem; letter-spacing: 2px; text-transform: uppercase; }
-        .loyalty-number { font-family: 'Courier New', monospace; font-size: 1.4rem; letter-spacing: 4px; margin: 1rem 0; }
-        
-        /* Menu Latéral */
-        .menu-list a { border-radius: 8px; font-weight: 500; color: var(--primary); }
-        .menu-list a.is-active { background-color: var(--primary); color: white; }
-        .menu-list a:hover:not(.is-active) { background-color: rgba(0, 42, 92, 0.05); }
-        
-        .box { border-radius: var(--radius-lg); box-shadow: var(--shadow-md); border: 1px solid rgba(0,0,0,0.02); }
-        .stat-value { font-size: 2.5rem; font-weight: 800; color: var(--primary); }
 
-        /* =========================================
-           FLIGHTY APP STYLE CARDS (Inspiré des PJ)
-           ========================================= */
-        .flighty-card {
-            background: var(--flighty-bg);
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
-            margin-bottom: 24px;
+        /* --- MENU LATÉRAL MODERNE --- */
+        .sidebar-menu {
+            background: white; border-radius: var(--radius-xl);
+            padding: 24px; box-shadow: var(--shadow-soft);
             border: 1px solid rgba(0,0,0,0.02);
         }
-        
-        .flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .flighty-airline { font-size: 14px; font-weight: 600; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
-        .flighty-status { font-size: 14px; font-weight: 700; }
-        .status-ontime { color: var(--flighty-green); }
-        .status-delayed { color: var(--flighty-red); }
+        .menu-label { font-weight: 700; color: var(--flighty-gray); letter-spacing: 0.5px; }
+        .menu-list a { 
+            border-radius: 12px; font-weight: 600; color: var(--flighty-text); 
+            padding: 12px 16px; margin-bottom: 4px; transition: all 0.2s;
+        }
+        .menu-list a:hover { background-color: var(--bg-light); }
+        .menu-list a.is-active { 
+            background-color: var(--primary); color: white; 
+            box-shadow: 0 4px 12px rgba(0, 42, 92, 0.2);
+        }
 
-        .flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
-        .flighty-airport { display: flex; flex-direction: column; width: 90px; }
-        .flighty-airport.right { text-align: right; }
+        /* --- SECTION FIDÉLITÉ (PREMIUM DARK THEME) --- */
+        .premium-dark-card {
+            background: linear-gradient(135deg, #0B0F19 0%, #001B40 100%);
+            border-radius: var(--radius-xl);
+            padding: 32px; color: white;
+            box-shadow: var(--shadow-premium);
+            position: relative; overflow: hidden;
+            height: 100%; display: flex; flex-direction: column; justify-content: space-between;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* Effet de lueur dorée subtile en arrière-plan */
+        .premium-dark-card::before {
+            content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255, 199, 44, 0.08) 0%, transparent 50%);
+            pointer-events: none; z-index: 0;
+        }
+        .premium-content { position: relative; z-index: 1; }
         
-        .flighty-iata { font-size: 44px; font-weight: 800; color: var(--flighty-text); line-height: 1; letter-spacing: -1px; margin-bottom: 4px;}
-        .flighty-time { font-size: 22px; font-weight: 700; color: var(--flighty-text); letter-spacing: -0.5px; }
+        .loyalty-tier { color: var(--accent); font-weight: 800; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; }
+        .loyalty-number { font-family: 'Courier New', monospace; font-size: 1.5rem; letter-spacing: 3px; margin: 16px 0; color: rgba(255,255,255,0.9); }
+        
+        .miles-value { font-size: 3.5rem; font-weight: 800; line-height: 1; margin: 8px 0; display: flex; align-items: center; gap: 12px;}
+        .progress.is-premium { background-color: rgba(255,255,255,0.1); }
+        .progress.is-premium::-webkit-progress-value { background-color: var(--accent); }
+        .progress.is-premium::-moz-progress-bar { background-color: var(--accent); }
+
+        /* --- FLIGHTY APP CARDS (Vols & Formulaires) --- */
+        .flighty-card {
+            background: white; border-radius: var(--radius-xl);
+            padding: 24px; box-shadow: var(--shadow-soft);
+            margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
+        }
+
+        /* En-tête vol Flighty */
+        .flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .flighty-airline { font-size: 14px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
+        .flighty-status { padding: 4px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+        .status-ontime { background: #E5F8EB; color: #248A3D; }
+        .status-delayed { background: #FFF4E5; color: #E67E22; }
+
+        /* Itinéraire Flighty */
+        .flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .flighty-iata { font-size: 40px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; }
+        .flighty-time { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-bottom: 4px; }
         .flighty-time.delayed { color: var(--flighty-red); }
         .flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
         
         .flighty-path {
-            flex-grow: 1; margin: 20px 24px 0 24px; position: relative; height: 2px;
+            flex-grow: 1; margin: 20px 24px 0 24px; height: 2px;
             background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px);
             display: flex; align-items: center; justify-content: center;
         }
-        .flighty-path i { color: #D1D1D6; font-size: 16px; background: #fff; padding: 0 10px; }
+        .flighty-path i { color: var(--flighty-gray); font-size: 16px; background: white; padding: 0 10px; }
 
+        /* Grille Infos (Porte, Siège) */
         .flighty-footer {
             display: flex; justify-content: space-between; align-items: center;
-            background: var(--flighty-light-gray); padding: 16px 20px; border-radius: 16px;
+            background: var(--bg-light); padding: 16px 20px; border-radius: var(--radius-lg);
         }
         .flighty-info-group { display: flex; flex-direction: column; }
         .flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;}
-        .flighty-value { font-size: 18px; font-weight: 700; color: var(--flighty-text); }
-        
-        /* Le fameux badge jaune de porte d'embarquement Flighty */
-        .flighty-gate { 
-            background: var(--flighty-gate); color: #000; padding: 4px 12px; 
-            border-radius: 8px; font-size: 20px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;
-        }
+        .flighty-value { font-size: 18px; font-weight: 800; color: var(--flighty-text); }
+        .flighty-gate { background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 8px; font-size: 18px; font-weight: 800; }
+
+        /* Formulaires harmonisés */
+        .flighty-input { border-radius: 12px; border: 1px solid #E5E5EA; height: 3em; font-weight: 500; box-shadow: none; }
+        .flighty-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,42,92,0.1); }
+        .form-label { font-size: 12px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
     </style>
 {% endblock %}
 
 {% block content %}
-    <section class="section" style="flex: 1;">
-        <div class="container" style="max-width: 1200px;">
-            <div class="columns is-variable is-6">
-                
-                <div class="column is-3">
-                    <aside class="menu box p-5">
-                        <p class="menu-label">Mon Compte</p>
-                        <ul class="menu-list">
-                            <li><a class="is-active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie mr-2"></i> Tableau de bord</a></li>
-                            <li><a onclick="switchTab('profil')"><i class="fas fa-user-edit mr-2"></i> Informations Personnelles</a></li>
-                            <li><a onclick="switchTab('preferences')"><i class="fas fa-sliders-h mr-2"></i> Préférences de voyage</a></li>
-                        </ul>
-                        <p class="menu-label mt-5">Fidélité</p>
-                        <ul class="menu-list">
-                            <li><a><i class="fas fa-history mr-2"></i> Historique des Miles</a></li>
-                            <li><a><i class="fas fa-gift mr-2"></i> Dépenser mes Miles</a></li>
-                        </ul>
-                    </aside>
-                </div>
+<section class="section" style="flex: 1; padding-top: 2rem;">
+    <div class="container" style="max-width: 1200px;">
+        <div class="columns is-variable is-6">
+            
+            <div class="column is-3">
+                <aside class="sidebar-menu">
+                    <p class="menu-label">Mon Compte</p>
+                    <ul class="menu-list">
+                        <li><a class="is-active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie mr-3"></i> Tableau de bord</a></li>
+                        <li><a onclick="switchTab('profil')"><i class="fas fa-user-edit mr-3"></i> Informations</a></li>
+                        <li><a onclick="switchTab('preferences')"><i class="fas fa-sliders-h mr-3"></i> Préférences</a></li>
+                    </ul>
+                    <p class="menu-label mt-5">Fidélité</p>
+                    <ul class="menu-list">
+                        <li><a href="{{ url_for('client.mes_reservations') }}"><i class="fas fa-history mr-3"></i> Historique</a></li>
+                        <li><a href="#"><i class="fas fa-gift mr-3"></i> Avantages</a></li>
+                    </ul>
+                </aside>
+            </div>
 
-                <div class="column is-9">
+            <div class="column is-9">
+                
+                <div id="tab-dashboard" class="content-tab">
+                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Bienvenue, Antoine</h2>
                     
-                    <div id="tab-dashboard" class="content-tab">
-                        <h2 class="title is-3 mb-5" style="color: var(--primary);">Bienvenue, Antoine</h2>
-                        
-                        <div class="columns mb-6">
-                            <div class="column is-6">
-                                <div class="loyalty-card">
-                                    <p class="loyalty-tier">O'Buffair Gold</p>
+                    <div class="columns mb-5 is-variable is-4">
+                        <div class="column is-5">
+                            <div class="premium-dark-card">
+                                <div class="premium-content">
+                                    <div class="is-flex is-justify-content-space-between is-align-items-start">
+                                        <p class="loyalty-tier">Gold Member</p>
+                                        <i class="fas fa-plane" style="color: var(--accent); opacity: 0.5; font-size: 1.5rem;"></i>
+                                    </div>
                                     <p class="loyalty-number">1034 5678 9012</p>
-                                    <p class="is-uppercase is-size-7 mt-4 font-weight-bold">Antoine Hardy</p>
-                                    <p class="is-size-7 mt-1">Valide jusqu'au : 12/2026</p>
-                                </div>
-                            </div>
-                            <div class="column is-6">
-                                <div class="box h-100" style="height: 100%;">
-                                    <p class="heading">Miles de Prime Disponibles</p>
-                                    <p class="stat-value">42 500 <span class="is-size-5" style="color: var(--accent);"><i class="fas fa-star"></i></span></p>
-                                    <progress class="progress is-warning mt-4 mb-2" value="65" max="100">65%</progress>
-                                    <p class="is-size-7" style="color: var(--gray);">Plus que 17 500 miles statut pour atteindre <strong>Platinum</strong>.</p>
+                                    <div class="mt-5">
+                                        <p class="is-uppercase is-size-6 font-weight-bold" style="letter-spacing: 1px;">Antoine Hardy</p>
+                                        <p class="is-size-7" style="color: rgba(255,255,255,0.5);">Valide jusqu'au 12/2026</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <h3 class="title is-4 mt-6 mb-4" style="color: var(--primary);">Mes Prochains Vols</h3>
                         
-                        <div class="flighty-card">
-                            <div class="flighty-header">
+                        <div class="column is-7">
+                            <div class="premium-dark-card">
+                                <div class="premium-content">
+                                    <p class="is-size-6 font-weight-bold is-uppercase" style="color: rgba(255,255,255,0.7); letter-spacing: 1px;">Miles Prime Disponibles</p>
+                                    <p class="miles-value">
+                                        42 500 <i class="fas fa-star" style="color: var(--accent); font-size: 2.5rem;"></i>
+                                    </p>
+                                    
+                                    <div class="mt-5">
+                                        <div class="is-flex is-justify-content-space-between is-size-7 mb-2 font-weight-bold" style="color: rgba(255,255,255,0.8);">
+                                            <span>Statut Gold actuel</span>
+                                            <span style="color: var(--accent);">Objectif Platinum</span>
+                                        </div>
+                                        <progress class="progress is-small is-premium" value="65" max="100">65%</progress>
+                                        <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que 17 500 miles statut pour atteindre le niveau supérieur.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mt-6 mb-4">
+                        <h3 class="title is-4 m-0" style="color: var(--primary); font-weight: 800;">Mon Prochain Vol</h3>
+                        <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light" style="border-radius: 20px; font-weight: 600;">Toutes mes réservations</a>
+                    </div>
+                    
+                    <a href="{{ url_for('client.mes_reservations') }}" style="text-decoration: none; display: block;">
+                        <div class="flighty-card" style="transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-premium)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-soft)';">
+                            <div class="flighty-header mb-3">
                                 <div class="flighty-airline">
-                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'BUFFAIR AF712
+                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
                                 </div>
                                 <div class="flighty-status status-ontime">À l'heure</div>
                             </div>
-
-                            <div class="flighty-route">
-                                <div class="flighty-airport">
-                                    <span class="flighty-iata">CDG</span>
-                                    <span class="flighty-time">10:30</span>
-                                    <span class="flighty-city">Paris (CDG)</span>
+                            
+                            <div class="is-flex is-align-items-center is-justify-content-space-between">
+                                <div>
+                                    <span class="flighty-iata" style="font-size: 28px;">CDG</span>
+                                    <i class="fas fa-arrow-right mx-3" style="color: var(--flighty-gray);"></i>
+                                    <span class="flighty-iata" style="font-size: 28px;">FCO</span>
                                 </div>
-                                <div class="flighty-path"><i class="fas fa-plane"></i></div>
-                                <div class="flighty-airport right">
-                                    <span class="flighty-iata">FCO</span>
-                                    <span class="flighty-time">12:35</span>
-                                    <span class="flighty-city">Rome (FCO)</span>
+                                <div class="has-text-right">
+                                    <div class="flighty-time" style="font-size: 18px; margin-bottom: 0;">10:30 - 12:35</div>
                                 </div>
-                            </div>
-
-                            <div class="flighty-footer">
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Terminal</span>
-                                    <span class="flighty-value">2F</span>
-                                </div>
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Gate Departure in 45m</span>
-                                    <span class="flighty-gate"><i class="fas fa-walking is-size-6"></i> F34</span>
-                                </div>
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Siège</span>
-                                    <span class="flighty-value">12A</span>
-                                </div>
-                                <div class="flighty-info-group">
+                                <div class="has-text-right">
                                     <span class="flighty-label">PNR</span>
-                                    <span class="flighty-value" style="font-family: monospace;">X8B9Q2</span>
+                                    <span class="flighty-value is-size-6" style="font-family: monospace;">X8B9Q2</span>
+                                </div>
+                                <div>
+                                    <i class="fas fa-chevron-right" style="color: var(--flighty-gray);"></i>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="flighty-card">
-                            <div class="flighty-header">
-                                <div class="flighty-airline">
-                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'BUFFAIR AF1409
-                                </div>
-                                <div class="flighty-status status-delayed">Retardé de 45m</div>
-                            </div>
-
-                            <div class="flighty-route">
-                                <div class="flighty-airport">
-                                    <span class="flighty-iata">FCO</span>
-                                    <span class="flighty-time delayed">16:30</span>
-                                    <span class="flighty-city">Rome (FCO)</span>
-                                </div>
-                                <div class="flighty-path"><i class="fas fa-plane"></i></div>
-                                <div class="flighty-airport right">
-                                    <span class="flighty-iata">CDG</span>
-                                    <span class="flighty-time delayed">18:40</span>
-                                    <span class="flighty-city">Paris (CDG)</span>
-                                </div>
-                            </div>
-
-                            <div class="flighty-footer">
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Date</span>
-                                    <span class="flighty-value">Jeu. 18 Juin</span>
-                                </div>
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Porte</span>
-                                    <span class="flighty-value" style="color: var(--flighty-gray);">--</span>
-                                </div>
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Siège</span>
-                                    <span class="flighty-value">12A</span>
-                                </div>
-                                <div class="flighty-info-group">
-                                    <span class="flighty-label">Bagages</span>
-                                    <span class="flighty-gate" style="background: var(--primary); color: white; padding: 4px 10px; font-size: 16px;">
-                                        <i class="fas fa-suitcase"></i> 1
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <h3 class="title is-5 mt-6" style="color: var(--primary);">Historique Récent</h3>
-                        <div class="box">
-                            <table class="table is-fullwidth is-hoverable">
-                                <tbody>
-                                    <tr>
-                                        <td><i class="fas fa-plane-arrival has-text-primary mr-3"></i> Vol AF712 (CDG - FCO)</td>
-                                        <td class="has-text-grey">14 Juin 2026</td>
-                                        <td class="has-text-right has-text-success font-weight-bold">+ 1,250 Miles</td>
-                                    </tr>
-                                    <tr>
-                                        <td><i class="fas fa-shopping-bag has-text-primary mr-3"></i> O'Buffet Premium Upgrade</td>
-                                        <td class="has-text-grey">14 Juin 2026</td>
-                                        <td class="has-text-right has-text-danger font-weight-bold">- 3,000 Miles</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="tab-profil" class="content-tab is-hidden">
-                        <h2 class="title is-3" style="color: var(--primary);">Informations Personnelles</h2>
-                        <div class="box p-5">
-                            <form>
-                                <div class="columns is-multiline">
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Prénom</label><div class="control"><input class="input" type="text" value="Antoine"></div></div>
-                                    </div>
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Nom</label><div class="control"><input class="input" type="text" value="Hardy"></div></div>
-                                    </div>
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Email de contact</label><div class="control"><input class="input" type="email" value="antoine.hardy.2025@enac.fr"></div></div>
-                                    </div>
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Téléphone</label><div class="control"><input class="input" type="tel" value="+33 6 12 34 56 78"></div></div>
-                                    </div>
-                                </div>
-                                <hr>
-                                <h4 class="title is-5" style="color: var(--primary);">Documents de voyage</h4>
-                                <div class="columns is-multiline">
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Type de document</label><div class="select is-fullwidth"><select><option selected>Passeport</option><option>Carte d'Identité</option></select></div></div>
-                                    </div>
-                                    <div class="column is-6">
-                                        <div class="field"><label class="label">Numéro du document</label><div class="control"><input class="input" type="text" value="12AB34567"></div></div>
-                                    </div>
-                                </div>
-                                <div class="field is-grouped mt-5">
-                                    <div class="control"><button type="button" class="button is-primary" onclick="alert('Modifications enregistrées !')">Enregistrer les modifications</button></div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div id="tab-preferences" class="content-tab is-hidden">
-                        <h2 class="title is-3" style="color: var(--primary);">Préférences de Voyage</h2>
-                        <div class="box p-5">
-                            <p class="has-text-grey">Vos préférences de repas et de placement (Hublot/Couloir) apparaîtront ici.</p>
-                        </div>
-                    </div>
-
+                    </a>
                 </div>
+
+                <div id="tab-profil" class="content-tab is-hidden">
+                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Informations Personnelles</h2>
+                    
+                    <div class="flighty-card">
+                        <form>
+                            <h4 class="title is-5 mb-4" style="color: var(--flighty-text);"><i class="fas fa-user-circle mr-2" style="color: var(--primary-light);"></i> Identité</h4>
+                            <div class="columns is-multiline mb-4">
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Prénom</label>
+                                        <div class="control"><input class="input flighty-input" type="text" value="Antoine"></div>
+                                    </div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Nom</label>
+                                        <div class="control"><input class="input flighty-input" type="text" value="Hardy"></div>
+                                    </div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Email de contact</label>
+                                        <div class="control"><input class="input flighty-input" type="email" value="antoine.hardy.2025@enac.fr"></div>
+                                    </div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Téléphone</label>
+                                        <div class="control"><input class="input flighty-input" type="tel" value="+33 6 12 34 56 78"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr style="background-color: #E5E5EA; margin: 2rem 0;">
+                            
+                            <h4 class="title is-5 mb-4" style="color: var(--flighty-text);"><i class="fas fa-passport mr-2" style="color: var(--primary-light);"></i> Documents de voyage</h4>
+                            <div class="columns is-multiline">
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Type de document</label>
+                                        <div class="select is-fullwidth">
+                                            <select class="flighty-input">
+                                                <option selected>Passeport</option>
+                                                <option>Carte d'Identité</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-6">
+                                    <div class="field">
+                                        <label class="form-label">Numéro du document</label>
+                                        <div class="control"><input class="input flighty-input" type="text" value="12AB34567"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="has-text-right mt-5">
+                                <button type="button" class="button is-primary" style="border-radius: 12px; font-weight: bold; padding: 0 32px; height: 3em;" onclick="alert('Modifications enregistrées !')">Enregistrer les modifications</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="tab-preferences" class="content-tab is-hidden">
+                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Préférences de Voyage</h2>
+                    <div class="flighty-card p-5">
+                        <div class="has-text-centered py-6">
+                            <i class="fas fa-sliders-h is-size-1 mb-4" style="color: #D1D1D6;"></i>
+                            <p class="has-text-grey font-weight-bold">Vos préférences de repas et de placement (Hublot/Couloir) apparaîtront ici prochainement.</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
-    </section>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
-    <!-- Link to the external JS file created to separate JS from HTML according to golden rules of coding -->
     <script src="{{ url_for('static', filename='js/profil.js') }}"></script>
 {% endblock %}
