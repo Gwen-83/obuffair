@@ -22,15 +22,16 @@ def dashboard():
     nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations ")).fetchone()
     # Récupérer vols + modèle avion + capacité totale et nombre de réservations par vol
     vols_rows = db.session.execute(text("""
-        SELECT v.*, a.modele AS modele, a.immatriculation AS immatriculation_avion,
-               (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
-               COALESCE(r.cnt, 0) AS nb_reservations
-        FROM vols v
-        LEFT JOIN avions a ON v.immatriculation = a.immatriculation
-        LEFT JOIN (
-            SELECT id_vol, COUNT(*) AS cnt FROM reservations GROUP BY id_vol
-        ) r ON r.id_vol = v.id_vol
-    """)).mappings().all()
+    SELECT v.*,
+           a.modele,
+           a.immatriculation AS immatriculation_avion,
+           (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
+           COUNT(b.id_billet) AS nb_reservations
+    FROM vols v
+    LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
+    LEFT JOIN billets b ON b.id_vol = v.id_vol
+    GROUP BY v.id_vol
+""")).mappings().all()
 
     # Calculer le pourcentage de remplissage par vol
     vols = []
@@ -69,34 +70,28 @@ def config_avion():
     
     # Formulaire ajout avins
     if form.validate_on_submit():
-        # Unicité immat
-        immat_upper = form.immatriculation.data.upper() if form.immatriculation.data else ''
-        avion_existant = db.session.execute(db.text("SELECT * FROM avions WHERE immatriculation = {immat_upper} LIMIT 1")).mappings().first()
-        if avion_existant:
-            flash('Cette immatriculation existe déjà', 'danger')
-        else:
-            try:
-                #Nouvel avions à partir de model_amdin.py
-                nouvel_avion = Avion(
-                    immatriculation=immat_upper,
-                    modele=form.modele.data or '',
-                    nb_rangees=form.nb_rangees.data or 0,
-                    largeur_rangee=form.largeur_rangee.data or 0,
-                    eco_rang_de=form.eco_rang_de.data or 0,
-                    eco_rang_a=form.eco_rang_a.data or 0,
-                    bus_rang_de=form.bus_rang_de.data or 0,
-                    bus_rang_a=form.bus_rang_a.data or 0,
-                    first_rang_de=form.first_rang_de.data or 0,
-                    first_rang_a=form.first_rang_a.data or 0,
-                    actif=form.actif.data if form.actif.data is not None else True
-                )
-                db.session.add(nouvel_avion)
-                db.session.commit()
-                flash(f'Avion {nouvel_avion.immatriculation} ajouté', 'success')
-                return redirect(url_for('admin.config_avion'))
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Erreur lors de l\'ajout : {str(e)}', 'danger')
+        immat_upper = form.immatriculation.data.upper()
+        try:
+            nouvel_avion = Avion(
+                immatriculation=immat_upper,
+                modele=form.modele.data or '',
+                nb_rangees=form.nb_rangees.data or 0,
+                largeur_rangee=form.largeur_rangee.data or 0,
+                eco_rang_de=form.eco_rang_de.data or 0,
+                eco_rang_a=form.eco_rang_a.data or 0,
+                bus_rang_de=form.bus_rang_de.data or 0,
+                bus_rang_a=form.bus_rang_a.data or 0,
+                first_rang_de=form.first_rang_de.data or 0,
+                first_rang_a=form.first_rang_a.data or 0,
+                actif=form.actif.data if form.actif.data is not None else True
+            )
+            db.session.add(nouvel_avion)
+            db.session.commit()
+            flash(f'Avion {nouvel_avion.immatriculation} ajouté', 'success')
+            return redirect(url_for('admin.config_avion'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de l\'ajout : {str(e)}', 'danger')
     
     return render_template('admin/html/config_avion.html', avions=avions, form=form)
 
