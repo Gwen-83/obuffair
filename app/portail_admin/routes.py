@@ -174,7 +174,7 @@ def gestion_vols():
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required
 def get_vols():
-    vols = db.session.execute(text("SELECT * FROM vols")).mappings().all()
+    vols = Vols.query.all()
     events = []
     for v in vols:
         bg_color = '#002A5C'
@@ -255,7 +255,9 @@ def create_vol():
 def update_vol(id_vol):
     """API : Maj vol"""
     data = request.json
-    vol = db.session.execute(text("SELECT * FROM vols WHERE id_vol = :id_vol LIMIT 1"),{"id_vol": id_vol}).mappings().all()
+    
+    # CORRECTION ICI : On utilise l'ORM pour récupérer un Objet modifiable
+    vol = Vols.query.get(id_vol)
 
     if not vol:
         return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
@@ -275,6 +277,7 @@ def update_vol(id_vol):
         if 'end' in data and data['end']:
             nouveau_end = datetime.fromisoformat(clean_iso_date(data['end']))
         
+        # Vérification des conflits avec l'ORM
         conflits = Vols.query.filter(
             Vols.immatriculation_avion == nouvel_avion,
             Vols.id_vol != id_vol,
@@ -288,6 +291,7 @@ def update_vol(id_vol):
                 'message': f"Conflit détecté : l'avion {nouvel_avion} a déjà un vol programmé pendant cette période (Vol #{conflits.id_vol})"
             }), 409
         
+        # Mise à jour des attributs de l'objet
         if 'depart' in data: 
             vol.id_aeroport_depart = data['depart'].upper()
         if 'arrivee' in data: 
@@ -302,8 +306,10 @@ def update_vol(id_vol):
         vol.date_heure_dep_utc = nouveau_start
         vol.date_heure_arr_utc = nouveau_end
             
+        # Sauvegarde en base de données
         db.session.commit()
         return jsonify({'success': True})
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
