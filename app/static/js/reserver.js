@@ -1,43 +1,32 @@
-// app/static/js/reserver.js
-// Extrait depuis reserver.html pour séparer le JS de l'HTML
-
 document.addEventListener('DOMContentLoaded', () => {
-    // DOM Elements
+    // Éléments DOM
     const calendarDays = document.getElementById('calendarDays');
-    if (!calendarDays) return; // Ignore on non-reservation pages
-
     const allerDisplay = document.getElementById('allerDisplay');
     const retourDisplay = document.getElementById('retourDisplay');
-    const priceDisplay = document.getElementById('priceDisplay');
     const btnContinue = document.getElementById('btnContinue');
-
+    
     // Selects
     const selectDepart = document.getElementById('selectDepart');
     const selectArrivee = document.getElementById('selectArrivee');
-    const selectPassagers = document.getElementById('selectPassagers');
     const selectClasse = document.getElementById('selectClasse');
-
+    
     // Resume Elements
-    const resumeItineraire = document.getElementById('resumeItineraire');
-    const resumeClasse = document.getElementById('resumeClasse');
-    const resumePassagers = document.getElementById('resumePassagers');
+    const iataDepart = document.getElementById('iataDepart');
+    const cityDepart = document.getElementById('cityDepart');
+    const iataArrivee = document.getElementById('iataArrivee');
+    const cityArrivee = document.getElementById('cityArrivee');
 
-    // State
-    let currentDate = new Date(2026, 5, 1); // Juin 2026
+    // Form inputs cachés
+    const formDepart = document.getElementById('formDepart');
+    const formArrivee = document.getElementById('formArrivee');
+    const formClasse = document.getElementById('formClasse');
+    const formDateAller = document.getElementById('formDateAller');
+    const formDateRetour = document.getElementById('formDateRetour');
+
+    // État du calendrier
+    let currentDate = new Date(2026, 5, 1); // Juin 2026 pour la démo
     let startDate = null;
     let endDate = null;
-
-    // Générateur de prix qui prend en compte la CLASSE choisie
-    const getPriceForDay = (dayIndex) => {
-        const classMultiplier = parseFloat(selectClasse.value); // 1 (Eco), 2.5 (Biz), 4 (First)
-        
-        // On utilise une graine basée sur le jour pour que le prix d'un jour donné reste le même
-        const pseudoRandom = Math.sin(dayIndex) * 10000;
-        const fluctuation = Math.abs(Math.floor((pseudoRandom - Math.floor(pseudoRandom)) * 60));
-        
-        const basePrice = 45;
-        return Math.floor((basePrice + fluctuation) * classMultiplier);
-    };
 
     function renderCalendar() {
         const weekdays = `<div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div><div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>`;
@@ -49,126 +38,127 @@ document.addEventListener('DOMContentLoaded', () => {
         const monthNames = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
         document.getElementById('monthYearDisplay').innerText = `${monthNames[month]} ${year}`;
 
-        const firstDayIndex = new Date(year, month, 1).getDay();
+        // Calcul du premier jour du mois (Ajustement pour que Lundi soit le 1er jour)
+        let firstDayIndex = new Date(year, month, 1).getDay();
         const startOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1; 
         const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-        // Cases vides
+        // Cases vides pour le début du mois
         for (let i = 0; i < startOffset; i++) {
-            calendarDays.innerHTML += `<div class="day disabled"></div>`;
+            calendarDays.innerHTML += `<div class="day disabled" style="color: transparent;">0</div>`;
         }
 
         // Génération des jours
         for (let i = 1; i <= daysInMonth; i++) {
             const dateVal = new Date(year, month, i);
-            const price = getPriceForDay(i + month*30); // Prix stable
             
-            // Griser avant le 10 Juin 2026
-            const isDisabled = i < 10 && month === 5 ? 'disabled' : '';
+            // Simulation : Griser les jours passés (avant le 10 Juin 2026)
+            const isDisabled = i < 10 && month === 5 && year === 2026 ? 'disabled' : '';
             
             const dayEl = document.createElement('div');
             dayEl.className = `day ${isDisabled}`;
             dayEl.dataset.date = dateVal.toISOString();
-            dayEl.dataset.price = price;
-            
-            dayEl.innerHTML = `
-                <span class="day-number">${i}</span>
-                <span class="day-price">${price}€</span>
-            `;
+            dayEl.innerText = i;
 
             if (!isDisabled) {
-                dayEl.addEventListener('click', () => handleDayClick(dateVal, price, dayEl));
+                dayEl.addEventListener('click', () => handleDayClick(dateVal, dayEl));
             }
             calendarDays.appendChild(dayEl);
         }
         updateSelectionUI();
     }
 
-    function handleDayClick(date, price, el) {
+    function handleDayClick(date, el) {
         if (!startDate || (startDate && endDate)) {
-            startDate = { date: date, price: price };
+            // Nouvelle sélection
+            startDate = date;
             endDate = null;
-        } else if (date < startDate.date) {
-            startDate = { date: date, price: price };
+        } else if (date < startDate) {
+            // Clic avant la date de début
+            startDate = date;
         } else {
-            endDate = { date: date, price: price };
+            // Sélection de la date de fin
+            endDate = date;
         }
         updateSelectionUI();
     }
 
     function updateSelectionUI() {
+        // Mise à jour visuelle du calendrier (Effet Pilule)
         document.querySelectorAll('.day').forEach(el => {
             if(el.classList.contains('disabled')) return;
             
             const elDate = new Date(el.dataset.date);
             el.classList.remove('selected', 'in-range', 'range-start', 'range-end');
 
-            if (startDate && elDate.getTime() === startDate.date.getTime()) {
+            if (startDate && elDate.getTime() === startDate.getTime()) {
                 el.classList.add('selected');
                 if (endDate) el.classList.add('range-start');
             }
             
-            if (endDate && elDate.getTime() === endDate.date.getTime()) {
+            if (endDate && elDate.getTime() === endDate.getTime()) {
                 el.classList.add('selected', 'range-end');
             }
             
-            if (startDate && endDate && elDate > startDate.date && elDate < endDate.date) {
+            if (startDate && endDate && elDate > startDate && elDate < endDate) {
                 el.classList.add('in-range');
             }
         });
 
-        const formatDate = (d) => d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+        // Mise à jour du texte de la carte résumé
+        const optionsDate = { weekday: 'short', day: 'numeric', month: 'short' };
+        const formatDate = (d) => d.toLocaleDateString('fr-FR', optionsDate);
         
-        allerDisplay.innerText = startDate ? formatDate(startDate.date) : '--';
-        retourDisplay.innerText = endDate ? formatDate(endDate.date) : '--';
+        allerDisplay.innerText = startDate ? formatDate(startDate) : 'Sélectionnez une date';
+        retourDisplay.innerText = endDate ? formatDate(endDate) : 'Sélectionnez une date';
         
-        const nbPassagers = parseInt(selectPassagers.value);
+        // Mise à jour des inputs cachés pour le backend
+        if (startDate) formDateAller.value = startDate.toISOString().split('T')[0];
+        if (endDate) formDateRetour.value = endDate.toISOString().split('T')[0];
 
+        // Activation du bouton uniquement si l'aller-retour est sélectionné
         if (startDate && endDate) {
-            const totalPrixVol = parseInt(startDate.price) + parseInt(endDate.price);
-            priceDisplay.innerText = `${totalPrixVol * nbPassagers} €`;
             btnContinue.removeAttribute('disabled');
-        } else if (startDate) {
-            priceDisplay.innerText = `dès ${parseInt(startDate.price) * nbPassagers} €`;
-            btnContinue.setAttribute('disabled', 'true');
         } else {
-            priceDisplay.innerText = '-- €';
             btnContinue.setAttribute('disabled', 'true');
         }
     }
 
-    function updateSummaryPanel() {
-        const dep = selectDepart.value.split(' ')[0]; // Récupère juste "Paris"
-        const arr = selectArrivee.value.split(' ')[0];
-        resumeItineraire.innerHTML = `${dep} <i class="fas fa-arrow-right mx-2 is-size-6" style="color: var(--accent);"></i> ${arr}`;
-        
-        resumeClasse.innerText = selectClasse.options[selectClasse.selectedIndex].text;
-        
-        const pax = selectPassagers.value;
-        resumePassagers.innerText = `(${pax} Passager${pax > 1 ? 's' : ''})`;
-        
-        // Re-render calendrier pour mettre à jour les prix si la classe change
-        renderCalendar(); 
+    // Extraction IATA et Ville depuis la balise select (ex: "Paris (CDG)")
+    function extractLocation(str) {
+        const parts = str.split('(');
+        return {
+            city: parts[0].trim(),
+            iata: parts[1] ? parts[1].replace(')', '').trim() : ''
+        };
     }
 
-    // Event Listeners
+    function updateSummaryPanel() {
+        // Mise à jour des IATA et villes Flighty Style
+        const dep = extractLocation(selectDepart.value);
+        const arr = extractLocation(selectArrivee.value);
+        
+        iataDepart.innerText = dep.iata;
+        cityDepart.innerText = dep.city;
+        formDepart.value = dep.iata;
+        
+        iataArrivee.innerText = arr.iata;
+        cityArrivee.innerText = arr.city;
+        formArrivee.value = arr.iata;
+        
+        formClasse.value = selectClasse.value;
+    }
+
+    // Écouteurs d'événements
     document.getElementById('prevMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
     document.getElementById('nextMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
-
     document.getElementById('btnResetDates').addEventListener('click', () => { startDate = null; endDate = null; updateSelectionUI(); });
 
-    // Update dynamique quand on touche au formulaire de recherche
     selectDepart.addEventListener('change', updateSummaryPanel);
     selectArrivee.addEventListener('change', updateSummaryPanel);
-    selectPassagers.addEventListener('change', updateSummaryPanel);
-    selectClasse.addEventListener('change', updateSummaryPanel); // Ceci déclenche un recalcul des prix !
-
-    // Navigation vers l'étape suivante
-    btnContinue.addEventListener('click', () => {
-        // En production, on pourrait sauvegarder les choix dans la session via une requête fetch POST
-        window.location.href = '/client/booking-flights';
-    });
+    selectClasse.addEventListener('change', updateSummaryPanel);
 
     // Initialisation
     updateSummaryPanel();
+    renderCalendar();
 });

@@ -5,6 +5,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 
 from flask import Blueprint, render_template
 
+
 # Blueprint
 client_bp = Blueprint('client', __name__, url_prefix='/client')
 

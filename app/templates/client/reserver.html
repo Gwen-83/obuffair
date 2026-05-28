@@ -1,7 +1,7 @@
 {% extends "client/base_booking.html" %}
 {% set step = 1 %}
 
-{% block title %}Réservation Complète - O'BUFFAIR{% endblock %}
+{% block title %}Recherche de Vols - O'BUFFAIR{% endblock %}
 
 {% block booking_css %}
     <style>
@@ -9,193 +9,201 @@
             --primary: #002A5C; 
             --primary-light: #004B9E; 
             --accent: #FFC72C; 
-            --bg-light: #F4F7F9; 
-            --radius: 12px;
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --bg-light: #F2F2F7; /* Gris Flighty iOS */
+            --flighty-text: #1C1C1E;
+            --flighty-gray: #8E8E93;
+            --radius-xl: 24px;
+            --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
         }
-        body { background-color: var(--bg-light); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
-        .navbar.is-primary { background-color: var(--primary); }
-        
-        /* Formulaire de recherche Haut */
-        .search-panel { background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; border-top: 4px solid var(--accent); }
-        
-        /* Styles du calendrier interactif */
-        .calendar-container { background: white; border-radius: var(--radius); box-shadow: var(--shadow-md); padding: 1.5rem; height: 100%; }
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; color: var(--primary); font-weight: bold; }
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-        .weekday { font-size: 0.8rem; color: #757575; font-weight: bold; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 5px; }
-        
-        .day { 
-            padding: 10px 5px; border-radius: 8px; cursor: pointer; border: 2px solid transparent;
-            display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 65px;
-            transition: all 0.2s; position: relative;
+
+        /* Panneau de recherche supérieur */
+        .search-panel { 
+            background: white; border-radius: var(--radius-xl); 
+            box-shadow: var(--shadow-soft); padding: 1.5rem 2rem; 
+            margin-bottom: 2rem; border: 1px solid rgba(0,0,0,0.02);
         }
-        .day:hover:not(.disabled) { border-color: var(--primary); background: #f0f4f8; }
-        .day.disabled { color: #ccc; cursor: not-allowed; background: #fafafa; }
         
-        .day-price { font-size: 0.75rem; color: #2E7D32; font-weight: 700; margin-top: 4px; }
-        .day.disabled .day-price { display: none; }
-        
-        /* États de sélection du calendrier */
-        .day.selected { background-color: var(--primary); color: white; border-color: var(--primary); font-weight: bold;}
-        .day.selected .day-price { color: var(--accent); }
-        .day.in-range { background-color: rgba(0, 42, 92, 0.08); border-radius: 0; }
-        .day.range-start { border-top-right-radius: 0; border-bottom-right-radius: 0; }
-        .day.range-end { border-top-left-radius: 0; border-bottom-left-radius: 0; }
-        
-        /* Panneau Récapitulatif */
-        .summary-box { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-radius: var(--radius); padding: 2rem; height: 100%; box-shadow: var(--shadow-md); }
-        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border: none; transition: transform 0.2s; }
-        .button.is-accent:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255,199,44,0.4); }
-        
-        /* Custom selects */
-        .select select { border-radius: 6px; border-color: #ddd; box-shadow: none; }
+        .flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;}
+        .select select { border-radius: 12px; border: 1px solid #E5E5EA; font-weight: 600; color: var(--flighty-text); height: 2.8em; box-shadow: none !important;}
         .select select:focus { border-color: var(--primary); }
+
+        /* Calendrier Flighty Style (iOS native look) */
+        .flighty-calendar-card { 
+            background: white; border-radius: var(--radius-xl); 
+            box-shadow: var(--shadow-soft); padding: 2rem; height: 100%;
+            border: 1px solid rgba(0,0,0,0.02);
+        }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .calendar-title { font-size: 22px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px;}
+        
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px 0; text-align: center; }
+        .weekday { font-size: 13px; color: var(--flighty-gray); font-weight: 700; padding-bottom: 10px; }
+        
+        /* Design des jours (Cercles et Pilules) */
+        .day { 
+            height: 44px; display: flex; align-items: center; justify-content: center;
+            font-size: 17px; font-weight: 600; cursor: pointer; color: var(--flighty-text);
+            position: relative; z-index: 2; margin: 0 4px; transition: color 0.2s;
+        }
+        .day:hover:not(.disabled) { color: var(--primary); }
+        .day.disabled { color: #D1D1D6; cursor: not-allowed; font-weight: 500;}
+        
+        /* État Sélectionné (Cercle plein) */
+        .day.selected { color: white; font-weight: 700;}
+        .day.selected::after {
+            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 44px; height: 44px; background: var(--primary); border-radius: 50%; z-index: -1;
+            box-shadow: 0 4px 10px rgba(0, 42, 92, 0.2);
+        }
+        
+        /* État "Dans la plage" (Pilule continue) */
+        .day.in-range { color: var(--primary); }
+        .day.in-range::before, .day.range-start::before, .day.range-end::before {
+            content: ''; position: absolute; top: 0; bottom: 0; left: -4px; right: -4px;
+            background: rgba(0, 42, 92, 0.08); z-index: -2;
+        }
+        /* Bords arrondis pour le début et la fin de la pilule */
+        .day.range-start::before { left: 50%; border-top-left-radius: 22px; border-bottom-left-radius: 22px; }
+        .day.range-end::before { right: 50%; border-top-right-radius: 22px; border-bottom-right-radius: 22px; }
+
+        /* Panneau Récapitulatif (Flighty Style) */
+        .summary-card { 
+            background: white; border-radius: var(--radius-xl); 
+            padding: 2rem; height: 100%; box-shadow: var(--shadow-soft);
+            border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column;
+        }
+        .route-display { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .iata-code { font-size: 42px; font-weight: 800; color: var(--flighty-text); line-height: 1; letter-spacing: -1px;}
+        .city-name { font-size: 14px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+        .flight-path { flex-grow: 1; height: 2px; background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); margin: 0 20px; position: relative; top: -10px; display: flex; justify-content: center; align-items: center;}
+        .flight-path i { background: white; padding: 0 10px; color: var(--flighty-gray); font-size: 14px;}
+        
+        .date-box { background: var(--bg-light); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
+        .date-value { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-top: 4px;}
+        
+        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border-radius: 14px; border: none; height: 3.5em; font-size: 16px; transition: transform 0.2s;}
+        .button.is-accent:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 199, 44, 0.4); }
     </style>
 {% endblock %}
 
 {% block booking_content %}
-    <section class="section" style="flex: 1;">
-        <div class="container" style="max-width: 1200px;">
-            <h2 class="title is-3 mb-5" style="color: var(--primary);">Où souhaitez-vous voyager ?</h2>
-            
-            <div class="search-panel mb-6">
-                <div class="columns is-vcentered">
-                    <div class="column is-3">
-                        <div class="field">
-                            <label class="label is-small has-text-grey">De</label>
-                            <div class="control has-icons-left">
-                                <div class="select is-fullwidth">
-                                    <select id="selectDepart">
-                                        <option value="Paris (CDG)" selected>Paris (CDG)</option>
-                                        <option value="Lyon (LYS)">Lyon (LYS)</option>
-                                        <option value="Marseille (MRS)">Marseille (MRS)</option>
-                                    </select>
-                                </div>
-                                <span class="icon is-small is-left"><i class="fas fa-plane-departure has-text-primary"></i></span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="column is-3">
-                        <div class="field">
-                            <label class="label is-small has-text-grey">Vers</label>
-                            <div class="control has-icons-left">
-                                <div class="select is-fullwidth">
-                                    <select id="selectArrivee">
-                                        <option value="Rome (FCO)" selected>Rome (FCO)</option>
-                                        <option value="Madrid (MAD)">Madrid (MAD)</option>
-                                        <option value="Londres (LHR)">Londres (LHR)</option>
-                                        <option value="Berlin (BER)">Berlin (BER)</option>
-                                    </select>
-                                </div>
-                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival has-text-primary"></i></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="column is-2">
-                        <div class="field">
-                            <label class="label is-small has-text-grey">Passagers</label>
-                            <div class="control has-icons-left">
-                                <div class="select is-fullwidth">
-                                    <select id="selectPassagers">
-                                        <option value="1" selected>1 Adulte</option>
-                                        <option value="2">2 Adultes</option>
-                                        <option value="3">3 Adultes</option>
-                                        <option value="4">Famille (4+)</option>
-                                    </select>
-                                </div>
-                                <span class="icon is-small is-left"><i class="fas fa-users has-text-primary"></i></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="column is-2">
-                        <div class="field">
-                            <label class="label is-small has-text-grey">Classe</label>
-                            <div class="control has-icons-left">
-                                <div class="select is-fullwidth">
-                                    <select id="selectClasse">
-                                        <option value="1" selected>Économique</option>
-                                        <option value="2.5">Business</option>
-                                        <option value="4">Première</option>
-                                    </select>
-                                </div>
-                                <span class="icon is-small is-left"><i class="fas fa-gem has-text-primary"></i></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="column is-2">
-                        <div class="field">
-                            <label class="label is-small has-text-white">.</label>
-                            <button id="btnResetDates" style="display:none;"></button>
-                            <a href="{{ url_for('client.booking') }}" class="button is-primary is-fullwidth">
-                                <i class="fas fa-search mr-2"></i> Rechercher
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="columns is-variable is-6">
-                
-                <div class="column is-8">
-                    <div class="calendar-container">
-                        <div class="calendar-header">
-                            <button class="button is-small is-light" id="prevMonth"><i class="fas fa-chevron-left"></i></button>
-                            <span id="monthYearDisplay" class="is-size-5">Juin 2026</span>
-                            <button class="button is-small is-light" id="nextMonth"><i class="fas fa-chevron-right"></i></button>
-                        </div>
-                        <div class="calendar-grid" id="calendarDays">
-                            <div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div>
-                            <div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>
-                            </div>
-                    </div>
-                </div>
-
+        <div class="search-panel">
+            <div class="columns is-vcentered">
                 <div class="column is-4">
-                    <div class="summary-box">
-                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
-                            <h3 class="title is-4 has-text-white m-0"><i class="fas fa-ticket-alt mr-2"></i> Résumé</h3>
-                            <span class="tag is-light is-rounded" id="resumeClasse">Économique</span>
-                        </div>
-                        
-                        <div class="box p-4 mb-4" style="background-color: rgba(255,255,255,0.1); border: none; border-radius: 8px;">
-                            <p class="is-size-7 has-text-grey-light is-uppercase mb-1">Itinéraire</p>
-                            <p class="is-size-5 has-text-white font-weight-bold" id="resumeItineraire">Paris (CDG) <i class="fas fa-arrow-right mx-2 is-size-6" style="color: var(--accent);"></i> Rome (FCO)</p>
-                        </div>
-                        
-                        <div class="columns is-mobile">
-                            <div class="column is-6">
-                                <p class="heading has-text-grey-light">Vol Aller</p>
-                                <p class="is-size-5 has-text-white font-weight-bold" id="allerDisplay">--</p>
+                    <div class="field">
+                        <label class="flighty-label">Aéroport de Départ</label>
+                        <div class="control has-icons-left">
+                            <div class="select is-fullwidth">
+                                <select id="selectDepart">
+                                    <option value="Paris (CDG)" selected>Paris (CDG)</option>
+                                    <option value="Lyon (LYS)">Lyon (LYS)</option>
+                                    <option value="Toulouse (TLS)">Toulouse (TLS)</option>
+                                </select>
                             </div>
-                            <div class="column is-6 has-text-right">
-                                <p class="heading has-text-grey-light">Vol Retour</p>
-                                <p class="is-size-5 has-text-white font-weight-bold" id="retourDisplay">--</p>
+                            <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="column is-4">
+                    <div class="field">
+                        <label class="flighty-label">Aéroport d'Arrivée</label>
+                        <div class="control has-icons-left">
+                            <div class="select is-fullwidth">
+                                <select id="selectArrivee">
+                                    <option value="Rome (FCO)" selected>Rome (FCO)</option>
+                                    <option value="Madrid (MAD)">Madrid (MAD)</option>
+                                    <option value="Londres (LHR)">Londres (LHR)</option>
+                                </select>
                             </div>
+                            <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
                         </div>
-                        
-                        <hr style="background-color: rgba(255,255,255,0.2);">
-                        
-                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
-                            <span class="is-size-6">Total estimé <span id="resumePassagers" class="is-size-7 has-text-grey-light block">(1 Passager)</span></span>
-                            <span class="title is-2 m-0" style="color: var(--accent);" id="priceDisplay">-- €</span>
+                    </div>
+                </div>
+
+                <div class="column is-3">
+                    <div class="field">
+                        <label class="flighty-label">Classe de Voyage</label>
+                        <div class="control has-icons-left">
+                            <div class="select is-fullwidth">
+                                <select id="selectClasse">
+                                    <option value="Eco" selected>Économique</option>
+                                    <option value="Business">Business</option>
+                                </select>
+                            </div>
+                            <span class="icon is-small is-left"><i class="fas fa-gem" style="color: var(--primary);"></i></span>
                         </div>
-                        
-                        <button class="button is-accent is-fullwidth is-medium" id="btnContinue" disabled>
-                            Continuer <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
+                </div>
+
+                <div class="column is-1 has-text-right">
+                    <div class="field">
+                        <label class="flighty-label">&nbsp;</label>
+                        <button class="button is-light is-rounded" id="btnResetDates" title="Réinitialiser">
+                            <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
                 </div>
-
             </div>
         </div>
-    </section>
-{% endblock %}
 
-{% block extra_js %}
-    <script src="{{ url_for('static', filename='js/reserver.js') }}"></script>
+        <div class="columns is-variable is-5">
+            
+            <div class="column is-7">
+                <div class="flighty-calendar-card">
+                    <div class="calendar-header">
+                        <button class="button is-white is-rounded" id="prevMonth"><i class="fas fa-chevron-left" style="color: var(--primary);"></i></button>
+                        <span id="monthYearDisplay" class="calendar-title">Juin 2026</span>
+                        <button class="button is-white is-rounded" id="nextMonth"><i class="fas fa-chevron-right" style="color: var(--primary);"></i></button>
+                    </div>
+                    <div class="calendar-grid" id="calendarDays">
+                        </div>
+                </div>
+            </div>
+
+            <div class="column is-5">
+                <div class="summary-card">
+                    
+                    <div class="route-display">
+                        <div style="width: 80px;">
+                            <div class="iata-code" id="iataDepart">CDG</div>
+                            <div class="city-name" id="cityDepart">Paris</div>
+                        </div>
+                        <div class="flight-path"><i class="fas fa-plane"></i></div>
+                        <div style="width: 80px; text-align: right;">
+                            <div class="iata-code" id="iataArrivee">FCO</div>
+                            <div class="city-name" id="cityArrivee">Rome</div>
+                        </div>
+                    </div>
+                    
+                    <div class="date-box">
+                        <p class="flighty-label">Vol Aller</p>
+                        <p class="date-value" id="allerDisplay">Sélectionnez une date</p>
+                    </div>
+                    
+                    <div class="date-box">
+                        <p class="flighty-label">Vol Retour</p>
+                        <p class="date-value" id="retourDisplay">Sélectionnez une date</p>
+                    </div>
+                    
+                    <div style="margin-top: auto; padding-top: 1rem;">
+                        <form action="{{ url_for('client.booking_flights') }}" method="POST" id="searchFlightForm">
+                            <input type="hidden" name="depart" id="formDepart" value="CDG">
+                            <input type="hidden" name="arrivee" id="formArrivee" value="FCO">
+                            <input type="hidden" name="classe" id="formClasse" value="Eco">
+                            <input type="hidden" name="date_aller" id="formDateAller" value="">
+                            <input type="hidden" name="date_retour" id="formDateRetour" value="">
+                            
+                            <button type="submit" class="button is-accent is-fullwidth" id="btnContinue" disabled>
+                                Voir les vols <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+<script src="{{ url_for('static', filename='js/reserver.js') }}"></script>
 {% endblock %}
