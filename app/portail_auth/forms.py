@@ -10,6 +10,8 @@ import re  # Pour les regex (pattern dans string)
 from flask_wtf import FlaskForm  # Forms securisées avec CSRF token
 from wtforms import StringField, PasswordField, SubmitField, DateField  # Types de champs
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError  # Validateurs prédéfinis
+from app import db
+from sqlalchemy import text
 from app.portail_auth.models_auth import User  # Model pour vérifier si l'email existe déjà
 
 
@@ -98,10 +100,12 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('S\'inscrire')
     
     def validate_email(self, email):
-        # Chercher en BD si cet email existe déjà
-        # .first() retourne le premier résultat ou None
-        if User.query.filter_by(email=email.data.lower()).first():
-            # L'email existe, on lève une erreur
+        # Chercher en BD si email existe
+        existing = db.session.execute(
+            text("SELECT 1 FROM clients WHERE email = :email LIMIT 1"),
+            {"email": email.data.lower()}
+        ).fetchone()
+        if existing:
             raise ValidationError('Cet email est déjà associé à un compte')
 
 
@@ -137,7 +141,8 @@ class ForgotPasswordForm(FlaskForm):
     
     def validate_email(self, email):
         """Vérifier que l'email existe"""
-        if not User.query.filter_by(email=email.data.lower()).first():
+        existing = db.session.execute(text("SELECT 1 FROM clients WHERE email = :email LIMIT 1"),{"email": email.data.lower()}).fetchone()
+        if not existing:
             raise ValidationError('Aucun compte associé à cet email')
 
 

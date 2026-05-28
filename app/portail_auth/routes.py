@@ -17,6 +17,7 @@ from app import db  # Accès à la base de données
 from app.portail_auth.models_auth import User  # Modèle User
 from app.portail_auth.forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm  # Formulaires
 from app.portail_auth.email_utils import send_reset_password_email, send_verification_email  # Utilitaires pour envoyer les emails
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError  # Exception si email dupliqué en BD
 
 # Créer un log pour afficher des messages lors du debug
@@ -115,22 +116,22 @@ def login():
             password = form.password.data
             
             # cherche user par email
-            user = User.query.filter_by(email=email).first()
+            user = db.session.execute(text("SELECT * FROM clients WHERE email = :email LIMIT 1"),{"email": email}).mappings().first()
             
             # Vérifier que l'email est confirmé (avant de vérifier le mot de passe)
-            if user and not user.email_verified:
+            if user and not user['email_verified']:
                 logger.warning(f'Tentative de connexion avec email non vérifié: {email}')
                 flash('Veuillez vérifier votre email avant de vous connecter.', 'warning')
                 return render_template('auth/login.html', form=form)
             
             # user exist + mdp correct avec hash dans bdd
-            if user and check_password_hash(user.mot_de_passe, password):
+            if user and check_password_hash(user['mot_de_passe'], password):
                 # Auth réussi
-                session['user_id'] = user.id_client
-                session['email'] = user.email
-                session['prenom'] = user.prenom
-                session['nom'] = user.nom
-                session['is_admin'] = user.is_admin
+                session['user_id'] = user['id_client']
+                session['email'] = user['email']
+                session['prenom'] = user['prenom']
+                session['nom'] = user['nom']
+                session['is_admin'] = user['is_admin']
                 
                 logger.info(f'Utilisateur connecté: {email}')
                 flash(f'Connexion réussie','success')
@@ -180,16 +181,24 @@ def forgot_password():
     if form.validate_on_submit():
         try:
             email = form.email.data.strip().lower()
-            user = User.query.filter_by(email=email).first()
+            user = db.session.execute(
+                text("SELECT * FROM clients WHERE email = :email LIMIT 1"),
+                {"email": email}
+            ).mappings().first()
             
             if user:
                 # token 64 car
                 reset_token = secrets.token_urlsafe(64)
                 
                 # Stocker le token et son expiration (1 heure)
-                user.reset_token = reset_token
-                user.reset_token_expiration = datetime.utcnow() + timedelta(hours=1)
-                
+                db.session.execute(
+                    text("UPDATE clients SET reset_token = :reset_token, reset_token_expiration = :expiration WHERE id_client = :id"),
+                    {
+                        "reset_token": reset_token,
+                        "expiration": datetime.utcnow() + timedelta(hours=1),
+                        "id": user['id_client']
+                    }
+                )
                 db.session.commit()
                 
                 logger.info(f'Token de réinitialisation généré pour: {email}')
@@ -224,11 +233,11 @@ def reset_password(token):
     if 'user_id' in session:
         return redirect(url_for('client.accueil'))
     
-    # cheche user avec token = reset token
-    user = User.query.filter_by(reset_token=token).first()
+    # cherche user avec token = reset token
+    user = db.session.execute(text("SELECT * FROM clients WHERE reset_token = :token LIMIT 1"),{"token": token}).mappings().first()
     
     # Vérif user existe et token en vie
-    if not user or user.reset_token_expiration < datetime.utcnow():
+    if not user or user['reset_token_expiration'] < datetime.utcnow():
         logger.warning(f'Token invalide ou expiré: {token}')
         flash('Lien de réinitialisation invalide ou expiré', 'danger')
         return redirect(url_for('auth.login'))
@@ -244,13 +253,10 @@ def reset_password(token):
             )
             
             # Maj mdp et del token
-            user.mot_de_passe = hashed_password
-            user.reset_token = None
-            user.reset_token_expiration = None
-            
+            db.session.execute(text("UPDATE clients SET mot_de_passe = :password, reset_token = NULL, reset_token_expiration = NULL WHERE id_client = :id"),{"password": hashed_password,"id": user['id_client']})
             db.session.commit()
             
-            logger.info(f'Mot de passe réinitialisé pour: {user.email}')
+            logger.info(f'Mot de passe réinitialisé pour: {user["email"]}')
             flash('Mot de passe réinitialisé avec succès. Connectez-vous.', 'success')
             
             return redirect(url_for('auth.login'))
@@ -270,22 +276,23 @@ def verify_email(token):
     Généré lors de l'inscription, permet de confirmer l'adresse email.
     """
     # Cherche user avec le token de vérification
-    user = User.query.filter_by(email_verification_token=token).first()
+    user = db.session.execute(text("SELECT * FROM clients WHERE email_verification_token = :token LIMIT 1"),{"token": token}).mappings().first()
     
     # Vérif user existe et token en vie
-    if not user or user.email_verification_token_expiration < datetime.utcnow():
+    if not user or user['email_verification_token_expiration'] < datetime.utcnow():
         logger.warning(f'Token de vérification invalide ou expiré: {token}')
         flash('Lien de vérification invalide ou expiré. Veuillez vous réinscrire.', 'danger')
         return redirect(url_for('auth.register'))
     
     # Vérifier l'email et supprimer le token
-    user.email_verified = True
-    user.email_verification_token = None
-    user.email_verification_token_expiration = None
+    db.session.execute(
+        text("UPDATE clients SET email_verified = true, email_verification_token = NULL, email_verification_token_expiration = NULL WHERE id_client = :id"),
+        {"id": user['id_client']}
+    )
     
     db.session.commit()
     
-    logger.info(f'Email vérifié pour: {user.email}')
+    logger.info(f"Email vérifié pour: {user['email']}")
     flash('Email vérifié avec succès! Vous pouvez vous connecter.', 'success')
     
     return redirect(url_for('auth.login'))

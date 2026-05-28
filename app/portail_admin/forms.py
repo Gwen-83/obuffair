@@ -108,7 +108,10 @@ class FormAjouterAvion(FlaskForm):
         if self._original_immatriculation and field.data.upper() == self._original_immatriculation:
             return
 
-        avion_existant = Avion.query.filter_by(immatriculation=field.data.upper()).first()
+        avion_existant = db.session.execute(
+            text("SELECT immatriculation FROM avions WHERE immatriculation = :immat LIMIT 1"),
+            {"immat": field.data.upper()}
+        ).fetchone()
         if avion_existant:
             raise ValidationError('Cette immatriculation existe déjà dans la base de données')
     

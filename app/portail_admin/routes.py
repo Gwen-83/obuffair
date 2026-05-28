@@ -3,12 +3,14 @@ Routes admin : CRUD vols/avions/aéroports, configuration tarifaire, dashboards 
 Gère aussi les droits d'accès et logs d'audit.
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
 from app.portail_admin.modele_admin import Avion
 from app.portail_admin.forms import FormAjouterAvion
 from app.portail_admin.modele_admin import Vols
+from sqlalchemy import text
+from types import SimpleNamespace
 # Blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -34,17 +36,18 @@ def config_avion():
     form = FormAjouterAvion()
     
     # Récupérer tous les avions
-    avions = Avion.query.all()
+    avions = db.session.execute(text("SELECT * FROM avions")).mappings().all()
     
     # Formulaire ajout avins
     if form.validate_on_submit():
         # Unicité immat
         immat_upper = form.immatriculation.data.upper() if form.immatriculation.data else ''
-        avion_existant = Avion.query.filter_by(immatriculation=immat_upper).first()
+        avion_existant = db.session.execute(db.text("SELECT * FROM avions WHERE immatriculation = {immat_upper} LIMIT 1")).mappings().first()
         if avion_existant:
             flash('Cette immatriculation existe déjà', 'danger')
         else:
             try:
+                #Nouvel avions à partir de model_amdin.py
                 nouvel_avion = Avion(
                     immatriculation=immat_upper,
                     modele=form.modele.data or '',
@@ -60,7 +63,7 @@ def config_avion():
                 )
                 db.session.add(nouvel_avion)
                 db.session.commit()
-                flash(f'Avion {nouvel_avion.immatriculation} ajouté avec succès', 'success')
+                flash(f'Avion {nouvel_avion.immatriculation} ajouté', 'success')
                 return redirect(url_for('admin.config_avion'))
             except Exception as e:
                 db.session.rollback()
@@ -72,11 +75,13 @@ def config_avion():
 @admin_required
 def supprimer_avion(immatriculation):
     """supprimer avion en désactivant"""
-    avion = Avion.query.get_or_404(immatriculation)
+    result = db.session.execute(db.text("UPDATE avions SET actif = false WHERE immatriculation = :immat"),{"immat": immatriculation}
+    )
+    if result.rowcount == 0:
+        abort(404)
     try:
-        avion.actif = False
         db.session.commit()
-        return jsonify({'success': True, 'message': f'Avion {avion.immatriculation} supprimé'})
+        return jsonify({'success': True, 'message': f'Avion {immatriculation} supprimé'})
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
@@ -86,47 +91,58 @@ def supprimer_avion(immatriculation):
 def get_avions_json():
     """Avions liste en JSON"""
     filtre_actif = request.args.get('actif', 'true').lower() == 'true'
-    avions = Avion.query.filter_by(actif=filtre_actif).all() if filtre_actif else Avion.query.all()
+    if filtre_actif:
+        avions = db.session.execute(
+            text("SELECT * FROM avions WHERE actif = :actif"),
+            {"actif": filtre_actif}
+        ).mappings().all()
+    else:
+        avions = db.session.execute(text("SELECT * FROM avions")).mappings().all()
     
     return jsonify([{
-        'immatriculation': a.immatriculation,
-        'modele': a.modele,
-        'eco_capacite': a.eco_capacite,
-        'bus_capacite': a.bus_capacite,
-        'first_capacite': a.first_capacite,
-        'nb_rangees': a.nb_rangees,
-        'largeur_rangee': a.largeur_rangee,
-        'eco_rang_de': a.eco_rang_de,
-        'eco_rang_a': a.eco_rang_a,
-        'bus_rang_de': a.bus_rang_de,
-        'bus_rang_a': a.bus_rang_a,
-        'first_rang_de': a.first_rang_de,
-        'first_rang_a': a.first_rang_a,
-        'capacite_totale': a.capacite_totale,
-        'actif': a.actif
+        'immatriculation': a['immatriculation'],
+        'modele': a['modele'],
+        'eco_capacite': a['eco_capacite'],
+        'bus_capacite': a['bus_capacite'],
+        'first_capacite': a['first_capacite'],
+        'nb_rangees': a['nb_rangees'],
+        'largeur_rangee': a['largeur_rangee'],
+        'eco_rang_de': a['eco_rang_de'],
+        'eco_rang_a': a['eco_rang_a'],
+        'bus_rang_de': a['bus_rang_de'],
+        'bus_rang_a': a['bus_rang_a'],
+        'first_rang_de': a['first_rang_de'],
+        'first_rang_a': a['first_rang_a'],
+        'capacite_totale': a['capacite_totale'],
+        'actif': a['actif']
     } for a in avions])
 
 
 @admin_bp.route('/api/avion/<string:immatriculation>', methods=['GET'])
 @admin_required
 def get_avion_json(immatriculation):
-    a = Avion.query.get_or_404(immatriculation)
+    a = db.session.execute(
+        text("SELECT * FROM avions WHERE immatriculation = :immat LIMIT 1"),
+        {"immat": immatriculation}
+    ).mappings().first()
+    if not a:
+        abort(404)
     return jsonify({
-        'immatriculation': a.immatriculation,
-        'modele': a.modele,
-        'eco_capacite': a.eco_capacite,
-        'bus_capacite': a.bus_capacite,
-        'first_capacite': a.first_capacite,
-        'nb_rangees': a.nb_rangees,
-        'largeur_rangee': a.largeur_rangee,
-        'eco_rang_de': a.eco_rang_de,
-        'eco_rang_a': a.eco_rang_a,
-        'bus_rang_de': a.bus_rang_de,
-        'bus_rang_a': a.bus_rang_a,
-        'first_rang_de': a.first_rang_de,
-        'first_rang_a': a.first_rang_a,
-        'capacite_totale': a.capacite_totale,
-        'actif': a.actif
+        'immatriculation': a['immatriculation'],
+        'modele': a['modele'],
+        'eco_capacite': a['eco_capacite'],
+        'bus_capacite': a['bus_capacite'],
+        'first_capacite': a['first_capacite'],
+        'nb_rangees': a['nb_rangees'],
+        'largeur_rangee': a['largeur_rangee'],
+        'eco_rang_de': a['eco_rang_de'],
+        'eco_rang_a': a['eco_rang_a'],
+        'bus_rang_de': a['bus_rang_de'],
+        'bus_rang_a': a['bus_rang_a'],
+        'first_rang_de': a['first_rang_de'],
+        'first_rang_a': a['first_rang_a'],
+        'capacite_totale': a['capacite_totale'],
+        'actif': a['actif']
     })
 
 
@@ -134,7 +150,13 @@ def get_avion_json(immatriculation):
 @admin_required
 def edit_avion(immatriculation):
     """Modifier un avion existant"""
-    avion = Avion.query.get_or_404(immatriculation)
+    row = db.session.execute(
+        text("SELECT * FROM avions WHERE immatriculation = :immat LIMIT 1"),
+        {"immat": immatriculation}
+    ).mappings().first()
+    if not row:
+        abort(404)
+    avion = SimpleNamespace(**dict(row))
     form = FormAjouterAvion(original_immatriculation=avion.immatriculation)
 
     if request.method == 'GET':
@@ -154,18 +176,29 @@ def edit_avion(immatriculation):
     if form.validate_on_submit():
         try:
             # On n'autorise pas le changement d'immatriculation primaire
-            avion.modele = form.modele.data or ''
-            avion.nb_rangees = form.nb_rangees.data or 0
-            avion.largeur_rangee = form.largeur_rangee.data or 0
-            avion.eco_rang_de = form.eco_rang_de.data or 0
-            avion.eco_rang_a = form.eco_rang_a.data or 0
-            avion.bus_rang_de = form.bus_rang_de.data or 0
-            avion.bus_rang_a = form.bus_rang_a.data or 0
-            avion.first_rang_de = form.first_rang_de.data or 0
-            avion.first_rang_a = form.first_rang_a.data or 0
-            avion.actif = form.actif.data if form.actif.data is not None else True
+            db.session.execute(
+                text(
+                    "UPDATE avions SET modele = :modele, nb_rangees = :nb_rangees, largeur_rangee = :largeur_rangee, "
+                    "eco_rang_de = :eco_rang_de, eco_rang_a = :eco_rang_a, bus_rang_de = :bus_rang_de, "
+                    "bus_rang_a = :bus_rang_a, first_rang_de = :first_rang_de, first_rang_a = :first_rang_a, "
+                    "actif = :actif WHERE immatriculation = :immat"
+                ),
+                {
+                    "modele": form.modele.data or '',
+                    "nb_rangees": form.nb_rangees.data or 0,
+                    "largeur_rangee": form.largeur_rangee.data or 0,
+                    "eco_rang_de": form.eco_rang_de.data or 0,
+                    "eco_rang_a": form.eco_rang_a.data or 0,
+                    "bus_rang_de": form.bus_rang_de.data or 0,
+                    "bus_rang_a": form.bus_rang_a.data or 0,
+                    "first_rang_de": form.first_rang_de.data or 0,
+                    "first_rang_a": form.first_rang_a.data or 0,
+                    "actif": form.actif.data if form.actif.data is not None else True,
+                    "immat": immatriculation
+                }
+            )
             db.session.commit()
-            flash(f'Avion {avion.immatriculation} modifié', 'success')
+            flash(f'Avion {immatriculation} modifié', 'success')
             return redirect(url_for('admin.config_avion'))
         except Exception as e:
             db.session.rollback()

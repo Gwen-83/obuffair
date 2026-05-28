@@ -16,13 +16,12 @@ class User(db.Model):
     C'est la structure de la table 'clients' en BD.
     Chaque instance User = une ligne dans la table.
     """
-    # Nom de la table en BD
     __tablename__ = 'clients'
     
-    # ID unique pour chaque user (auto-increment)
+    # ID chaque user
     id_client = db.Column(db.Integer, primary_key=True)
     
-    # Email (deux users ne peuvent pas avoir le même email) index=True pour recherche rapide
+    # Email (deux users ne peuvent pas avoir le même email)/ index=True pour recherche rapide
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     
     # Password hashé
@@ -37,25 +36,25 @@ class User(db.Model):
     # Date de naissance
     date_naissance = db.Column(db.Date)
     
-    # Points de fidélité (par défaut 0)
+    # Points de fidélité
     points_fidelite = db.Column(db.Integer, default=0)
     
-    # Token pour réinitialiser le mot de passe (None si pas de reset en cours)
+    # Token pour réinitialiser le mot de passe
     reset_token = db.Column(db.String(255), unique=True, nullable=True)
     
     # Expiration du token de réinitialisation
     reset_token_expiration = db.Column(db.DateTime, nullable=True)
     
-    # Booléen pour vérifier si l'email est confirmé (False par défaut)
+    # Booléen pour vérifier si l'email est confirmé
     email_verified = db.Column(db.Boolean, default=False, nullable=False)
     
-    # Token pour vérifier l'email (None si email déjà vérifié)
+    # Token pour vérifier l'email
     email_verification_token = db.Column(db.String(255), unique=True, nullable=True)
     
     # Expiration du token de vérification d'email
     email_verification_token_expiration = db.Column(db.DateTime, nullable=True)
     
-    # Booléen pour indiquer si l'utilisateur est administrateur (False par défaut)
+    # Booléen pour indiquer si l'utilisateur est administrateur
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
 class Reservation(db.Model):

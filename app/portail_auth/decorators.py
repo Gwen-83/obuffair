@@ -15,6 +15,8 @@ Exemple:
 
 from functools import wraps
 from flask import session, redirect, url_for, flash
+from app import db
+from sqlalchemy import text
 
 def login_required(f):
     """
@@ -43,10 +45,12 @@ def admin_required(f):
             return redirect(url_for('auth.login'))
         
         # Charger l'utilisateur depuis la BD pour vérifier son statut admin
-        from app.portail_auth.models_auth import User
-        user = User.query.get(session['user_id'])
+        user = db.session.execute(
+            text("SELECT * FROM clients WHERE id_client = :id LIMIT 1"),
+            {"id": session['user_id']}
+        ).mappings().first()
         
-        if not user or not user.is_admin:
+        if not user or not user['is_admin']:
             flash('Accès refusé. Seuls les administrateurs peuvent accéder à cette page.', 'danger')
             return redirect(url_for('index'))  # ou un route 403
         
