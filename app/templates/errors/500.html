@@ -1,0 +1,21 @@
+{% extends 'components/base.html' %} {% block title %}500 Erreur serveur -
+O'Buffair{% endblock %} {% block content %}
+<section class="section">
+  <div class="container has-text-centered">
+    <div class="box">
+      <h1 class="title is-1 has-text-primary">500</h1>
+      <h2 class="subtitle">Erreur interne du serveur</h2>
+      <p class="content">
+        Une erreur est survenue côté serveur. Nous travaillons à la résolution
+        du problème.
+      </p>
+      <p class="mt-4">
+        <a class="button is-primary" href="{{ url_for('index') }}"
+          ><span class="icon"><i class="fa-solid fa-house"></i></span
+          >&nbsp;Retour à l'accueil</a
+        >
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}
