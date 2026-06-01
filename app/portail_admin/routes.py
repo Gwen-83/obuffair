@@ -11,6 +11,7 @@ from app.portail_admin.forms import FormAjouterAvion
 from sqlalchemy import text
 from types import SimpleNamespace
 from datetime import datetime
+from app.algos.yield_management import calculer_prix
 # Blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -202,6 +203,69 @@ def reservations():
         reservations.append(résa_dico)
 
     return render_template('admin/html/reservations.html', reservations=reservations)
+
+
+@admin_bp.route('/tarification', methods=['GET'])
+@admin_required
+def tarification():
+    """Afficher les vols avec prix base et prix suggéré par l'algorithme"""
+    rows = db.session.execute(text("""
+        SELECT v.id_vol, v.id_aeroport_depart, v.id_aeroport_arrivee, v.date_heure_dep_utc, v.prix_de_base,
+               a.nb_rangees, a.largeur_rangee, COALESCE(COUNT(b.id_billet),0) AS nb_reservations
+        FROM vols v
+        LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
+        LEFT JOIN billets b ON b.id_vol = v.id_vol
+        GROUP BY v.id_vol
+        ORDER BY v.date_heure_dep_utc DESC
+    """)).mappings().all()
+
+    vols = []
+    for row in rows:
+        d = dict(row)
+        capacite = (d.get('nb_rangees') or 0) * (d.get('largeur_rangee') or 0)
+        taux = (d.get('nb_reservations') or 0) / capacite if capacite > 0 else 0.0
+
+        try:
+            resultat = calculer_prix(
+                prix_de_base=float(d.get('prix_de_base') or 0),
+                date_depart=d.get('date_heure_dep_utc'),
+                date_calcul=datetime.utcnow(),
+                taux_remplissage_vol=float(taux),
+                taux_remplissage_classe=float(taux),
+                classe='eco'
+            )
+            suggested = resultat.get('prix_final') if isinstance(resultat, dict) else d.get('prix_de_base')
+        except Exception:
+            suggested = d.get('prix_de_base')
+
+        d['capacite'] = capacite
+        d['taux'] = round(taux, 3)
+        d['suggested'] = suggested
+        vols.append(d)
+
+    return render_template('admin/html/tarification.html', vols=vols)
+
+
+@admin_bp.route('/tarification/update', methods=['POST'])
+@admin_required
+def update_tarif():
+    vol_id = request.form.get('vol_id')
+    new_price = request.form.get('new_price')
+    try:
+        p = float(new_price)
+    except Exception:
+        flash('Prix invalide', 'danger')
+        return redirect(url_for('admin.tarification'))
+
+    try:
+        db.session.execute(text("UPDATE vols SET prix_de_base = :p WHERE id_vol = :id"), {'p': p, 'id': vol_id})
+        db.session.commit()
+        flash('Prix mis à jour', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur mise à jour: {str(e)}', 'danger')
+
+    return redirect(url_for('admin.tarification'))
 
 
 @admin_bp.route('/support')
