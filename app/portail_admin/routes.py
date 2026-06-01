@@ -6,9 +6,8 @@ Gère aussi les droits d'accès et logs d'audit.
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
-from app.portail_admin.modele_admin import Avion
+from app.portail_admin.modele_admin import Avion, Vols, Support
 from app.portail_admin.forms import FormAjouterAvion
-from app.portail_admin.modele_admin import Vols
 from sqlalchemy import text
 from types import SimpleNamespace
 from datetime import datetime
@@ -170,6 +169,61 @@ def gestion_vols():
     """)).mappings().all()
 
     return render_template('admin/html/vols.html', avions=avions, aeroports=aeroports, vols_list=vols_list)
+
+
+@admin_bp.route('/reservations')
+@admin_required
+def reservations():
+    """Liste des réservations avec leurs billets associés"""
+    # Récupérer réservations
+    réservations = db.session.execute(text("""
+        SELECT id_reservation, id_client, date_reservation, statut
+        FROM reservations
+        ORDER BY date_reservation DESC
+    """)).mappings().all()
+
+    reservations = []
+    for résa in réservations:
+        résa_dico = dict(résa)
+        # formater date lisible
+        dt = résa_dico.get('date_reservation')
+        if hasattr(dt, 'strftime'):
+            résa_dico['date_reservation'] = dt.strftime('%Y-%m-%d %H:%M')
+
+        # récupérer billets liés
+        billets = db.session.execute(text("""
+            SELECT id_billet, id_vol, classe, options_repas, bagages_sup
+            FROM billets
+            WHERE id_reservation = :rid
+            ORDER BY id_billet
+        """), {"rid": résa_dico['id_reservation']}).mappings().all()
+
+        résa_dico['billets'] = [dict(b) for b in billets]
+        reservations.append(résa_dico)
+
+    return render_template('admin/html/reservations.html', reservations=reservations)
+
+
+@admin_bp.route('/support')
+@admin_required
+def support():
+    """Liste des tickets de support avec statistiques"""
+    # Récupérer tous les tickets
+    tickets = db.session.query(Support).order_by(Support.date_creation.desc()).all()
+    
+    # Calculer les statistiques par statut
+    stats = {
+        'nouveau': db.session.query(Support).filter(Support.statut == 'nouveau').count(),
+        'en_cours': db.session.query(Support).filter(Support.statut == 'en cours').count(),
+        'resolu': db.session.query(Support).filter(Support.statut == 'resolu').count(),
+        'ferme': db.session.query(Support).filter(Support.statut == 'ferme').count(),
+    }
+    
+    # Formater les dates
+    for t in tickets:
+        t.date_creation = t.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(t.date_creation, 'strftime') else t.date_creation
+    
+    return render_template('admin/html/support.html', tickets=tickets, stats=stats)
 
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required

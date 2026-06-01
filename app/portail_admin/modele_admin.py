@@ -91,3 +91,41 @@ class Vols(db.Model):
 
     def __repr__(self):
         return f'<Vol {self.id_vol}: {self.id_aeroport_depart} -> {self.id_aeroport_arrivee}>'
+
+class Support(db.Model):
+    """
+    Modèle pour les tickets de support clients.
+    Gère les demandes d'assistance et les réclamations.
+    """
+    __tablename__ = 'support'
+    
+    # ID du ticket de support (clé primaire)
+    id_ticket = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    
+    # Référence du client
+    id_client = db.Column(db.Integer, nullable=False, index=True)
+    
+    # Titre/Sujet du ticket
+    titre = db.Column(db.String(255), nullable=False)
+    
+    # Description détaillée du problème
+    description = db.Column(db.Text, nullable=False)
+    
+    # Statut du ticket : nouveau, en cours, résolu, fermé
+    statut = db.Column(db.String(20), default="nouveau", nullable=False)
+    
+    # Catégorie : reservation, vol, bagage, paiement, autre
+    categorie = db.Column(db.String(50), default="autre", nullable=False)
+    
+    # Priorité : basse, normale, haute
+    priorite = db.Column(db.String(20), default="normale", nullable=False)
+    
+    # Notes internes de l'admin
+    notes_internes = db.Column(db.Text, nullable=True)
+    
+    # Dates
+    date_creation = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    date_modification = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    
+    def __repr__(self):
+        return f'<Support #{self.id_ticket}: {self.titre} ({self.statut})'

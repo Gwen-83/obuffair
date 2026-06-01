@@ -1,0 +1,81 @@
+{% extends 'components/base.html' %} {% block title %}Réservations - Admin -
+O'Buffair{% endblock %} {% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-primary">Réservations</h1>
+
+    <div class="box">
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            <th>Réservation</th>
+            <th>Client</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Billets</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reservations %}
+          <tr>
+            <td>{{ r.id_reservation }}</td>
+            <td>{{ r.id_client }}</td>
+            <td>{{ r.date_reservation }}</td>
+            <td>
+              {% if r.statut == 'confirmee' %}
+              <span class="tag is-success">Confirmée</span>
+              {% elif r.statut == 'en cours' %}
+              <span class="tag is-info">En cours</span>
+              {% elif r.statut == 'annule' %}
+              <span class="tag is-danger">Annulée</span>
+              {% elif r.statut == 'en modification' %}
+              <span class="tag is-warning">En modification</span>
+              {% else %}
+              <span class="tag">{{ r.statut }}</span>
+              {% endif %}
+            </td>
+            <td>{{ r.billets|length }}</td>
+            <td>
+              <details>
+                <summary class="button is-outlined is-small">
+                  Voir billets
+                </summary>
+                <div class="content mt-2">
+                  {% if r.billets %}
+                  <table class="table is-fullwidth is-narrow">
+                    <thead>
+                      <tr>
+                        <th>ID billet</th>
+                        <th>Vol</th>
+                        <th>Classe</th>
+                        <th>Options repas</th>
+                        <th>Bagages sup.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for b in r.billets %}
+                      <tr>
+                        <td>{{ b.id_billet }}</td>
+                        <td>{{ b.id_vol }}</td>
+                        <td>{{ b.classe }}</td>
+                        <td>{{ b.options_repas }}</td>
+                        <td>{{ b.bagages_sup }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                  {% else %}
+                  <p class="help">Aucun billet lié</p>
+                  {% endif %}
+                </div>
+              </details>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}
