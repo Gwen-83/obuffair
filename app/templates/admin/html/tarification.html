@@ -1,0 +1,52 @@
+{% extends 'components/base.html' %}
+
+{% block title %}Tarification - Admin - O'Buffair{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-primary">Gestion tarifaire</h1>
+    <p class="subtitle">Voir et ajuster les prix des vols basés sur l'algorithme de yield management.</p>
+
+    <div class="box">
+      <table class="table is-fullwidth is-hoverable is-striped">
+        <thead>
+          <tr>
+            <th>Vol</th>
+            <th>Route</th>
+            <th>Départ</th>
+            <th>Capacité</th>
+            <th>Réservés</th>
+            <th>Prix base</th>
+            <th>Prix suggéré</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vols %}
+          <tr>
+            <td>{{ v.id_vol }}</td>
+            <td>{{ v.id_aeroport_depart }} → {{ v.id_aeroport_arrivee }}</td>
+            <td>{{ v.date_heure_dep_utc }}</td>
+            <td>{{ v.capacite or '—' }}</td>
+            <td>{{ v.nb_reservations or 0 }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin.update_tarif') }}" style="display:flex;gap:.5rem;align-items:center;">
+                <input type="hidden" name="vol_id" value="{{ v.id_vol }}">
+                <input class="input is-small" type="text" name="new_price" value="{{ '%.2f'|format(v.prix_de_base) }}" style="width:110px">
+            </td>
+            <td>
+                <strong>{{ '%.2f'|format(v.suggested) }}</strong>
+            </td>
+            <td>
+                <button class="button is-primary is-small" type="submit">Enregistrer</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends 'components/base.html' %} {% block title %}403 Interdit - O'Buffair{%
+endblock %} {% block content %}
+<section class="section">
+  <div class="container has-text-centered">
+    <div class="box">
+      <h1 class="title is-1 has-text-primary">403</h1>
+      <h2 class="subtitle">Accès refusé</h2>
+      <p class="content">
+        Vous n'avez pas la permission d'accéder à cette ressource.
+      </p>
+      <p class="mt-4">
+        <a class="button is-primary" href="{{ url_for('index') }}"
+          ><span class="icon"><i class="fa-solid fa-house"></i></span
+          >&nbsp;Retour à l'accueil</a
+        >
+      </p>
+    </div>
+  </div>
+</section>
+{% endblock %}

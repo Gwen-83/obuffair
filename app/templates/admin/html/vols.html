@@ -1,0 +1,542 @@
+{% extends "components/base.html" %} {% block title %}Planification des Vols{%
+endblock %} {% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<style>
+  /* Meilleure gestion des événements simultanés */
+  .fc {
+    font-size: 0.9rem;
+  }
+
+  .fc-event {
+    cursor: pointer;
+    transition:
+      transform 0.2s,
+      box-shadow 0.2s;
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-weight: 500;
+    border: 2px solid;
+  }
+
+  .fc-event:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+    z-index: 10;
+  }
+
+  /* Meilleure lisibilité pour les événements chevauchants */
+  .fc-daygrid-event {
+    margin-bottom: 2px;
+  }
+
+  .fc-col-time-frame .fc-event {
+    margin-bottom: 1px;
+  }
+
+  .fc-toolbar-title {
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+  }
+
+  .dashboard-header {
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Info-bulle pour les événements en surcharge */
+  .fc-event-title {
+    font-size: 0.85rem;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+</style>
+{% endblock %} {% block content %}
+<section class="section">
+  <div class="container">
+    <div
+      class="dashboard-header is-flex is-justify-content-space-between is-align-items-center"
+    >
+      <div>
+        <h1 class="title is-2" style="color: var(--primary)">
+          <i class="fas fa-calendar-alt"></i> Planification des vols
+        </h1>
+        <p class="subtitle is-6 mt-2">
+          Gérez vos horaires graphiquement. Passez en vue "Mois" pour déplacer
+          facilement vos vols entre les semaines.
+        </p>
+      </div>
+      <button class="button is-primary is-medium" onclick="openModal('create')">
+        <span class="icon"><i class="fas fa-plus"></i></span>
+        <span>Nouveau Vol</span>
+      </button>
+    </div>
+
+    <div class="box mb-6" style="border-top: 4px solid var(--primary)">
+      <div id="calendar"></div>
+    </div>
+
+    <h2 class="title is-4" style="color: var(--primary)">
+      <i class="fas fa-list"></i> Liste des vols programmés
+    </h2>
+    <div class="box" style="overflow-x: auto">
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr style="background-color: var(--primary)">
+            <th style="color: white">ID</th>
+            <th style="color: white">Itinéraire</th>
+            <th style="color: white">Avion</th>
+            <th style="color: white">Départ (UTC)</th>
+            <th style="color: white">Arrivée (UTC)</th>
+            <th style="color: white">Prix Base</th>
+            <th style="color: white">Statut</th>
+            <th style="color: white" class="has-text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in vols_list %}
+          <tr>
+            <td><strong>#{{ v.id_vol }}</strong></td>
+            <td>
+              <span class="tag is-light"
+                ><strong>{{ v.id_aeroport_depart }}</strong> ({{ v.ville_depart
+                }})</span
+              >
+              <i
+                class="fas fa-arrow-right mx-2"
+                style="color: var(--medium-gray)"
+              ></i>
+              <span class="tag is-light"
+                ><strong>{{ v.id_aeroport_arrivee }}</strong> ({{
+                v.ville_arrivee }})</span
+              >
+            </td>
+            <td>
+              <span class="tag"
+                ><i class="fas fa-plane mr-2"></i>{{ v.immatriculation_avion
+                }}</span
+              >
+            </td>
+            <td>{{ v.date_heure_dep_utc.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ v.date_heure_arr_utc.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td><strong>{{ v.prix_de_base }} €</strong></td>
+            <td>
+              {% if v.statut == "à l'heure" %}<span class="tag is-success"
+                >À l'heure</span
+              >
+              {% elif v.statut == "retardé" %}<span class="tag is-warning"
+                >Retardé</span
+              >
+              {% elif v.statut == "embarquement" %}<span class="tag is-info"
+                >Embarquement</span
+              >
+              {% elif v.statut == "annulé" %}<span class="tag is-danger"
+                >Annulé</span
+              >
+              {% else %}<span class="tag">{{ v.statut }}</span>{% endif %}
+            </td>
+            <td class="has-text-right">
+              <button
+                class="button is-small is-info is-outlined"
+                onclick="openModal('edit', '{{ v.id_vol }}', '{{ v.id_aeroport_depart }}', '{{ v.id_aeroport_arrivee }}', '{{ v.immatriculation_avion }}', '{{ v.date_heure_dep_utc.strftime('%Y-%m-%dT%H:%M') }}', '{{ v.date_heure_arr_utc.strftime('%Y-%m-%dT%H:%M') }}', '{{ v.prix_de_base }}', '{{ v.statut }}')"
+              >
+                <i class="fas fa-edit"></i>
+              </button>
+              <button
+                class="button is-small is-danger is-outlined"
+                onclick="deleteVol({{ v.id_vol }})"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="has-text-centered py-5">
+              Aucun vol programmé.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="modal" id="modal-vol">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head" style="background-color: var(--primary)">
+      <p class="modal-card-title has-text-white" id="modal-title"></p>
+      <button class="delete" aria-label="close" onclick="closeModal()"></button>
+    </header>
+    <section class="modal-card-body">
+      <form id="formVol">
+        <input type="hidden" id="vol_id" value="" />
+        <div class="columns">
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Aéroport de départ</label>
+              <div class="control has-icons-left">
+                <div class="select is-fullwidth">
+                  <select id="aeroport_depart" required>
+                    <option value="" disabled selected>Choisir</option>
+                    {% for apt in aeroports %}
+                    <option value="{{ apt.id_aeroport }}">
+                      {{ apt.id_aeroport }} - {{ apt.ville }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <span class="icon is-small is-left"
+                  ><i class="fas fa-map-marker-alt"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Aéroport d'arrivée</label>
+              <div class="control has-icons-left">
+                <div class="select is-fullwidth">
+                  <select id="aeroport_arrivee" required>
+                    <option value="" disabled selected>Choisir</option>
+                    {% for apt in aeroports %}
+                    <option value="{{ apt.id_aeroport }}">
+                      {{ apt.id_aeroport }} - {{ apt.ville }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <span class="icon is-small is-left"
+                  ><i class="fas fa-map-marker-alt"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="columns">
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Avion assigné</label>
+              <div class="control has-icons-left">
+                <div class="select is-fullwidth">
+                  <select id="avion_immatriculation" required>
+                    <option value="" disabled selected>Choisir un avion</option>
+                    {% for avion in avions %}
+                    <option value="{{ avion.immatriculation }}">
+                      {{ avion.immatriculation }} - {{ avion.modele }}
+                    </option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <span class="icon is-small is-left"
+                  ><i class="fas fa-plane"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Statut du vol</label>
+              <div class="control has-icons-left">
+                <div class="select is-fullwidth">
+                  <select id="statut" required>
+                    <option value="à l'heure">À l'heure</option>
+                    <option value="retardé">Retardé</option>
+                    <option value="embarquement">Embarquement</option>
+                    <option value="en vol">En vol</option>
+                    <option value="atterri">Atterri</option>
+                    <option value="annulé">Annulé</option>
+                  </select>
+                </div>
+                <span class="icon is-small is-left"
+                  ><i class="fas fa-info-circle"></i
+                ></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="columns">
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Départ (UTC)</label>
+              <div class="control">
+                <input
+                  class="input"
+                  type="datetime-local"
+                  id="date_depart"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+          <div class="column is-half">
+            <div class="field">
+              <label class="label">Arrivée (UTC)</label>
+              <div class="control">
+                <input
+                  class="input"
+                  type="datetime-local"
+                  id="date_arrivee"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label">Prix de base (€)</label>
+          <div class="control has-icons-left">
+            <input
+              class="input"
+              type="number"
+              step="0.01"
+              id="prix_base"
+              required
+            />
+            <span class="icon is-small is-left"
+              ><i class="fas fa-euro-sign"></i
+            ></span>
+          </div>
+        </div>
+      </form>
+    </section>
+    <footer class="modal-card-foot is-justify-content-flex-end">
+      <button class="button" onclick="closeModal()">Annuler</button>
+      <button
+        class="button is-accent"
+        id="btn-save-vol"
+        style="font-weight: 700"
+      >
+        <span class="icon"><i class="fas fa-save"></i></span>
+        <span id="btn-save-text">Enregistrer</span>
+      </button>
+    </footer>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  let calendar;
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const calendarEl = document.getElementById("calendar");
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: "timeGridWeek",
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,timeGridDay", // Permet de basculer en vue "Mois" pour bouger les vols entre les semaines
+      },
+      locale: "fr",
+      timeZone: "UTC", // RESOLUTION BUG : Force le calendrier à traiter les heures en UTC Strict
+      slotMinTime: "00:00:00", // RESOLUTION BUG : Démarre à minuit pile pour ne pas cacher les vols matinaux
+      slotLabelInterval: "00:15", // Affiche les créneaux toutes les 15 minutes
+      allDaySlot: false,
+      editable: true, // Autorise le Drag & Drop graphique
+      droppable: true,
+      eventResizableFromStart: true,
+      eventOverlap: true, // Permet les chevauchements d'événements
+      eventMaxStack: 3, // Affiche max 3 événements empilés avant de montrer "+n more"
+      eventDisplay: "block", // Affiche les événements en bloc (pas de "timed")
+      slotLabelFormat: {
+        hour: "2-digit",
+        minute: "2-digit",
+        meridiem: "short",
+        omitZeroMinute: false,
+      },
+      events: "/admin/api/vols",
+
+      // Callbacks Drag & Drop et Redimensionnement
+      eventDrop: function (info) {
+        updateVolTime(info.event);
+      },
+      eventResize: function (info) {
+        updateVolTime(info.event);
+      },
+
+      // Clic sur un vol du calendrier -> Ouvre l'édition
+      eventClick: function (info) {
+        const props = info.event.extendedProps;
+        const startIso = info.event.start.toISOString().slice(0, 16);
+        const endIso = info.event.end
+          ? info.event.end.toISOString().slice(0, 16)
+          : "";
+        openModal(
+          "edit",
+          info.event.id,
+          props.depart,
+          props.arrivee,
+          props.avion,
+          startIso,
+          endIso,
+          props.prix,
+          props.statut,
+        );
+      },
+    });
+
+    calendar.render();
+
+    // Traitement du formulaire d'ajout / édition
+    document
+      .getElementById("btn-save-vol")
+      .addEventListener("click", function () {
+        const form = document.getElementById("formVol");
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+
+        // Conversion datetime-local -> ISO 8601 UTC (FullCalendar + base de données attendent UTC strict)
+        function localToUTC(localDatetimeStr) {
+          if (!localDatetimeStr) return null;
+          const localDate = new Date(localDatetimeStr);
+          return localDate.toISOString().slice(0, 19);
+        }
+
+        const id = document.getElementById("vol_id").value;
+        const data = {
+          depart: document.getElementById("aeroport_depart").value,
+          arrivee: document.getElementById("aeroport_arrivee").value,
+          avion: document.getElementById("avion_immatriculation").value,
+          statut: document.getElementById("statut").value,
+          start: localToUTC(document.getElementById("date_depart").value),
+          end: localToUTC(document.getElementById("date_arrivee").value),
+          prix: document.getElementById("prix_base").value,
+        };
+
+        const method = id ? "PUT" : "POST";
+        const url = id ? `/admin/api/vols/${id}` : "/admin/api/vols";
+
+        const btn = this;
+        btn.classList.add("is-loading");
+
+        fetch(url, {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              return response.json().then((errorData) => {
+                throw new Error(
+                  errorData.message || `Erreur ${response.status}`,
+                );
+              });
+            }
+            return response.json();
+          })
+          .then((result) => {
+            if (result.success) {
+              window.location.reload();
+            } else {
+              alert("Erreur: " + result.message);
+              btn.classList.remove("is-loading");
+            }
+          })
+          .catch((err) => {
+            alert("Erreur: " + err.message);
+            btn.classList.remove("is-loading");
+          });
+      });
+  });
+
+  // Envoi asynchrone des modifications d'horaires (Drag & Drop)
+  function updateVolTime(event) {
+    fetch(`/admin/api/vols/${event.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        start: event.start ? event.start.toISOString().slice(0, 19) : null,
+        end: event.end ? event.end.toISOString().slice(0, 19) : null,
+      }),
+    })
+      .then((r) => {
+        if (!r.ok) {
+          return r.json().then((errorData) => {
+            throw new Error(errorData.message || `Erreur ${r.status}`);
+          });
+        }
+        return r.json();
+      })
+      .then((data) => {
+        if (!data.success) {
+          alert("Erreur lors de la synchronisation : " + data.message);
+          event.revert();
+        } else {
+          // Met à jour la liste du bas après le glisser-déposer
+          setTimeout(() => window.location.reload(), 200);
+        }
+      })
+      .catch((err) => {
+        alert("Erreur de conflit : " + err.message);
+        event.revert();
+      });
+  }
+
+  // Exportation des fonctions de contrôle dans le scope global (window.) pour Bulma et Jinja2 onclick
+  window.openModal = function (
+    mode,
+    id = "",
+    dep = "",
+    arr = "",
+    avion = "",
+    start = "",
+    end = "",
+    prix = "",
+    statut = "à l'heure",
+  ) {
+    const modal = document.getElementById("modal-vol");
+    document.getElementById("formVol").reset();
+    document.getElementById("vol_id").value = id;
+
+    if (mode === "edit") {
+      document.getElementById("modal-title").innerHTML =
+        `<i class="fas fa-edit"></i> Modifier le vol #${id}`;
+      document.getElementById("btn-save-text").textContent =
+        "Mettre à jour le vol";
+
+      document.getElementById("aeroport_depart").value = dep;
+      document.getElementById("aeroport_arrivee").value = arr;
+      document.getElementById("avion_immatriculation").value = avion;
+      document.getElementById("statut").value = statut;
+      document.getElementById("date_depart").value = start;
+      document.getElementById("date_arrivee").value = end;
+      document.getElementById("prix_base").value = prix;
+    } else {
+      document.getElementById("modal-title").innerHTML =
+        `<i class="fas fa-plane-departure"></i> Programmer un nouveau vol`;
+      document.getElementById("btn-save-text").textContent =
+        "Enregistrer le vol";
+    }
+    modal.classList.add("is-active");
+  };
+
+  window.closeModal = function () {
+    document.getElementById("modal-vol").classList.remove("is-active");
+  };
+
+  window.deleteVol = function (id) {
+    if (
+      confirm(
+        `Êtes-vous sûr de vouloir supprimer définitivement le vol #${id} ?`,
+      )
+    ) {
+      fetch(`/admin/api/vols/${id}`, { method: "DELETE" })
+        .then((response) => response.json())
+        .then((result) => {
+          if (result.success) {
+            window.location.reload();
+          } else {
+            alert("Erreur lors de la suppression : " + result.message);
+          }
+        });
+    }
+  };
+</script>
+{% endblock %}

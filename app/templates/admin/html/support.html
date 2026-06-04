@@ -1,0 +1,122 @@
+{% extends 'components/base.html' %} {% block title %}Support Client - Admin -
+O'Buffair{% endblock %} {% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title has-text-primary">
+      <span class="icon"><i class="fas fa-headset"></i></span>
+      <span>Support Client</span>
+    </h1>
+
+    <!-- Filtres et stats -->
+    <div class="columns is-multiline">
+      <div class="column is-3">
+        <div class="box has-background-info">
+          <p class="heading">Nouveaux</p>
+          <p class="title is-2">{{ stats.nouveau }}</p>
+        </div>
+      </div>
+      <div class="column is-3">
+        <div class="box has-background-warning">
+          <p class="heading">En cours</p>
+          <p class="title is-2">{{ stats.en_cours }}</p>
+        </div>
+      </div>
+      <div class="column is-3">
+        <div class="box has-background-success">
+          <p class="heading">Résolus</p>
+          <p class="title is-2">{{ stats.resolu }}</p>
+        </div>
+      </div>
+      <div class="column is-3">
+        <div class="box has-background-light">
+          <p class="heading">Fermés</p>
+          <p class="title is-2">{{ stats.ferme }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tableau des tickets -->
+    <div class="box">
+      <div class="mb-4">
+        <a href="#" class="button is-primary">
+          <span class="icon"><i class="fas fa-plus"></i></span>
+          <span>Nouveau ticket</span>
+        </a>
+      </div>
+
+      <table class="table is-fullwidth is-striped is-hoverable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Client</th>
+            <th>Titre</th>
+            <th>Catégorie</th>
+            <th>Priorité</th>
+            <th>Statut</th>
+            <th>Créé</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if tickets %} {% for ticket in tickets %}
+          <tr>
+            <td><strong>#{{ ticket.id_ticket }}</strong></td>
+            <td>{{ ticket.id_client }}</td>
+            <td>{{ ticket.titre }}</td>
+            <td>
+              {% if ticket.categorie == 'reservation' %}
+              <span class="tag is-info">Réservation</span>
+              {% elif ticket.categorie == 'vol' %}
+              <span class="tag is-primary">Vol</span>
+              {% elif ticket.categorie == 'bagage' %}
+              <span class="tag is-light">Bagages</span>
+              {% elif ticket.categorie == 'paiement' %}
+              <span class="tag is-danger">Paiement</span>
+              {% else %}
+              <span class="tag">{{ ticket.categorie }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if ticket.priorite == 'haute' %}
+              <span class="tag is-danger">Haute</span>
+              {% elif ticket.priorite == 'normale' %}
+              <span class="tag is-warning">Normale</span>
+              {% elif ticket.priorite == 'basse' %}
+              <span class="tag is-success">Basse</span>
+              {% else %}
+              <span class="tag">{{ ticket.priorite }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if ticket.statut == 'nouveau' %}
+              <span class="tag is-info">Nouveau</span>
+              {% elif ticket.statut == 'en cours' %}
+              <span class="tag is-warning">En cours</span>
+              {% elif ticket.statut == 'resolu' %}
+              <span class="tag is-success">Résolu</span>
+              {% elif ticket.statut == 'ferme' %}
+              <span class="tag is-light">Fermé</span>
+              {% else %}
+              <span class="tag">{{ ticket.statut }}</span>
+              {% endif %}
+            </td>
+            <td>{{ ticket.date_creation }}</td>
+            <td>
+              <button class="button is-small is-info" title="Voir le détail">
+                <span class="icon is-small"><i class="fas fa-eye"></i></span>
+              </button>
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <tr>
+            <td colspan="8" class="has-text-centered has-text-grey">
+              Aucun ticket de support pour le moment
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

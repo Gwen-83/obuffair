@@ -1,0 +1,356 @@
+{% extends "components/base.html" %}
+
+{% block title %}Configuration Avions - OBufFair{% endblock %}
+
+{% block content %}
+<div class="container mt-6 mb-6" style="max-width: 1400px;">
+    
+    <div class="level mb-6">
+        <div class="level-left">
+            <div class="level-item">
+                <div>
+                    <h1 class="title is-2 mb-2" style="color: var(--primary);">
+                        <i class="fas fa-plane-departure mr-3" style="color: var(--accent);"></i>Configuration de la Flotte
+                    </h1>
+                    <p class="subtitle is-6 mt-1" style="color: var(--medium-gray);">
+                        Ajoutez, consultez et retirez facilement les avions de votre flotte. Les appareils inactifs sont historisés.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <div class="tags are-medium">
+                    <span class="tag is-success is-light" style="border: 1px solid var(--success); font-weight: 600;">
+                        <i class="fas fa-check-circle mr-2"></i> Actifs : {{ avions|selectattr('actif', 'equalto', True)|list|length }}
+                    </span>
+                    <span class="tag" style="background-color: var(--primary); color: white; font-weight: 600;">
+                        <i class="fas fa-list mr-2"></i> Total : {{ avions|length }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="mb-5">
+                {% for category, message in messages %}
+                    <div class="notification is-{{ 'danger' if category == 'danger' else 'success' }} is-light" style="border-left: 4px solid var(--{{ 'danger' if category == 'danger' else 'success' }});">
+                        <button class="delete" onclick="this.parentElement.style.display='none'"></button>
+                        <i class="fas {{ 'fa-exclamation-triangle' if category == 'danger' else 'fa-check-circle' }} mr-2"></i>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="columns is-variable is-5 mb-5">
+        
+        <div class="column is-4">
+            <div class="box" style="border-top: 4px solid var(--primary); height: 100%; box-shadow: var(--shadow-md);">
+                <h2 class="title is-4 mb-5" style="color: var(--primary); border-bottom: 2px solid var(--light-gray); padding-bottom: 0.75rem;">
+                    <i class="fas fa-plus-circle mr-2" style="color: var(--accent);"></i>Ajouter un avion
+                </h2>
+
+                <form method="POST" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="field mb-4">
+                        <label class="label" style="color: var(--primary);">{{ form.immatriculation.label.text }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.immatriculation(class="input" ~ (' is-danger' if form.immatriculation.errors else ''), placeholder="Ex: F-GTAM") }}
+                            <span class="icon is-small is-left" style="color: var(--primary-light);">
+                                <i class="fas fa-tag"></i>
+                            </span>
+                        </div>
+                        {% if form.immatriculation.errors %}
+                            {% for error in form.immatriculation.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                        {% else %}
+                            <p class="help" style="color: var(--medium-gray);">Identifiant unique de l'appareil</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="field mb-4">
+                        <label class="label" style="color: var(--primary);">{{ form.modele.label.text }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.modele(class="input" ~ (' is-danger' if form.modele.errors else ''), placeholder="Ex: B737 ou A320") }}
+                            <span class="icon is-small is-left" style="color: var(--primary-light);">
+                                <i class="fas fa-plane"></i>
+                            </span>
+                        </div>
+                        {% if form.modele.errors %}
+                            {% for error in form.modele.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <div class="columns is-mobile is-variable is-3 mb-0">
+                        <div class="column is-half pb-0">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">{{ form.nb_rangees.label.text }}</label>
+                                <div class="control">
+                                    {{ form.nb_rangees(class="input" ~ (' is-danger' if form.nb_rangees.errors else ''), type="number", placeholder="Ex: 30") }}
+                                </div>
+                                {% for error in form.nb_rangees.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="column is-half pb-0">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">{{ form.largeur_rangee.label.text }}</label>
+                                <div class="control">
+                                    {{ form.largeur_rangee(class="input" ~ (' is-danger' if form.largeur_rangee.errors else ''), type="number", placeholder="Ex: 6") }}
+                                </div>
+                                {% for error in form.largeur_rangee.errors %}<p class="help is-danger">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mt-4 mb-4" style="background-color: var(--light-gray);">
+                    <p class="heading mb-3" style="color: var(--primary-light); font-weight: 600;">Configuration des classes (Rangées)</p>
+
+                    <div class="columns is-mobile is-variable is-2 mb-0">
+                        <div class="column is-4 pb-0">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">Éco de</label>
+                                <div class="control">
+                                    {{ form.eco_rang_de(class="input is-small" ~ (' is-danger' if form.eco_rang_de.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4 pb-0">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">Bus. de</label>
+                                <div class="control">
+                                    {{ form.bus_rang_de(class="input is-small" ~ (' is-danger' if form.bus_rang_de.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4 pb-0">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">First de</label>
+                                <div class="control">
+                                    {{ form.first_rang_de(class="input is-small" ~ (' is-danger' if form.first_rang_de.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="columns is-mobile is-variable is-2">
+                        <div class="column is-4 pt-2">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">Éco à</label>
+                                <div class="control">
+                                    {{ form.eco_rang_a(class="input is-small" ~ (' is-danger' if form.eco_rang_a.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4 pt-2">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">Bus. à</label>
+                                <div class="control">
+                                    {{ form.bus_rang_a(class="input is-small" ~ (' is-danger' if form.bus_rang_a.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4 pt-2">
+                            <div class="field">
+                                <label class="label is-small" style="color: var(--dark-gray);">First à</label>
+                                <div class="control">
+                                    {{ form.first_rang_a(class="input is-small" ~ (' is-danger' if form.first_rang_a.errors else ''), type="number") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field mt-4 mb-5">
+                        <div class="control">
+                            <label class="checkbox" style="font-weight: 600; color: var(--primary);">
+                                {{ form.actif(class="mr-2", style="transform: scale(1.2); accent-color: var(--primary);") }}
+                                L'appareil est opérationnel
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="control">
+                        {{ form.soumettre(class="button is-primary is-fullwidth", style="font-weight: 700;") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="column is-8">
+            <div class="box" style="border-top: 4px solid var(--info); height: 100%; box-shadow: var(--shadow-md); display: flex; flex-direction: column;">
+                <h2 class="title is-4 mb-5" style="color: var(--primary); border-bottom: 2px solid var(--light-gray); padding-bottom: 0.75rem;">
+                    <i class="fas fa-eye mr-2" style="color: var(--info);"></i>Aperçu du plan cabine
+                </h2>
+                <div id="cabin-visualization" style="flex-grow: 1; display: flex; justify-content: center; align-items: center; min-height: 500px; background-color: var(--light); border-radius: var(--radius-md); padding: 1rem;">
+                    <div id="cabin-svg-container" style="width:100%; height:500px; min-height:500px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registre des appareils -->
+    <div class="box mb-6" style="border-top: 4px solid var(--secondary); box-shadow: var(--shadow-md);">
+                
+                <div class="level mb-4">
+                    <div class="level-left">
+                        <h2 class="title is-4 mb-0" style="color: var(--primary);">
+                            <i class="fas fa-clipboard-list mr-2" style="color: var(--secondary);"></i>Registre des appareils
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="table-container" style="flex-grow: 1;">
+                    {% if avions %}
+                        <table class="table is-fullwidth is-striped is-hoverable">
+                            <thead>
+                                <tr style="background-color: var(--primary);">
+                                    <th style="color: white; border-color: var(--primary);">Appareil</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Grille</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Éco</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Bus</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">First</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Total</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Statut</th>
+                                    <th class="has-text-centered" style="color: white; border-color: var(--primary);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for avion in avions %}
+                                    <tr class="{% if not avion.actif %}has-background-white-ter has-text-grey{% endif %}">
+                                        <td class="is-vcentered">
+                                            <div style="font-weight: 600; color: {% if avion.actif %}var(--primary){% else %}inherit{% endif %};">{{ avion.immatriculation }}</div>
+                                            <div class="is-size-7">{{ avion.modele }}</div>
+                                        </td>
+                                        <td class="has-text-centered is-vcentered">
+                                            {{ avion.nb_rangees }} <i class="fas fa-times is-size-7 mx-1"></i> {{ avion.largeur_rangee }}
+                                        </td>
+                                        <td class="has-text-centered is-vcentered">{{ avion.eco_rang_de }}-{{ avion.eco_rang_a }}</td>
+                                        <td class="has-text-centered is-vcentered">{{ avion.bus_rang_de }}-{{ avion.bus_rang_a }}</td>
+                                        <td class="has-text-centered is-vcentered">{{ avion.first_rang_de }}-{{ avion.first_rang_a }}</td>
+                                        <td class="has-text-centered is-vcentered">
+                                            <strong style="color: {% if avion.actif %}var(--primary-light){% else %}inherit{% endif %};">{{ avion.capacite_totale }}</strong>
+                                        </td>
+                                        <td class="has-text-centered is-vcentered">
+                                            {% if avion.actif %}
+                                                <span class="tag is-success is-light" style="font-weight: 600;">Actif</span>
+                                            {% else %}
+                                                <span class="tag is-danger is-light">Inactif</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="has-text-centered is-vcentered">
+                                            <div class="buttons is-centered">
+                                                <a class="button is-small is-info" href="{{ url_for('admin.edit_avion', immatriculation=avion.immatriculation) }}">
+                                                    <span class="icon"><i class="fas fa-edit"></i></span>
+                                                    <span>Éditer</span>
+                                                </a>
+                                                {% if avion.actif %}
+                                                    <button class="button is-small is-outlined is-danger" onclick="supprimerAvion('{{ avion.immatriculation }}')">
+                                                        <span class="icon"><i class="fas fa-power-off"></i></span>
+                                                        <span>Retirer</span>
+                                                    </button>
+                                                {% else %}
+                                                    <button class="button is-small" disabled style="border: none; background: transparent;">
+                                                        <span class="icon has-text-grey-light"><i class="fas fa-ban"></i></span>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="notification is-info is-light" style="border-left: 4px solid var(--info);">
+                            <span class="icon mr-2"><i class="fas fa-info-circle"></i></span>
+                            <strong>Aucun avion enregistré.</strong> Ajoutez un appareil via le formulaire pour constituer votre flotte.
+                        </div>
+                    {% endif %}
+                </div>
+
+                {% if avions %}
+                    <div class="columns is-mobile is-multiline mt-4 pt-4" style="border-top: 1px solid var(--light-gray);">
+                        <div class="column is-4-tablet is-12-mobile">
+                            <div class="has-text-centered" style="padding: 1rem; background: var(--light); border-radius: var(--radius-md); border-bottom: 3px solid var(--success);">
+                                <p class="heading mb-1" style="color: var(--medium-gray);">Flotte Opérationnelle</p>
+                                <p class="title is-3 mb-0" style="color: var(--success);">{{ avions|selectattr('actif', 'equalto', True)|list|length }}</p>
+                            </div>
+                        </div>
+                        <div class="column is-4-tablet is-12-mobile">
+                            <div class="has-text-centered" style="padding: 1rem; background: var(--light); border-radius: var(--radius-md); border-bottom: 3px solid var(--primary-light);">
+                                <p class="heading mb-1" style="color: var(--medium-gray);">Capacité Totale</p>
+                                <p class="title is-3 mb-0" style="color: var(--primary-light);">{{ avions|selectattr('actif', 'equalto', True)|map(attribute='capacite_totale')|map('int')|sum }}</p>
+                            </div>
+                        </div>
+                        <div class="column is-4-tablet is-12-mobile">
+                            <div class="has-text-centered" style="padding: 1rem; background: var(--light); border-radius: var(--radius-md); border-bottom: 3px solid var(--accent);">
+                                <p class="heading mb-1" style="color: var(--medium-gray);">Moyenne / Avion</p>
+                                <p class="title is-3 mb-0" style="color: var(--accent);">
+                                    {% set actifs = avions|selectattr('actif', 'equalto', True)|list %}
+                                    {% if actifs %}
+                                        {{ (actifs|map(attribute='capacite_totale')|sum / actifs|length)|int }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+                
+            </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function supprimerAvion(immatriculation) {
+    // Remplacement du confirm natif par un flux plus discret, mais on garde la base JS demandée.
+    if (confirm(`Êtes-vous sûr de vouloir retirer l'appareil ${immatriculation} du service actif ?`)) {
+        fetch(`/admin/api/avion/${immatriculation}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(`Erreur: ${data.message}`);
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            alert('Une erreur de communication est survenue.');
+        });
+    }
+}
+</script>
+<script src="/static/js/admin_avion.js?v=3"></script>
+<script>
+// Initialisation du visualiseur de cabine pour le formulaire d'ajout
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('cabin-svg-container');
+    if (!container) {
+        console.error('❌ Conteneur cabin-svg-container non trouvé');
+        return;
+    }
+    
+    window.initCabinVisualizer({
+        nbRangeesSelector: 'input[name="nb_rangees"]',
+        largeurRangeeSelector: 'input[name="largeur_rangee"]',
+        ecoDeSelector: 'input[name="eco_rang_de"]',
+        ecoASelector: 'input[name="eco_rang_a"]',
+        busDeSelector: 'input[name="bus_rang_de"]',
+        busASelector: 'input[name="bus_rang_a"]',
+        firstDeSelector: 'input[name="first_rang_de"]',
+        firstASelector: 'input[name="first_rang_a"]',
+        container: container
+    });
+});
+</script>
+{% endblock %}

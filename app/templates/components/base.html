@@ -1,616 +1,716 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}O'Buffair - Réservation de vols{% endblock %}</title>
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}O'Buffair - Réservation de vols{% endblock %}
+    </title>
+
     <!-- Bulma CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css"
+    />
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/output.css') }}">
-    
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/output.css') }}"
+    />
+
     <style>
-        :root {
-            /* Couleurs primaires inspirées d'Air France, KLM et Lufthansa */
-            --primary: #002A5C;           /* Bleu Air France foncé */
-            --primary-light: #004B9E;    /* Bleu moyen */
-            --primary-lighter: #0066CC;   /* Bleu KLM */
-            --secondary: #003DA5;         /* Bleu Lufthansa */
-            --accent: #FFC72C;            /* Jaune Lufthansa/Or */
-            --accent-light: #FFD700;      /* Or clair */
-            
-            /* Couleurs sémantiques */
-            --success: #2E7D32;           /* Vert foncé */
-            --success-light: #4CAF50;
-            --warning: #F57C00;           /* Orange */
-            --warning-light: #FF9800;
-            --danger: #C62828;            /* Rouge foncé */
-            --danger-light: #E53935;
-            --info: #1565C0;              /* Bleu info */
-            --info-light: #1976D2;
-            
-            /* Couleurs neutres */
-            --dark: #1A1A1A;
-            --dark-gray: #b7b7b7;
-            --medium-gray: #8d8c8c;
-            --light-gray: #EEEEEE;
-            --light: #F5F5F5;
-            --white: #FFFFFF;
-        }
+      :root {
+        /* Couleurs primaires inspirées d'Air France, KLM et Lufthansa */
+        --primary: #002a5c; /* Bleu Air France foncé */
+        --primary-light: #004b9e; /* Bleu moyen */
+        --primary-lighter: #0066cc; /* Bleu KLM */
+        --secondary: #003da5; /* Bleu Lufthansa */
+        --accent: #ffc72c; /* Jaune Lufthansa/Or */
+        --accent-light: #ffd700; /* Or clair */
 
-        body {
-            background-color: var(--light);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        }
+        /* Couleurs sémantiques */
+        --success: #2e7d32; /* Vert foncé */
+        --success-light: #4caf50;
+        --warning: #f57c00; /* Orange */
+        --warning-light: #ff9800;
+        --danger: #c62828; /* Rouge foncé */
+        --danger-light: #e53935;
+        --info: #1565c0; /* Bleu info */
+        --info-light: #1976d2;
 
-        main {
-            flex: 1;
-        }
+        /* Couleurs neutres */
+        --dark: #1a1a1a;
+        --dark-gray: #b7b7b7;
+        --medium-gray: #8d8c8c;
+        --light-gray: #eeeeee;
+        --light: #f5f5f5;
+        --white: #ffffff;
+      }
 
-        /* Navbar styling - Professionnel et institutionnel */
-        .navbar {
-            background: linear-gradient(135deg, var(--primary) 0%, #001a3e 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            border-bottom: 3px solid var(--accent);
-            padding: 0;
-            position: relative;
-            z-index: 1000;
-        }
+      body {
+        background-color: var(--light);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+      }
 
-        .navbar-brand {
-            font-weight: 800;
-            font-size: 1.3rem;
-            letter-spacing: 0.5px;
-        }
+      main {
+        flex: 1;
+      }
 
-        .navbar-brand > a:not(.navbar-burger) {
-            color: var(--white) !important;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem 1.5rem;
-        }
+      /* Navbar styling - Professionnel et institutionnel */
+      .navbar {
+        background: linear-gradient(135deg, var(--primary) 0%, #001a3e 100%);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border-bottom: 3px solid var(--accent);
+        padding: 0;
+        position: relative;
+        z-index: 1000;
+      }
 
-        .navbar-brand span {
-            font-size: 1.75rem;
-        }
+      .navbar-brand {
+        font-weight: 800;
+        font-size: 1.3rem;
+        letter-spacing: 0.5px;
+      }
 
-        .navbar-burger {
-            color: var(--white) !important;
-            height: auto;
-            padding: 0.5rem 1rem;
-        }
+      .navbar-brand > a:not(.navbar-burger) {
+        color: var(--white) !important;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.5rem;
+      }
 
-        .navbar-menu {
-            background-color: rgba(0, 42, 92, 0.98) !important;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
+      .navbar-brand span {
+        font-size: 1.75rem;
+      }
 
-        .navbar-item {
-            font-weight: 500;
-            font-size: 0.95rem;
-            letter-spacing: 0.3px;
-        }
+      .navbar-burger {
+        color: var(--white) !important;
+        height: auto;
+        padding: 0.5rem 1rem;
+      }
 
-        .navbar-item > a {
-            color: var(--white) !important;
-            transition: all 0.3s ease;
-            position: relative;
-            padding: 0.75rem 1rem !important;
-            display: block !important;
-        }
+      .navbar-menu {
+        background-color: rgba(0, 42, 92, 0.98) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
 
-        /* Adjust spacing for dropdown arrows to prevent overlap */
-        .navbar-link {
-            padding-right: 2.5em !important;
-        }
-        .navbar-link::after {
-            border-color: var(--accent) !important;
-        }
+      .navbar-item {
+        font-weight: 500;
+        font-size: 0.95rem;
+        letter-spacing: 0.3px;
+      }
 
-        .navbar-item > a::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 1rem;
-            width: calc(100% - 2rem);
-            height: 3px;
-            background-color: var(--accent);
-            transform: scaleX(0);
-            transform-origin: right;
-            transition: transform 0.3s ease;
-        }
+      .navbar-item > a {
+        color: var(--white) !important;
+        transition: all 0.3s ease;
+        position: relative;
+        padding: 0.75rem 1rem !important;
+        display: block !important;
+      }
 
-        .navbar-item > a:hover,
-        .navbar-item.has-dropdown:hover .navbar-link,
-        .navbar-item.has-dropdown.is-active .navbar-link {
-            color: var(--white) !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-        }
+      /* Adjust spacing for dropdown arrows to prevent overlap */
+      .navbar-link {
+        padding-right: 2.5em !important;
+      }
+      .navbar-link::after {
+        border-color: var(--accent) !important;
+      }
 
-        .navbar-item > a:hover::after {
-            transform: scaleX(1);
-            transform-origin: left;
-        }
+      .navbar-item > a::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 1rem;
+        width: calc(100% - 2rem);
+        height: 3px;
+        background-color: var(--accent);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s ease;
+      }
 
-        /* Navbar dropdown styling */
-        .navbar-dropdown {
-            background-color: rgba(0, 42, 92, 0.95) !important;
-            border-top: 2px solid var(--accent) !important;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
+      .navbar-item > a:hover,
+      .navbar-item.has-dropdown:hover .navbar-link,
+      .navbar-item.has-dropdown.is-active .navbar-link {
+        color: var(--white) !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+      }
 
-        .navbar-dropdown a {
-            color: var(--white) !important;
-            font-size: 0.9rem !important;
-            padding: 0.75rem 1.5rem !important;
-            transition: all 0.2s ease;
-            border-left: 3px solid transparent;
-        }
+      .navbar-item > a:hover::after {
+        transform: scaleX(1);
+        transform-origin: left;
+      }
 
-        .navbar-dropdown a:hover {
-            color: var(--white) !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
-            border-left-color: var(--accent);
-        }
+      /* Navbar dropdown styling */
+      .navbar-dropdown {
+        background-color: rgba(0, 42, 92, 0.95) !important;
+        border-top: 2px solid var(--accent) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
 
-        .navbar-end {
-            gap: 0;
-        }
+      .navbar-dropdown a {
+        color: var(--white) !important;
+        font-size: 0.9rem !important;
+        padding: 0.75rem 1.5rem !important;
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+      }
 
-        /* Footer styling - Complet et professionnel */
-        footer {
-            background: linear-gradient(135deg, var(--primary) 0%, #001a3e 100%) !important;
-            border-top: 3px solid var(--accent) !important;
-            margin-top: auto !important;
-            color: var(--white) !important;
-            padding: 3rem 0 1.5rem !important;
-        }
+      .navbar-dropdown a:hover {
+        color: var(--white) !important;
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        border-left-color: var(--accent);
+      }
 
-        footer .footer-section {
-            margin-bottom: 2rem;
-        }
+      .navbar-end {
+        gap: 0;
+      }
 
-        footer .footer-section h4 {
-            color: var(--accent) !important;
-            font-weight: 700;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+      /* Footer styling - Complet et professionnel */
+      footer {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          #001a3e 100%
+        ) !important;
+        border-top: 3px solid var(--accent) !important;
+        margin-top: auto !important;
+        color: var(--white) !important;
+        padding: 3rem 0 1.5rem !important;
+      }
 
-        footer .footer-section p {
-            font-size: 0.9rem;
-            line-height: 1.6;
-            color: #FFFFFF !important;
-            margin-bottom: 0.75rem;
-        }
-        
-        footer .footer-section strong {
-            color: #FFFFFF !important;
-        }
+      footer .footer-section {
+        margin-bottom: 2rem;
+      }
 
-        footer .footer-section a {
-            color: var(--accent-light) !important;
-            text-decoration: none;
-            transition: color 0.3s ease;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
+      footer .footer-section h4 {
+        color: var(--accent) !important;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
 
-        footer .footer-section a:hover {
-            color: var(--accent) !important;
-            text-decoration: underline !important;
-        }
+      footer .footer-section p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: #ffffff !important;
+        margin-bottom: 0.75rem;
+      }
 
-        footer .footer-section ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+      footer .footer-section strong {
+        color: #ffffff !important;
+      }
 
-        footer .footer-section li {
-            margin-bottom: 0.5rem;
-        }
+      footer .footer-section a {
+        color: var(--accent-light) !important;
+        text-decoration: none;
+        transition: color 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
 
-        footer .footer-section li::before {
-            content: '✈ ';
-            color: var(--accent);
-            margin-right: 0.5rem;
-        }
+      footer .footer-section a:hover {
+        color: var(--accent) !important;
+        text-decoration: underline !important;
+      }
 
-        footer .footer-section li a {
-            color: #FFFFFF !important;
-            font-size: 0.9rem;
-        }
+      footer .footer-section ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
 
-        footer .footer-section li a:hover {
-            color: var(--accent) !important;
-            text-decoration: underline;
-        }
+      footer .footer-section li {
+        margin-bottom: 0.5rem;
+      }
 
-        .footer-divider {
-            border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
-            margin: 1.5rem 0 !important;
-        }
+      footer .footer-section li::before {
+        content: "✈ ";
+        color: var(--accent);
+        margin-right: 0.5rem;
+      }
 
-        .footer-bottom {
-            text-align: center;
-            padding-top: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            font-size: 0.85rem;
-            color: #FFFFFF !important;
-        }
+      footer .footer-section li a {
+        color: #ffffff !important;
+        font-size: 0.9rem;
+      }
 
-        .footer-bottom p {
-            margin: 0.25rem 0;
-            color: #FFFFFF !important;
-        }
+      footer .footer-section li a:hover {
+        color: var(--accent) !important;
+        text-decoration: underline;
+      }
 
-        .footer-bottom strong {
-            color: var(--accent) !important;
+      .footer-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.2) !important;
+        margin: 1.5rem 0 !important;
+      }
+
+      .footer-bottom {
+        text-align: center;
+        padding-top: 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        font-size: 0.85rem;
+        color: #ffffff !important;
+      }
+
+      .footer-bottom p {
+        margin: 0.25rem 0;
+        color: #ffffff !important;
+      }
+
+      .footer-bottom strong {
+        color: var(--accent) !important;
+      }
+
+      .footer-links {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .footer-links a {
+        color: #ffffff !important;
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: color 0.3s ease;
+        border-bottom: 1px solid transparent;
+      }
+
+      .footer-links a:hover {
+        color: var(--accent) !important;
+        border-bottom-color: var(--accent);
+      }
+
+      .social-links {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 1rem;
+      }
+
+      .social-links a {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: rgba(255, 199, 44, 0.15) !important;
+        color: var(--accent) !important;
+        transition: all 0.3s ease;
+        border: 2px solid var(--accent) !important;
+        font-size: 1.1rem;
+      }
+
+      .social-links a:hover {
+        background-color: var(--accent) !important;
+        color: var(--primary) !important;
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(255, 199, 44, 0.3);
+      }
+
+      /* Button enhancements */
+      .button {
+        border-radius: 4px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+      }
+
+      .button.is-primary {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: var(--white);
+      }
+
+      .button.is-primary:hover {
+        background-color: var(--primary-light);
+        border-color: var(--primary-light);
+      }
+
+      .button.is-info {
+        background-color: var(--info);
+        border-color: var(--info);
+        color: var(--white);
+      }
+
+      .button.is-danger {
+        background-color: var(--danger);
+        border-color: var(--danger);
+        color: var(--white);
+      }
+
+      .button.is-success {
+        background-color: var(--success);
+        border-color: var(--success);
+        color: var(--white);
+      }
+
+      /* Box and card enhancements */
+      .box {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+      }
+
+      /* Input fields styling */
+      .input,
+      .textarea,
+      .select select {
+        border-radius: 4px;
+        border: 1px solid #dbdbdb;
+      }
+
+      .input:focus,
+      .textarea:focus,
+      .select select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.125em rgba(0, 42, 92, 0.25);
+      }
+
+      .input.is-danger,
+      .textarea.is-danger {
+        border-color: var(--danger);
+      }
+
+      /* Label styling */
+      .label {
+        color: var(--dark);
+        font-weight: 600;
+      }
+
+      /* Helper text */
+      .help {
+        font-size: 0.875rem;
+      }
+
+      /* Responsive */
+      @media screen and (max-width: 768px) {
+        footer .columns {
+          display: flex;
+          flex-direction: column;
         }
 
         .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
+          flex-direction: column;
+          gap: 0.5rem;
         }
-
-        .footer-links a {
-            color: #FFFFFF !important;
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: color 0.3s ease;
-            border-bottom: 1px solid transparent;
-        }
-
-        .footer-links a:hover {
-            color: var(--accent) !important;
-            border-bottom-color: var(--accent);
-        }
-
-        .social-links {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 1rem;
-        }
-
-        .social-links a {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: rgba(255, 199, 44, 0.15) !important;
-            color: var(--accent) !important;
-            transition: all 0.3s ease;
-            border: 2px solid var(--accent) !important;
-            font-size: 1.1rem;
-        }
-
-        .social-links a:hover {
-            background-color: var(--accent) !important;
-            color: var(--primary) !important;
-            transform: translateY(-3px);
-            box-shadow: 0 4px 12px rgba(255, 199, 44, 0.3);
-        }
-
-        /* Button enhancements */
-        .button {
-            border-radius: 4px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .button.is-primary {
-            background-color: var(--primary);
-            border-color: var(--primary);
-            color: var(--white);
-        }
-
-        .button.is-primary:hover {
-            background-color: var(--primary-light);
-            border-color: var(--primary-light);
-        }
-
-        .button.is-info {
-            background-color: var(--info);
-            border-color: var(--info);
-            color: var(--white);
-        }
-
-        .button.is-danger {
-            background-color: var(--danger);
-            border-color: var(--danger);
-            color: var(--white);
-        }
-
-        .button.is-success {
-            background-color: var(--success);
-            border-color: var(--success);
-            color: var(--white);
-        }
-
-        /* Box and card enhancements */
-        .box {
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-        }
-
-        /* Input fields styling */
-        .input, .textarea, .select select {
-            border-radius: 4px;
-            border: 1px solid #DBDBDB;
-        }
-
-        .input:focus, .textarea:focus, .select select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.125em rgba(0, 42, 92, 0.25);
-        }
-
-        .input.is-danger, .textarea.is-danger {
-            border-color: var(--danger);
-        }
-
-        /* Label styling */
-        .label {
-            color: var(--dark);
-            font-weight: 600;
-        }
-
-        /* Helper text */
-        .help {
-            font-size: 0.875rem;
-        }
-
-        /* Responsive */
-        @media screen and (max-width: 768px) {
-            footer .columns {
-                display: flex;
-                flex-direction: column;
-            }
-
-            .footer-links {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-        }
+      }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
-</head>
-<body>
+  </head>
+  <body>
     <!-- Navigation -->
     <nav class="navbar" role="navigation" aria-label="main navigation">
-        <div class="navbar-brand">
-            <a href="/" style="display: flex; align-items: center; gap: 0.75rem; text-decoration: none;">
-                <span>O'Buffair</span>
+      <div class="navbar-brand">
+        <a
+          href="/"
+          style="
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+          "
+        >
+          <span>O'Buffair</span>
+        </a>
+        <a
+          role="button"
+          class="navbar-burger"
+          aria-label="menu"
+          aria-expanded="false"
+          data-target="navbarMenu"
+        >
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+          <span aria-hidden="true"></span>
+        </a>
+      </div>
+
+      <div id="navbarMenu" class="navbar-menu">
+        <div class="navbar-start">
+          <!-- Vols & Réservations -->
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+              <i class="fas fa-plane" style="margin-right: 0.5rem"></i>Vols &
+              Réservations
             </a>
-            <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
+            <div class="navbar-dropdown">
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-search"></i></span>
+                <span>Rechercher un vol</span>
+              </a>
+              <a
+                href="{{ url_for('client.mes_reservations') }}"
+                class="navbar-item"
+              >
+                <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+                <span>Gérer ma réservation</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-plus-circle"></i></span>
+                <span>Ajouter une réservation</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Services -->
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+              <i class="fas fa-concierge-bell" style="margin-right: 0.5rem"></i
+              >Services
             </a>
-        </div>
-        
-        <div id="navbarMenu" class="navbar-menu">
-            <div class="navbar-start">
-                <!-- Vols & Réservations -->
-                <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link">
-                        <i class="fas fa-plane" style="margin-right: 0.5rem;"></i>Vols & Réservations
-                    </a>
-                    <div class="navbar-dropdown">
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-search"></i></span>
-                            <span>Rechercher un vol</span>
-                        </a>
-                        <a href="{{ url_for('client.mes_reservations') }}" class="navbar-item">
-                            <span class="icon"><i class="fas fa-ticket-alt"></i></span>
-                            <span>Gérer ma réservation</span>
-                        </a>
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-plus-circle"></i></span>
-                            <span>Ajouter une réservation</span>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Services -->
-                <div class="navbar-item has-dropdown is-hoverable">
-                    <a class="navbar-link">
-                        <i class="fas fa-concierge-bell" style="margin-right: 0.5rem;"></i>Services
-                    </a>
-                    <div class="navbar-dropdown">
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-check-circle"></i></span>
-                            <span>Enregistrement en ligne</span>
-                        </a>
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-suitcase"></i></span>
-                            <span>Bagages</span>
-                        </a>
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-chair"></i></span>
-                            <span>Choix des sièges</span>
-                        </a>
-                        <a href="/" class="navbar-item">
-                            <span class="icon"><i class="fas fa-utensils"></i></span>
-                            <span>Services à bord</span>
-                        </a>
-                    </div>
-                </div>
+            <div class="navbar-dropdown">
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-check-circle"></i></span>
+                <span>Enregistrement en ligne</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-suitcase"></i></span>
+                <span>Bagages</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-chair"></i></span>
+                <span>Choix des sièges</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-utensils"></i></span>
+                <span>Services à bord</span>
+              </a>
             </div>
-
-            <div class="navbar-end">
-
-                <hr class="navbar-divider" style="margin: 0 0.5rem;">
-
-                <!-- Connexion / Compte / Profil -->
-                {% if session.get('user_id') %}
-                    <!-- Utilisateur connecté -->
-                    <div class="navbar-item has-dropdown is-hoverable">
-                        <a class="navbar-link">
-                            <i class="fas fa-user-circle" style="margin-right: 0.5rem;"></i>{{ session.get('prenom') }}
-                        </a>
-                        <div class="navbar-dropdown is-right">
-                            <a href="/" class="navbar-item">
-                                <span class="icon"><i class="fas fa-user"></i></span>
-                                <span>Mon profil</span>
-                            </a>
-                            <a href="/" class="navbar-item">
-                                <span class="icon"><i class="fas fa-heart"></i></span>
-                                <span>Mes favoris</span>
-                            </a>
-                            <a href="/" class="navbar-item">
-                                <span class="icon"><i class="fas fa-cog"></i></span>
-                                <span>Paramètres</span>
-                            </a>
-                            <hr class="navbar-divider">
-                            <a href="/auth/logout" class="navbar-item">
-                                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
-                                <span>Se déconnecter</span>
-                            </a>
-                        </div>
-                    </div>
-                {% else %}
-                    <!-- Utilisateur non connecté -->
-                    <div class="navbar-item">
-                        <div class="buttons">
-                            <a href="/auth/login" class="button" style="background-color: transparent; color: #FFFFFF; border: 1px solid rgba(255, 255, 255, 0.3); font-weight: 500;">
-                                <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
-                                <span>Connexion</span>
-                            </a>
-                            <a href="/auth/register" class="button is-primary" style="font-weight: 600;">
-                                <span class="icon"><i class="fas fa-user-plus"></i></span>
-                                <span>S'inscrire</span>
-                            </a>
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
+          </div>
         </div>
+
+        <div class="navbar-end">
+          {% if session.get('is_admin') %}
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+              <i class="fas fa-tools" style="margin-right: 0.5rem"></i>Admin
+            </a>
+            <div class="navbar-dropdown is-right">
+              <a href="{{ url_for('admin.dashboard') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
+                <span>Dashboard</span>
+              </a>
+              <a href="{{ url_for('admin.gestion_vols') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-calendar"></i></span>
+                <span>Vols</span>
+              </a>
+              <a href="{{ url_for('admin.reservations') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+                <span>Réservations</span>
+              </a>
+              <a href="{{ url_for('admin.tarification') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-tags"></i></span>
+                <span>Tarification</span>
+              </a>
+              <a href="{{ url_for('admin.config_avion') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-plane"></i></span>
+                <span>Flotte</span>
+              </a>
+              <a href="{{ url_for('admin.support') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-headset"></i></span>
+                <span>Support</span>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+
+          <hr class="navbar-divider" style="margin: 0 0.5rem" />
+
+          <!-- Connexion / Compte / Profil -->
+          {% if session.get('user_id') %}
+          <!-- Utilisateur connecté -->
+          <div class="navbar-item has-dropdown is-hoverable">
+            <a class="navbar-link">
+              <i class="fas fa-user-circle" style="margin-right: 0.5rem"></i>{{
+              session.get('prenom') }}
+            </a>
+            <div class="navbar-dropdown is-right">
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-user"></i></span>
+                <span>Mon profil</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-heart"></i></span>
+                <span>Mes favoris</span>
+              </a>
+              <a href="/" class="navbar-item">
+                <span class="icon"><i class="fas fa-cog"></i></span>
+                <span>Paramètres</span>
+              </a>
+              <hr class="navbar-divider" />
+              <a href="/auth/logout" class="navbar-item">
+                <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
+                <span>Se déconnecter</span>
+              </a>
+            </div>
+          </div>
+          {% else %}
+          <!-- Utilisateur non connecté -->
+          <div class="navbar-item">
+            <div class="buttons">
+              <a
+                href="/auth/login"
+                class="button"
+                style="
+                  background-color: transparent;
+                  color: #ffffff;
+                  border: 1px solid rgba(255, 255, 255, 0.3);
+                  font-weight: 500;
+                "
+              >
+                <span class="icon"><i class="fas fa-sign-in-alt"></i></span>
+                <span>Connexion</span>
+              </a>
+              <a
+                href="/auth/register"
+                class="button is-primary"
+                style="font-weight: 600"
+              >
+                <span class="icon"><i class="fas fa-user-plus"></i></span>
+                <span>S'inscrire</span>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </nav>
 
     <!-- Main Content -->
-    <main>
-        {% block content %}{% endblock %}
-    </main>
+    <main>{% block content %}{% endblock %}</main>
 
     <!-- Footer -->
     <footer>
-        <div class="container">
-            <div class="columns">
-                <!-- À propos -->
-                <div class="column is-4-desktop is-6-tablet">
-                    <div class="footer-section">
-                        <h4>À propos</h4>
-                        <p>
-                            <strong>O'Buffair</strong> est votre compagnie aérienne de confiance pour des voyages en toute sécurité et confort.
-                        </p>
-                        <p style="margin-top: 1rem; font-size: 0.85rem;">
-                            <strong>Licence d'exploitation :</strong> ENAC 2026<br>
-                            <strong>Certification :</strong> ISO 9001:2015
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Services -->
-                <div class="column is-4-desktop is-6-tablet">
-                    <div class="footer-section">
-                        <h4>Services</h4>
-                        <ul>
-                            <li><a href="/">Réserver un vol</a></li>
-                            <li><a href="{{ url_for('client.mes_reservations') }}">Gérer ma réservation</a></li>
-                            <li><a href="/">Tarifs spéciaux</a></li>
-                            <li><a href="/">Statut du vol</a></li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Contact -->
-                <div class="column is-4-desktop is-12-tablet">
-                    <div class="footer-section">
-                        <h4>Nous contacter</h4>
-                        <p>
-                            <strong>Téléphone :</strong><br>
-                            +33 (0)1 XX XX XX XX<br>
-                            <em style="font-size: 0.8rem;">Lun-Ven : 8h-22h | Sam-Dim : 9h-20h</em>
-                        </p>
-                        <p style="margin-top: 0.75rem;">
-                            <strong>Email :</strong><br>
-                            <a href="mailto:contact@obuffair.com">contact@obuffair.com</a>
-                        </p>
-                    </div>
-                </div>
+      <div class="container">
+        <div class="columns">
+          <!-- À propos -->
+          <div class="column is-4-desktop is-6-tablet">
+            <div class="footer-section">
+              <h4>À propos</h4>
+              <p>
+                <strong>O'Buffair</strong> est votre compagnie aérienne de
+                confiance pour des voyages en toute sécurité et confort.
+              </p>
+              <p style="margin-top: 1rem; font-size: 0.85rem">
+                <strong>Licence d'exploitation :</strong> ENAC 2026<br />
+                <strong>Certification :</strong> ISO 9001:2015
+              </p>
             </div>
+          </div>
 
-            <div class="footer-divider"></div>
-
-            <!-- Réseaux sociaux -->
-            <div style="text-align: center; margin-bottom: 1.5rem;">
-                <p style="color: #FFFFFF; font-size: 0.9rem; margin-bottom: 0.75rem;">Nous suivre</p>
-                <div class="social-links">
-                    <a href="#" title="Facebook" aria-label="Facebook">
-                        <i class="fab fa-facebook-f"></i>
-                    </a>
-                    <a href="#" title="Twitter" aria-label="Twitter">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                    <a href="#" title="Instagram" aria-label="Instagram">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="#" title="LinkedIn" aria-label="LinkedIn">
-                        <i class="fab fa-linkedin-in"></i>
-                    </a>
-                </div>
+          <!-- Services -->
+          <div class="column is-4-desktop is-6-tablet">
+            <div class="footer-section">
+              <h4>Services</h4>
+              <ul>
+                <li><a href="/">Réserver un vol</a></li>
+                <li>
+                  <a href="{{ url_for('client.mes_reservations') }}"
+                    >Gérer ma réservation</a
+                  >
+                </li>
+                <li><a href="/">Tarifs spéciaux</a></li>
+                <li><a href="/">Statut du vol</a></li>
+              </ul>
             </div>
+          </div>
 
-            <!-- Bottom links -->
-            <div class="footer-links">
-                <a href="#">Conditions d'utilisation</a>
-                <a href="#">Politique de confidentialité</a>
-                <a href="#">Politique de cookies</a>
-                <a href="#">Accessibilité</a>
-                <a href="#">Plan du site</a>
+          <!-- Contact -->
+          <div class="column is-4-desktop is-12-tablet">
+            <div class="footer-section">
+              <h4>Nous contacter</h4>
+              <p>
+                <strong>Téléphone :</strong><br />
+                +33 (0)1 XX XX XX XX<br />
+                <em style="font-size: 0.8rem"
+                  >Lun-Ven : 8h-22h | Sam-Dim : 9h-20h</em
+                >
+              </p>
+              <p style="margin-top: 0.75rem">
+                <strong>Email :</strong><br />
+                <a href="mailto:contact@obuffair.com">contact@obuffair.com</a>
+              </p>
             </div>
-
-            <!-- Copyright -->
-            <div class="footer-bottom">
-                <p>&copy; 2026 <strong>O'Buffair</strong> - Tous droits réservés</p>
-                <p style="font-size: 0.8rem; margin-top: 0.5rem;">Siège social : ENAC, Toulouse, France</p>
-            </div>
+          </div>
         </div>
+
+        <div class="footer-divider"></div>
+
+        <!-- Réseaux sociaux -->
+        <div style="text-align: center; margin-bottom: 1.5rem">
+          <p style="color: #ffffff; font-size: 0.9rem; margin-bottom: 0.75rem">
+            Nous suivre
+          </p>
+          <div class="social-links">
+            <a href="#" title="Facebook" aria-label="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" title="Twitter" aria-label="Twitter">
+              <i class="fab fa-twitter"></i>
+            </a>
+            <a href="#" title="Instagram" aria-label="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" title="LinkedIn" aria-label="LinkedIn">
+              <i class="fab fa-linkedin-in"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Bottom links -->
+        <div class="footer-links">
+          <a href="#">Conditions d'utilisation</a>
+          <a href="#">Politique de confidentialité</a>
+          <a href="#">Politique de cookies</a>
+          <a href="#">Accessibilité</a>
+          <a href="#">Plan du site</a>
+        </div>
+
+        <!-- Copyright -->
+        <div class="footer-bottom">
+          <p>&copy; 2026 <strong>O'Buffair</strong> - Tous droits réservés</p>
+          <p style="font-size: 0.8rem; margin-top: 0.5rem">
+            Siège social : ENAC, Toulouse, France
+          </p>
+        </div>
+      </div>
     </footer>
 
     <script>
-        // Navbar burger toggle for mobile
-        document.addEventListener('DOMContentLoaded', () => {
-            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
-            $navbarBurgers.forEach( el => {
-                el.addEventListener('click', () => {
-                    const target = el.dataset.target;
-                    const $target = document.getElementById(target);
-                    el.classList.toggle('is-active');
-                    $target.classList.toggle('is-active');
-                });
-            });
+      // Navbar burger toggle for mobile
+      document.addEventListener("DOMContentLoaded", () => {
+        const $navbarBurgers = Array.prototype.slice.call(
+          document.querySelectorAll(".navbar-burger"),
+          0,
+        );
+        $navbarBurgers.forEach((el) => {
+          el.addEventListener("click", () => {
+            const target = el.dataset.target;
+            const $target = document.getElementById(target);
+            el.classList.toggle("is-active");
+            $target.classList.toggle("is-active");
+          });
         });
+      });
     </script>
-    
+
     {% block extra_js %}{% endblock %}
-</body>
+  </body>
 </html>

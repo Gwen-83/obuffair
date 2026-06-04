@@ -1,0 +1,487 @@
+{% extends "components/base.html" %} {% block title %}Infrastructure Aéroports -
+O'Buffair{% endblock %} {% block content %}
+<div class="container mt-6 mb-6" style="max-width: 1400px">
+  <div class="level mb-5">
+    <div class="level-left">
+      <div>
+        <h1 class="title is-2 mb-2" style="color: var(--primary)">
+          <i class="fas fa-building mr-3" style="color: var(--accent)"></i
+          >Gestion des aéroports
+        </h1>
+        <p class="subtitle is-6 mt-1" style="color: var(--medium-gray)">
+          Créez, modifiez et consultez les infrastructures aéroportuaires :
+          terminaux, gates, parkings et salons VIP.
+        </p>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <div class="tags are-medium">
+          <span
+            class="tag"
+            style="
+              background-color: var(--primary);
+              color: white;
+              font-weight: 600;
+            "
+          >
+            <i class="fas fa-map-marker-alt mr-2"></i> Aéroports : {{
+            airports|length }}
+          </span>
+          {% if selected_airport %}
+          <span class="tag is-info is-light" style="font-weight: 600">
+            <i class="fas fa-info-circle mr-2"></i> Détail : {{
+            selected_airport.id_aeroport }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %}
+  <div class="mb-5">
+    {% for category, message in messages %}
+    <div
+      class="notification is-{{ 'danger' if category == 'danger' else 'success' }} is-light"
+      style="border-left: 4px solid var(--{{ 'danger' if category == 'danger' else 'success' }});"
+    >
+      <button
+        class="delete"
+        onclick="this.parentElement.style.display = 'none'"
+      ></button>
+      <i
+        class="fas {{ 'fa-exclamation-triangle' if category == 'danger' else 'fa-check-circle' }} mr-2"
+      ></i>
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %} {% endwith %}
+
+  <div class="columns is-variable is-5 mb-5">
+    <div class="column is-5">
+      <div
+        class="box"
+        style="
+          border-top: 4px solid var(--primary);
+          box-shadow: var(--shadow-md);
+        "
+      >
+        <h2 class="title is-4 mb-4" style="color: var(--primary)">
+          <i class="fas fa-pencil-alt mr-2" style="color: var(--accent)"></i
+          >Ajouter / Modifier un aéroport
+        </h2>
+
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="field">
+            <label class="label">{{ form.id_aeroport.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.id_aeroport(class="input" ~ (' is-danger' if
+              form.id_aeroport.errors else ''), placeholder="Ex: CDG, BRU,
+              JFK…") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-hashtag"></i
+              ></span>
+            </div>
+            {% for error in form.id_aeroport.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+            <p class="help is-info">
+              Entrez un code IATA (3 lettres), puis complétez les informations
+              manuellement.
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.nom.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.nom(class="input" ~ (' is-danger' if form.nom.errors else
+              ''), placeholder="Ex: Aéroport Charles de Gaulle") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-landmark"></i
+              ></span>
+            </div>
+            {% for error in form.nom.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.ville.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.ville(class="input" ~ (' is-danger' if form.ville.errors
+              else ''), placeholder="Ex: Paris") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-city"></i
+              ></span>
+            </div>
+            {% for error in form.ville.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.pays.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.pays(class="input" ~ (' is-danger' if form.pays.errors
+              else ''), placeholder="Ex: France") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-globe"></i
+              ></span>
+            </div>
+            {% for error in form.pays.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.decalage_utc.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.decalage_utc(class="input" ~ (' is-danger' if
+              form.decalage_utc.errors else ''), placeholder="Ex: +01:00") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-clock"></i
+              ></span>
+            </div>
+            {% for error in form.decalage_utc.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column is-half">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.latitude.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.latitude(class="input" ~ (' is-danger' if
+                  form.latitude.errors else ''), placeholder="48.8566") }}
+                </div>
+                {% for error in form.latitude.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column is-half">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.longitude.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.longitude(class="input" ~ (' is-danger' if
+                  form.longitude.errors else ''), placeholder="2.3522") }}
+                </div>
+                {% for error in form.longitude.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.terminals_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.terminals_count(class="input" ~ (' is-danger' if
+                  form.terminals_count.errors else ''), type="number",
+                  placeholder="Ex: 3") }}
+                </div>
+                {% for error in form.terminals_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.gates_total.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.gates_total(class="input" ~ (' is-danger' if
+                  form.gates_total.errors else ''), type="number",
+                  placeholder="Ex: 24") }}
+                </div>
+                {% for error in form.gates_total.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.lounges_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.lounges_count(class="input" ~ (' is-danger' if
+                  form.lounges_count.errors else ''), type="number",
+                  placeholder="Ex: 4") }}
+                </div>
+                {% for error in form.lounges_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.parkings_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.parkings_count(class="input" ~ (' is-danger' if
+                  form.parkings_count.errors else ''), type="number",
+                  placeholder="Ex: 6") }}
+                </div>
+                {% for error in form.parkings_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.services.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.services(class="input" ~ (' is-danger' if
+              form.services.errors else ''), placeholder="Ex: WiFi, lounges,
+              parkings VIP") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-concierge-bell"></i
+              ></span>
+            </div>
+            {% for error in form.services.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.contact_phone.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.contact_phone(class="input" ~ (' is-danger' if
+              form.contact_phone.errors else ''), placeholder="Ex: +33 1 23 45
+              67 89") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-phone"></i
+              ></span>
+            </div>
+            {% for error in form.contact_phone.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.contact_email.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.contact_email(class="input" ~ (' is-danger' if
+              form.contact_email.errors else ''), placeholder="Ex:
+              info@airport.com") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-envelope"></i
+              ></span>
+            </div>
+            {% for error in form.contact_email.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.description.label.text }}</label>
+            <div class="control">
+              {{ form.description(class="textarea" ~ (' is-danger' if
+              form.description.errors else ''), placeholder="Détails
+              d'infrastructure comme le terminal principal, zone cargo,
+              navettes, etc.") }}
+            </div>
+            {% for error in form.description.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="control mt-4">
+            {{ form.soumettre(class="button is-primary is-fullwidth",
+            style="font-weight: 700;") }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="column is-7">
+      <div
+        class="box"
+        style="border-top: 4px solid var(--info); box-shadow: var(--shadow-md)"
+      >
+        <h2 class="title is-4 mb-4" style="color: var(--primary)">
+          <i class="fas fa-map mr-2" style="color: var(--info)"></i>Vue
+          détaillée de l'aéroport
+        </h2>
+
+        {% if selected_airport %}
+        <div class="columns is-multiline mb-5">
+          <div class="column is-half">
+            <div
+              class="box has-background-light"
+              style="border-left: 4px solid var(--primary)"
+            >
+              <p class="has-text-weight-semibold" style="color: var(--primary)">
+                {{ selected_airport.nom }} ({{ selected_airport.id_aeroport }})
+              </p>
+              <p>{{ selected_airport.ville }}, {{ selected_airport.pays }}</p>
+              <p>UTC : {{ selected_airport.decalage_utc }}</p>
+              {% if selected_airport.latitude and selected_airport.longitude %}
+              <p>
+                Coordonnées : {{ selected_airport.latitude }}, {{
+                selected_airport.longitude }}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="column is-half">
+            <div
+              class="box has-background-light"
+              style="border-left: 4px solid var(--accent)"
+            >
+              <div class="columns is-mobile is-multiline has-text-centered">
+                <div class="column is-half">
+                  <p class="heading is-size-6">Terminaux</p>
+                  <p class="title is-4">
+                    {{ selected_airport.terminals_count or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Gates</p>
+                  <p class="title is-4">
+                    {{ selected_airport.gates_total or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Salons</p>
+                  <p class="title is-4">
+                    {{ selected_airport.lounges_count or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Parkings</p>
+                  <p class="title is-4">
+                    {{ selected_airport.parkings_count or 0 }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="box mb-5"
+          style="
+            padding: 1rem 1rem 0.75rem;
+            border-top: 4px solid var(--secondary);
+          "
+        >
+          <h3 class="title is-5" style="color: var(--primary)">
+            Services et description
+          </h3>
+          <p>
+            <strong>Services :</strong> {{ selected_airport.services or 'Non
+            renseigné' }}
+          </p>
+          <p>
+            <strong>Contact :</strong> {{ selected_airport.contact_phone or
+            'N/A' }} / {{ selected_airport.contact_email or 'N/A' }}
+          </p>
+          <p class="mt-3">
+            {{ selected_airport.description or 'Aucune description
+            d’infrastructure disponible.' }}
+          </p>
+        </div>
+
+        {% else %}
+        <div class="notification is-info is-light">
+          <p>
+            Sélectionnez un aéroport dans le tableau ci-dessous pour voir sa vue
+            détaillée et modifier ses infrastructures.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="box"
+    style="border-top: 4px solid var(--secondary); box-shadow: var(--shadow-md)"
+  >
+    <div class="level mb-4">
+      <div class="level-left">
+        <h2 class="title is-4" style="color: var(--primary)">
+          <i class="fas fa-list mr-2" style="color: var(--secondary)"></i>Liste
+          des aéroports
+        </h2>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="table is-fullwidth is-hoverable is-striped">
+        <thead style="background-color: var(--primary); color: white">
+          <tr>
+            <th>Code</th>
+            <th>Nom</th>
+            <th>Ville</th>
+            <th>Pays</th>
+            <th>Terminaux</th>
+            <th>Gates</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for aeroport in airports %}
+          <tr>
+            <td><strong>{{ aeroport.id_aeroport }}</strong></td>
+            <td>{{ aeroport.nom }}</td>
+            <td>{{ aeroport.ville }}</td>
+            <td>{{ aeroport.pays }}</td>
+            <td class="has-text-centered">
+              {{ aeroport.terminals_count or 0 }}
+            </td>
+            <td class="has-text-centered">{{ aeroport.gates_total or 0 }}</td>
+            <td>
+              <div class="buttons is-right">
+                <a
+                  class="button is-small is-link"
+                  href="{{ url_for('admin.infrastructures', selected=aeroport.id_aeroport) }}"
+                >
+                  <span class="icon"><i class="fas fa-eye"></i></span>
+                  <span>Voir</span>
+                </a>
+                <form
+                  method="POST"
+                  action="{{ url_for('admin.supprimer_aeroport', id_aeroport=aeroport.id_aeroport) }}"
+                  style="display: inline-block"
+                >
+                  <button
+                    class="button is-small is-danger"
+                    type="submit"
+                    onclick="return confirm('Supprimer l\'aéroport {{ aeroport.id_aeroport }} ?');"
+                  >
+                    <span class="icon"><i class="fas fa-trash-alt"></i></span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
