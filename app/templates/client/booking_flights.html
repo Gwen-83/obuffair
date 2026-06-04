@@ -123,172 +123,102 @@
 </div>
 <p class="subtitle is-6 has-text-grey mb-6">{{ ville_dep }} ({{ iata_dep }}) vers {{ ville_arr }} ({{ iata_arr }}) • {{ date_vol }}</p>
 
-<div class="flighty-booking-card">
-    
-    <div class="flight-info-section">
-        <div class="flight-header">
-            <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair AF712 • Airbus A320</span>
-            <span class="badge direct">Direct</span>
-        </div>
-        
-        <div class="flight-route">
-            <div style="width: 75px;">
-                <div class="flighty-time">10:30</div>
-                <div class="flighty-iata">{{ iata_dep }}</div>
-                <div class="flighty-city">{{ ville_dep }}</div>
+{% if itineraries %}
+    {% for itin in itineraries %}
+    <div class="flighty-booking-card">
+        <div class="flight-info-section">
+            <div class="flight-header">
+                <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair {{ itin.segments[0].flight_number }}</span>
+                <span class="badge {% if itin.stops == 0 %}direct{% else %}stop{% endif %}">{{ itin.stops_text }}</span>
             </div>
             
-            <div class="flight-path-wrapper">
-                <div class="flight-duration">2h 05m</div>
-                <div class="flight-path-line"></div>
-                <div class="flight-stop-info">Sans escale</div>
+            <div class="flight-route">
+                <div style="width: 75px;">
+                    <div class="flighty-time">{{ itin.dep_time }}</div>
+                    <div class="flighty-iata">{{ iata_dep }}</div>
+                    <div class="flighty-city">{{ ville_dep }}</div>
+                </div>
+                
+                <div class="flight-path-wrapper">
+                    <div class="flight-duration">{{ itin.duration }}</div>
+                    <div class="flight-path-line"></div>
+                    <div class="flight-stop-info">
+                        {% if itin.stops == 0 %}Sans escale
+                        {% elif itin.stops == 1 %}Escale à {{ itin.segments[0].arr_iata }}
+                        {% else %}Mutiples Escales
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="has-text-right" style="width: 75px;">
+                    <div class="flighty-time">{{ itin.arr_time }}</div>
+                    <div class="flighty-iata">{{ iata_arr }}</div>
+                    <div class="flighty-city">{{ ville_arr }}</div>
+                </div>
             </div>
-            
-            <div class="has-text-right" style="width: 75px;">
-                <div class="flighty-time">12:35</div>
-                <div class="flighty-iata">{{ iata_arr }}</div>
-                <div class="flighty-city">{{ ville_arr }}</div>
+
+            {% if itin.stops > 0 %}
+            <div class="flight-amenities" style="flex-direction: column; gap: 4px;">
+                {% for seg in itin.segments %}
+                    {% if not loop.last %}
+                        <span><i class="fas fa-clock" style="color: var(--flighty-orange);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})</span>
+                    {% endif %}
+                {% endfor %}
             </div>
-        </div>
-
-        <div class="flight-amenities">
-            <span><i class="fas fa-wifi"></i> Wi-Fi payant</span>
-            <span><i class="fas fa-plug"></i> Prise USB</span>
-            <span><i class="fas fa-video"></i> Écrans persos</span>
-        </div>
-    </div>
-    
-    <div class="flight-tariffs-section">
-        
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="1">
-            <input type="hidden" name="classe" value="Eco">
-            <button type="submit" class="tariff-btn eco">
-                <div class="t-header">
-                    <div class="t-class eco">Economy</div>
-                    <div class="t-price">124 €</div>
-                </div>
-                <ul class="t-features">
-                    <li>1 Bagage cabine</li>
-                    <li>Siège standard</li>
-                </ul>
-            </button>
-        </form>
-
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="1">
-            <input type="hidden" name="classe" value="Business">
-            <button type="submit" class="tariff-btn biz">
-                <div class="t-header">
-                    <div class="t-class biz">Business</div>
-                    <div class="t-price">340 €</div>
-                </div>
-                <div class="t-seats-left">Plus que 3 sièges !</div>
-                <ul class="t-features">
-                    <li>2 Bagages soute</li>
-                    <li>Siège Premium</li>
-                    <li>Repas chaud</li>
-                </ul>
-            </button>
-        </form>
-
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="1">
-            <input type="hidden" name="classe" value="First">
-            <button type="submit" class="tariff-btn first">
-                <div class="t-header">
-                    <div class="t-class first">First</div>
-                    <div class="t-price">850 €</div>
-                </div>
-                <ul class="t-features">
-                    <li>3 Bagages soute</li>
-                    <li>Siège Lit / Suite</li>
-                    <li>Accès Salon VIP</li>
-                </ul>
-            </button>
-        </form>
-        
-    </div>
-</div>
-
-<div class="flighty-booking-card">
-    
-    <div class="flight-info-section">
-        <div class="flight-header">
-            <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair AF1409 • Boeing 737</span>
-            <span class="badge stop">1 Escale</span>
+            {% else %}
+            <div class="flight-amenities">
+                <span><i class="fas fa-wifi"></i> Wi-Fi</span>
+                <span><i class="fas fa-plug"></i> Prise USB</span>
+            </div>
+            {% endif %}
         </div>
         
-        <div class="flight-route">
-            <div style="width: 75px;">
-                <div class="flighty-time">15:45</div>
-                <div class="flighty-iata">{{ iata_dep }}</div>
-                <div class="flighty-city">{{ ville_dep }}</div>
-            </div>
-            
-            <div class="flight-path-wrapper">
-                <div class="flight-duration">4h 30m</div>
-                <div class="flight-path-line"></div>
-                <div class="flight-stop-info">1h 15m à AMS</div>
-            </div>
-            
-            <div class="has-text-right" style="width: 75px;">
-                <div class="flighty-time">20:15</div>
-                <div class="flighty-iata">{{ iata_arr }}</div>
-                <div class="flighty-city">{{ ville_arr }}</div>
-            </div>
-        </div>
+        <div class="flight-tariffs-section">
+            <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                <input type="hidden" name="classe" value="Eco">
+                <button type="submit" class="tariff-btn eco">
+                    <div class="t-header">
+                        <div class="t-class eco">Economy</div>
+                        <div class="t-price">{{ itin.price_eco }} €</div>
+                    </div>
+                    <ul class="t-features"><li>1 Bagage cabine</li></ul>
+                </button>
+            </form>
 
-        <div class="flight-amenities">
-            <span><i class="fas fa-wifi"></i> Pas de Wi-Fi</span>
-            <span><i class="fas fa-plug"></i> Prise AC</span>
+            <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                <input type="hidden" name="classe" value="Business">
+                <button type="submit" class="tariff-btn biz">
+                    <div class="t-header">
+                        <div class="t-class biz">Business</div>
+                        <div class="t-price">{{ itin.price_biz }} €</div>
+                    </div>
+                    <ul class="t-features"><li>2 Bagages soute</li></ul>
+                </button>
+            </form>
+
+            <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                <input type="hidden" name="classe" value="First">
+                <button type="submit" class="tariff-btn first">
+                    <div class="t-header">
+                        <div class="t-class first">First</div>
+                        <div class="t-price">{{ itin.price_first }} €</div>
+                    </div>
+                    <ul class="t-features"><li>Salon VIP</li></ul>
+                </button>
+            </form>
         </div>
     </div>
-    
-    <div class="flight-tariffs-section">
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="2">
-            <input type="hidden" name="classe" value="Eco">
-            <button type="submit" class="tariff-btn eco">
-                <div class="t-header">
-                    <div class="t-class eco">Economy</div>
-                    <div class="t-price">98 €</div>
-                </div>
-                <ul class="t-features">
-                    <li>1 Bagage cabine</li>
-                </ul>
-            </button>
-        </form>
-
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="2">
-            <input type="hidden" name="classe" value="Business">
-            <button type="submit" class="tariff-btn biz">
-                <div class="t-header">
-                    <div class="t-class biz">Business</div>
-                    <div class="t-price">280 €</div>
-                </div>
-                <ul class="t-features">
-                    <li>2 Bagages soute</li>
-                    <li>Siège Premium</li>
-                </ul>
-            </button>
-        </form>
-
-        <form class="tariff-form" action="{{ form_action }}" method="POST">
-            <input type="hidden" name="{{ input_name }}" value="2">
-            <input type="hidden" name="classe" value="First">
-            <button type="submit" class="tariff-btn first" disabled style="opacity: 0.5; cursor: not-allowed;">
-                <div class="t-header">
-                    <div class="t-class first">First</div>
-                    <div class="t-price" style="font-size: 14px;">Complet</div>
-                </div>
-                <div class="t-features mt-1" style="padding-left: 0;">
-                    Plus de sièges disponibles dans cette classe.
-                </div>
-            </button>
-        </form>
+    {% endfor %}
+{% else %}
+    <div class="notification" style="background: white; border-radius: 16px; border: 1px solid #E5E5EA; text-align: center; padding: 3rem;">
+        <i class="fas fa-plane-slash" style="font-size: 3rem; color: #D1D1D6; margin-bottom: 1rem;"></i>
+        <h3 class="title is-4" style="color: var(--primary);">Aucun vol trouvé</h3>
+        <p class="subtitle is-6 has-text-grey">Nous ne trouvons malheureusement aucun vol (direct ou avec escale) pour cet itinéraire à la date du {{ date_vol }}.</p>
+        <a href="{{ url_for('client.booking') }}" class="button is-accent mt-4">Modifier ma recherche</a>
     </div>
-</div>
+{% endif %}
 
 {% endblock %}

@@ -131,6 +131,33 @@
             margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;
         }
         .option-box .current-selection { font-weight: 600; font-size: 0.9rem; }
+        
+        /* Carousel Destinations (Non connecté) */
+        .destinations-section { margin-top: 1rem; margin-bottom: 4rem; }
+        .destinations-carousel {
+            display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1.5rem;
+            scroll-snap-type: x mandatory; scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+        }
+        .destinations-carousel::-webkit-scrollbar { display: none; }
+        .destinations-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .destination-card {
+            flex: 0 0 280px; scroll-snap-align: start;
+            border-radius: var(--radius-xl); overflow: hidden; position: relative;
+            box-shadow: var(--shadow-soft); cursor: pointer; transition: transform 0.3s;
+            height: 380px;
+        }
+        .destination-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-premium); }
+        .destination-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .destination-card:hover img { transform: scale(1.05); }
+        .destination-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,42,92,0.9) 0%, rgba(0,42,92,0) 60%);
+        }
+        .destination-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem; color: white; }
+        .destination-city { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; line-height: 1.2;}
+        .destination-price { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
     </style>
 {% endblock %}
 
@@ -188,12 +215,46 @@
             </div>
         </div>
 
+        <!-- Section Destinations Phares -->
+        <div class="destinations-section">
+            <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Inspirez-vous pour votre prochain voyage</h2>
+            <div class="destinations-carousel" id="destinationsCarousel">
+                {% set city_images = {
+                    'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
+                    'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
+                    'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
+                    'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
+                    'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
+                    'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
+                } %}
+                {% set default_image = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=600&auto=format&fit=crop' %}
+                {% set default_dest = [
+                    {'ville': 'Rome', 'prix': 124},
+                    {'ville': 'Londres', 'prix': 98},
+                    {'ville': 'Madrid', 'prix': 85},
+                    {'ville': 'Berlin', 'prix': 110}
+                ] %}
+                {% set display_dest = destinations if destinations else default_dest %}
+                {% for dest in display_dest %}
+                <div class="destination-card">
+                    <img src="{{ city_images.get(dest.ville, default_image) }}" alt="{{ dest.ville }}">
+                    <div class="destination-overlay"></div>
+                    <div class="destination-info">
+                        <div class="destination-city">{{ dest.ville }}</div>
+                        <div class="destination-price">Dès {{ dest.prix }} €</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
         <div class="columns is-variable is-6">
             
             <div class="column is-4">
                 <h3 class="title is-4 mb-4" style="color: var(--primary); font-weight: 800;">Mon Profil Fidélité</h3>
                 <div class="premium-dark-card mb-5">
                     <div class="premium-content">
+                        {% if session.get('user_id') %}
                         <div class="is-flex is-justify-content-space-between is-align-items-start mb-3">
                             <div style="font-size: 2.5rem; color: var(--accent);">
                                 <i class="fas fa-medal"></i>
@@ -214,6 +275,19 @@
                         </div>
                         <progress class="progress is-small is-premium" value="{{ loyalty_info.progress_percent if loyalty_info else 0 }}" max="100">{{ loyalty_info.progress_percent if loyalty_info else 0 }}%</progress>
                         <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que {{ loyalty_info.points_to_next if loyalty_info else '?' }} points avant le statut {{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</p>
+                        {% else %}
+                        <div class="is-flex is-justify-content-center mb-4 mt-2">
+                            <div style="font-size: 3rem; color: var(--accent);">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                        </div>
+                        <p class="title is-4 has-text-white has-text-centered mb-2">Rejoignez O'Buffair Club</p>
+                        <p class="is-size-6 has-text-centered mb-5" style="color: rgba(255,255,255,0.8);">Gagnez des miles à chaque vol et profitez d'avantages exclusifs pour vos prochains voyages.</p>
+                        <div class="has-text-centered">
+                            <a href="{{ url_for('auth.register') }}" class="button is-accent is-fullwidth" style="height: 3em;">S'inscrire maintenant</a>
+                            <p class="is-size-7 mt-3"><a href="{{ url_for('auth.login') }}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Déjà membre ? Se connecter</a></p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -288,4 +362,8 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/acceuil.js') }}"></script>
 {% endblock %}

@@ -158,47 +158,47 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Extraction IATA et Ville depuis la balise select (ex: "Paris (CDG)")
-    function extractLocation(str) {
-        const parts = str.split('(');
-        return {
-            city: parts[0].trim(),
-            iata: parts[1] ? parts[1].replace(')', '').trim() : ''
-        };
+    function extractLocation(selectElement) {
+        const text = selectElement.options[selectElement.selectedIndex].text;
+        const match = text.match(/(.+) \(([A-Z]{3})\)/);
+        return match ? { city: match[1], iata: match[2] } : null;
     }
 
-    function updateSummaryPanel() {
-        // Mise à jour des IATA et villes Flighty Style
-        // On récupère le texte visible de l'option sélectionnée (ex: "Paris (CDG)")
-        const depText = selectDepart.options[selectDepart.selectedIndex].text;
-        const arrText = selectArrivee.options[selectArrivee.selectedIndex].text;
-        
-        const dep = extractLocation(depText);
-        const arr = extractLocation(arrText);
-        
-        iataDepart.innerText = selectDepart.value; // La value contient directement le code (ex: CDG)
-        cityDepart.innerText = dep.city;
-        formDepart.value = selectDepart.value;
-        
-        iataArrivee.innerText = selectArrivee.value;
-        cityArrivee.innerText = arr.city;
-        formArrivee.value = selectArrivee.value;
-        
-        formClasse.value = selectClasse.value;
-        formTypeVol.value = selectTypeVol.value;
-        formPassagers.value = passengerCount;
-    }
-
-    // Écouteurs d'événements
-    document.getElementById('prevMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); });
-    document.getElementById('nextMonth').addEventListener('click', () => { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); });
-    document.getElementById('btnResetDates').addEventListener('click', () => { startDate = null; endDate = null; updateSelectionUI(); });
-
-    selectDepart.addEventListener('change', updateSummaryPanel);
-    selectArrivee.addEventListener('change', updateSummaryPanel);
-    selectClasse.addEventListener('change', updateSummaryPanel);
+    // --- SYNCHRONISATION DES SÉLECTEURS AVEC LE FORMULAIRE CACHÉ ---
     
-    // Gestion du dropdown passagers
-    passengerDropdown.querySelector('.dropdown-trigger button').addEventListener('click', (e) => {
+    selectTypeVol.addEventListener('change', (e) => {
+        formTypeVol.value = e.target.value;
+        // Réinitialiser les dates et l'UI du calendrier lors d'un changement
+        startDate = null;
+        endDate = null;
+        updateSelectionUI();
+    });
+
+    selectDepart.addEventListener('change', (e) => {
+        formDepart.value = e.target.value;
+        const loc = extractLocation(e.target);
+        if (loc) {
+            cityDepart.innerText = loc.city;
+            iataDepart.innerText = loc.iata;
+        }
+    });
+
+    selectArrivee.addEventListener('change', (e) => {
+        formArrivee.value = e.target.value;
+        const loc = extractLocation(e.target);
+        if (loc) {
+            cityArrivee.innerText = loc.city;
+            iataArrivee.innerText = loc.iata;
+        }
+    });
+
+    selectClasse.addEventListener('change', (e) => {
+        formClasse.value = e.target.value;
+    });
+
+    // --- OUVERTURE/FERMETURE DU DROPDOWN PASSAGERS ---
+    const dropdownTrigger = passengerDropdown.querySelector('.dropdown-trigger button');
+    dropdownTrigger.addEventListener('click', (e) => {
         e.stopPropagation();
         passengerDropdown.classList.toggle('is-active');
     });
@@ -209,11 +209,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- GESTION DES PASSAGERS ---
     btnPlusPassenger.addEventListener('click', (e) => {
         e.stopPropagation();
-        if (passengerCount < 9) {
+        if (passengerCount < 9) { // Limite optionnelle à 9 passagers max
             passengerCount++;
-            updatePassengerUI();
+            passengerCountText.innerText = passengerCount;
+            passengerCountDisplay.innerText = passengerCount;
+            formPassagers.value = passengerCount;
         }
     });
 
@@ -221,32 +224,12 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         if (passengerCount > 1) {
             passengerCount--;
-            updatePassengerUI();
+            passengerCountText.innerText = passengerCount;
+            passengerCountDisplay.innerText = passengerCount;
+            formPassagers.value = passengerCount;
         }
     });
 
-    function updatePassengerUI() {
-        passengerCountText.innerText = passengerCount;
-        passengerCountDisplay.innerText = passengerCount;
-        formPassagers.value = passengerCount;
-        updateSummaryPanel();
-    }
-    
-    selectTypeVol.addEventListener('change', () => {
-        const isOneWay = selectTypeVol.value === 'AS';
-        const typeVolIcon = document.getElementById('typeVolIcon');
-        if (isOneWay) {
-            typeVolIcon.className = 'fas fa-arrow-right';
-        } else {
-            typeVolIcon.className = 'fas fa-exchange-alt';
-        }
-
-        if (isOneWay && endDate) endDate = null; // Retire la date de retour si on passe en aller simple
-        updateSummaryPanel();
-        updateSelectionUI(); // Actualise l'affichage du calendrier
-    });
-
-    // Initialisation
-    updateSummaryPanel();
+    // --- INITIALISATION AU CHARGEMENT DE LA PAGE ---
     renderCalendar();
 });

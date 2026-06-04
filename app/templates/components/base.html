@@ -451,7 +451,7 @@
               Réservations
             </a>
             <div class="navbar-dropdown">
-              <a href="/" class="navbar-item">
+              <a href="{{ url_for('client.booking') }}" class="navbar-item">
                 <span class="icon"><i class="fas fa-search"></i></span>
                 <span>Rechercher un vol</span>
               </a>
@@ -461,36 +461,6 @@
               >
                 <span class="icon"><i class="fas fa-ticket-alt"></i></span>
                 <span>Gérer ma réservation</span>
-              </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-plus-circle"></i></span>
-                <span>Ajouter une réservation</span>
-              </a>
-            </div>
-          </div>
-
-          <!-- Services -->
-          <div class="navbar-item has-dropdown is-hoverable">
-            <a class="navbar-link">
-              <i class="fas fa-concierge-bell" style="margin-right: 0.5rem"></i
-              >Services
-            </a>
-            <div class="navbar-dropdown">
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-check-circle"></i></span>
-                <span>Enregistrement en ligne</span>
-              </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-suitcase"></i></span>
-                <span>Bagages</span>
-              </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-chair"></i></span>
-                <span>Choix des sièges</span>
-              </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-utensils"></i></span>
-                <span>Services à bord</span>
               </a>
             </div>
           </div>
@@ -542,20 +512,12 @@
               session.get('prenom') }}
             </a>
             <div class="navbar-dropdown is-right">
-              <a href="/" class="navbar-item">
+              <a href="{{ url_for('client.profil') }}" class="navbar-item">
                 <span class="icon"><i class="fas fa-user"></i></span>
                 <span>Mon profil</span>
               </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-heart"></i></span>
-                <span>Mes favoris</span>
-              </a>
-              <a href="/" class="navbar-item">
-                <span class="icon"><i class="fas fa-cog"></i></span>
-                <span>Paramètres</span>
-              </a>
               <hr class="navbar-divider" />
-              <a href="/auth/logout" class="navbar-item">
+              <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                 <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
                 <span>Se déconnecter</span>
               </a>

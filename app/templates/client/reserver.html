@@ -89,7 +89,7 @@
 {% block booking_content %}
         <div class="search-panel">
             <div class="columns is-vcentered">
-                <div class="column is-3">
+                <div class="column">
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
                         <div class="control has-icons-left">
@@ -105,7 +105,7 @@
                     </div>
                 </div>
                 
-                <div class="column is-3">
+                <div class="column">
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
                         <div class="control has-icons-left">
@@ -121,7 +121,7 @@
                     </div>
                 </div>
 
-                <div class="column is-2">
+                <div class="column">
                     <div class="field">
                         <label class="flighty-label">Type de vol</label>
                         <div class="control has-icons-left">
@@ -164,19 +164,13 @@
                 <div class="column">
                     <div class="field">
                         <label class="flighty-label">Classe</label>
-                        <div class="is-flex">
-                            <div class="control has-icons-left is-expanded" style="width: 100%;">
-                                <div class="select is-fullwidth">
-                                    <select id="selectClasse">
-                                        <option value="Eco" selected>Éco</option>
-                                        <option value="Business">Business</option>
-                                    </select>
-                                </div>
-                                <span class="icon is-small is-left"><i class="fas fa-gem" style="color: var(--primary);"></i></span>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select id="selectClasse">
+                                    <option value="Eco" selected>Éco</option>
+                                    <option value="Business">Business</option>
+                                </select>
                             </div>
-                            <button class="button is-light ml-2" id="btnResetDates" title="Réinitialiser" style="border-radius: 12px; height: 2.8em; border: 1px solid #E5E5EA;">
-                                <i class="fas fa-sync-alt"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
