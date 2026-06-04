@@ -19,17 +19,11 @@ from app import db
 from sqlalchemy import text
 
 def _is_truthy(value):
-<<<<<<< HEAD
-    return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
-
-
-=======
     """Gère le type bit(1) de MySQL qui retourne des bytes"""
     if isinstance(value, (bytes, bytearray)):
         return any(b != 0 for b in value)
     return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
 
->>>>>>> client
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
