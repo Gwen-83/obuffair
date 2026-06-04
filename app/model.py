@@ -235,6 +235,9 @@ class User(db.Model):
     # Date de naissance
     date_naissance = db.Column(db.Date)
     
+    # Numéro de téléphone (format +33X XX XX XX XX)
+    numero_telephone = db.Column(db.String(20), nullable=True)
+    
     # Points de fidélité
     points_fidelite = db.Column(db.Integer, default=0)
     
@@ -255,3 +258,14 @@ class User(db.Model):
     
     # Booléen pour indiquer si l'utilisateur est administrateur
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
+
+    def get_prochains_vols(self):
+        """Retourne les prochains billets (vols) confirmés pour cet utilisateur"""
+        return db.session.query(Billet)\
+            .join(Reservation)\
+            .join(Vols)\
+            .filter(Reservation.id_client == self.id_client)\
+            .filter(Reservation.statut == 'Confirmee')\
+            .filter(Vols.date_heure_dep_utc >= datetime.utcnow())\
+            .order_by(Vols.date_heure_dep_utc.asc())\
+            .all()

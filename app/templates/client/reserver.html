@@ -66,6 +66,21 @@
         .day.range-start::before { left: 50%; border-top-left-radius: 22px; border-bottom-left-radius: 22px; }
         .day.range-end::before { right: 50%; border-top-right-radius: 22px; border-bottom-right-radius: 22px; }
 
+        /* Autocomplete Dropdown */
+        .autocomplete-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000; max-height: 250px; overflow-y: auto;
+            display: none; border: 1px solid #E5E5EA; margin-top: 4px;
+        }
+        .autocomplete-item {
+            padding: 10px 15px; cursor: pointer; font-weight: 600; color: var(--flighty-text);
+            border-bottom: 1px solid #F2F2F7;
+        }
+        .autocomplete-item:last-child { border-bottom: none; }
+        .autocomplete-item:hover { background: #F2F2F7; color: var(--primary); }
+        .autocomplete-iata { font-size: 11px; color: var(--flighty-gray); background: #F2F2F7; padding: 2px 6px; border-radius: 6px; margin-left: 8px; }
+
         /* Panneau Récapitulatif (Flighty Style) */
         .summary-card { 
             background: white; border-radius: var(--radius-xl); 
@@ -92,15 +107,10 @@
                 <div class="column">
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
-                        <div class="control has-icons-left">
-                            <div class="select is-fullwidth">
-                                <select id="selectDepart">
-                                    {% for aeroport in aeroports %}
-                                    <option value="{{ aeroport.id_aeroport }}" {% if search_params.get('depart', 'CDG') == aeroport.id_aeroport %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="control has-icons-left is-relative">
+                            <input type="text" id="inputDepart" class="input" style="border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;" placeholder="Chercher une ville..." autocomplete="off">
                             <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
+                            <div id="dropdownDepart" class="autocomplete-dropdown"></div>
                         </div>
                     </div>
                 </div>
@@ -108,15 +118,10 @@
                 <div class="column">
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
-                        <div class="control has-icons-left">
-                            <div class="select is-fullwidth">
-                                <select id="selectArrivee">
-                                    {% for aeroport in aeroports %}
-                                    <option value="{{ aeroport.id_aeroport }}" {% if search_params.get('arrivee', 'FCO') == aeroport.id_aeroport %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                        <div class="control has-icons-left is-relative">
+                            <input type="text" id="inputArrivee" class="input" style="border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;" placeholder="Chercher une ville..." autocomplete="off">
                             <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
+                            <div id="dropdownArrivee" class="autocomplete-dropdown"></div>
                         </div>
                     </div>
                 </div>
@@ -156,20 +161,6 @@
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="column">
-                    <div class="field">
-                        <label class="flighty-label">Classe</label>
-                        <div class="control">
-                            <div class="select is-fullwidth">
-                                <select id="selectClasse">
-                                    <option value="Eco" {% if search_params.get('classe', 'Eco') == 'Eco' %}selected{% endif %}>Éco</option>
-                                    <option value="Business" {% if search_params.get('classe') == 'Business' %}selected{% endif %}>Business</option>
-                                </select>
                             </div>
                         </div>
                     </div>
@@ -220,7 +211,6 @@
                         <form action="{{ url_for('client.booking_flights') }}" method="POST" id="searchFlightForm">
                             <input type="hidden" name="depart" id="formDepart" value="{{ search_params.get('depart', 'CDG') }}">
                             <input type="hidden" name="arrivee" id="formArrivee" value="{{ search_params.get('arrivee', 'FCO') }}">
-                            <input type="hidden" name="classe" id="formClasse" value="{{ search_params.get('classe', 'Eco') }}">
                             <input type="hidden" name="type_vol" id="formTypeVol" value="{{ search_params.get('type_vol', 'AR') }}">
                             <input type="hidden" name="passagers" id="formPassagers" value="{{ search_params.get('passagers', '1') }}">
                             <input type="hidden" name="date_aller" id="formDateAller" value="{{ search_params.get('date_aller', '') }}">
@@ -237,8 +227,12 @@
 
         </div>
 
-<script>
-    window.savedSearchParams = {{ search_params|tojson|safe if search_params else 'null' }};
-</script>
+<!-- Transfert des données serveur vers JS via attributs HTML -->
+<div id="flightSearchData" data-search-params="{{ search_params|tojson|forceescape if search_params else 'null' }}" style="display: none;">
+    {% for a in aeroports %}
+    <span class="airport-data" data-iata="{{ a.id_aeroport }}" data-city="{{ a.ville }}"></span>
+    {% endfor %}
+</div>
+
 <script src="{{ url_for('static', filename='js/reserver.js') }}"></script>
 {% endblock %}

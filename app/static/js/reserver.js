@@ -5,12 +5,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const retourDisplay = document.getElementById('retourDisplay');
     const btnContinue = document.getElementById('btnContinue');
     
-    // Selects
-    const selectDepart = document.getElementById('selectDepart');
-    const selectArrivee = document.getElementById('selectArrivee');
-    const selectClasse = document.getElementById('selectClasse');
+    // Inputs & Dropdowns
+    const inputDepart = document.getElementById('inputDepart');
+    const dropdownDepart = document.getElementById('dropdownDepart');
+    const inputArrivee = document.getElementById('inputArrivee');
+    const dropdownArrivee = document.getElementById('dropdownArrivee');
     const selectTypeVol = document.getElementById('selectTypeVol');
     
+    // Récupération des données serveur (Jinja) transférées via HTML
+    const flightSearchData = document.getElementById('flightSearchData');
+    const aeroports = [];
+    document.querySelectorAll('.airport-data').forEach(el => {
+        aeroports.push({
+            iata: el.dataset.iata,
+            city: el.dataset.city
+        });
+    });
+
     // Passagers Dropdown
     const passengerDropdown = document.getElementById('passengerDropdown');
     const btnMinusPassenger = document.getElementById('btnMinusPassenger');
@@ -28,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Form inputs cachés
     const formDepart = document.getElementById('formDepart');
     const formArrivee = document.getElementById('formArrivee');
-    const formClasse = document.getElementById('formClasse');
     const formTypeVol = document.getElementById('formTypeVol');
     const formPassagers = document.getElementById('formPassagers');
     const formDateAller = document.getElementById('formDateAller');
@@ -40,11 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
     let startDate = null;
     let endDate = null;
     
+    let savedSearchParams = null;
+    if (flightSearchData && flightSearchData.dataset.searchParams && flightSearchData.dataset.searchParams !== 'null') {
+        savedSearchParams = JSON.parse(flightSearchData.dataset.searchParams);
+    }
+
     // Restauration des paramètres de session si existants
-    if (window.savedSearchParams) {
-        if (window.savedSearchParams.date_aller) startDate = new Date(window.savedSearchParams.date_aller + "T00:00:00");
-        if (window.savedSearchParams.date_retour) endDate = new Date(window.savedSearchParams.date_retour + "T00:00:00");
-        if (window.savedSearchParams.passagers) passengerCount = parseInt(window.savedSearchParams.passagers);
+    if (savedSearchParams) {
+        if (savedSearchParams.date_aller) startDate = new Date(savedSearchParams.date_aller + "T00:00:00");
+        if (savedSearchParams.date_retour) endDate = new Date(savedSearchParams.date_retour + "T00:00:00");
+        
+        // Failsafe au cas où les dates seraient inversées dans la session
+        if (startDate && endDate && startDate > endDate) {
+            endDate = new Date(startDate);
+        }
+        
+        if (savedSearchParams.passagers) passengerCount = parseInt(savedSearchParams.passagers);
     }
 
     let currentDate = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1); 
@@ -101,7 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 startDate = date;
                 endDate = null;
             } else if (date < startDate) {
-                // Clic avant la date de début
+                // Clic avant la date de début : on inverse intelligemment pour créer une plage
+                endDate = startDate;
                 startDate = date;
             } else {
                 // Sélection de la date de fin
@@ -150,29 +172,94 @@ document.addEventListener('DOMContentLoaded', () => {
             retourBox.style.opacity = '1';
         }
         
-        // Mise à jour des inputs cachés pour le backend
-        if (startDate) formDateAller.value = startDate.toISOString().split('T')[0];
-        if (endDate) formDateRetour.value = endDate.toISOString().split('T')[0];
+        // --- Validation: Empêcher le même aéroport d'origine et destination ---
+        const isSameAirport = (formDepart.value === formArrivee.value) && formDepart.value !== '';
+        inputArrivee.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
+        inputDepart.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
+
+        // Mise à jour des inputs cachés pour le backend (Correction Fuseau Horaire)
+        const getLocalISODate = (d) => {
+            const offset = d.getTimezoneOffset() * 60000;
+            return new Date(d.getTime() - offset).toISOString().split('T')[0];
+        };
+
+        if (startDate) formDateAller.value = getLocalISODate(startDate);
+        if (endDate) formDateRetour.value = getLocalISODate(endDate);
         else formDateRetour.value = '';
 
         // Activation du bouton selon le type de vol
         if (isOneWay) {
-            if (startDate) btnContinue.removeAttribute('disabled');
+            if (startDate && !isSameAirport) btnContinue.removeAttribute('disabled');
             else btnContinue.setAttribute('disabled', 'true');
         } else {
-            if (startDate && endDate) btnContinue.removeAttribute('disabled');
+            if (startDate && endDate && !isSameAirport) btnContinue.removeAttribute('disabled');
             else btnContinue.setAttribute('disabled', 'true');
         }
     }
 
-    // Extraction IATA et Ville depuis la balise select (ex: "Paris (CDG)")
-    function extractLocation(selectElement) {
-        const text = selectElement.options[selectElement.selectedIndex].text;
-        const match = text.match(/(.+) \(([A-Z]{3})\)/);
-        return match ? { city: match[1], iata: match[2] } : null;
+    // --- AUTOCOMPLETE POUR AÉROPORTS ---
+    function renderSuggestions(filtered, dropdown, input, hidden, iataDisp, cityDisp) {
+        dropdown.innerHTML = '';
+        if (filtered.length === 0) {
+            dropdown.style.display = 'none';
+            return;
+        }
+        filtered.forEach(ap => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-item';
+            div.innerHTML = `${ap.city} <span class="autocomplete-iata">${ap.iata}</span>`;
+            div.addEventListener('mousedown', (e) => {
+                // mousedown s'exécute avant le blur de l'input
+                e.preventDefault(); 
+                input.value = `${ap.city} (${ap.iata})`;
+                hidden.value = ap.iata;
+                iataDisp.innerText = ap.iata;
+                cityDisp.innerText = ap.city;
+                dropdown.style.display = 'none';
+                updateSelectionUI();
+            });
+            dropdown.appendChild(div);
+        });
+        dropdown.style.display = 'block';
     }
 
-    // --- SYNCHRONISATION DES SÉLECTEURS AVEC LE FORMULAIRE CACHÉ ---
+    function initAutocomplete(input, dropdown, hidden, iataDisp, cityDisp, defaultIata) {
+        const initialAp = aeroports.find(a => a.iata === hidden.value) || aeroports.find(a => a.iata === defaultIata);
+        if (initialAp) {
+            input.value = `${initialAp.city} (${initialAp.iata})`;
+            hidden.value = initialAp.iata;
+            iataDisp.innerText = initialAp.iata;
+            cityDisp.innerText = initialAp.city;
+        }
+
+        input.addEventListener('focus', () => {
+            input.select();
+            renderSuggestions(aeroports, dropdown, input, hidden, iataDisp, cityDisp);
+        });
+
+        input.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const filtered = aeroports.filter(a => 
+                a.city.toLowerCase().includes(val) || 
+                a.iata.toLowerCase().includes(val)
+            );
+            renderSuggestions(filtered, dropdown, input, hidden, iataDisp, cityDisp);
+        });
+
+        input.addEventListener('blur', () => {
+            // Rétablir la valeur sélectionnée si l'utilisateur n'a rien cliqué
+            const ap = aeroports.find(a => a.iata === hidden.value);
+            if (ap) {
+                input.value = `${ap.city} (${ap.iata})`;
+            }
+            dropdown.style.display = 'none';
+        });
+    }
+
+    initAutocomplete(inputDepart, dropdownDepart, formDepart, iataDepart, cityDepart, 'CDG');
+    initAutocomplete(inputArrivee, dropdownArrivee, formArrivee, iataArrivee, cityArrivee, 'FCO');
+
+    // --- SYNCHRONISATION DU TYPE DE VOL ---
     
     selectTypeVol.addEventListener('change', (e) => {
         formTypeVol.value = e.target.value;
@@ -180,28 +267,6 @@ document.addEventListener('DOMContentLoaded', () => {
         startDate = null;
         endDate = null;
         updateSelectionUI();
-    });
-
-    selectDepart.addEventListener('change', (e) => {
-        formDepart.value = e.target.value;
-        const loc = extractLocation(e.target);
-        if (loc) {
-            cityDepart.innerText = loc.city;
-            iataDepart.innerText = loc.iata;
-        }
-    });
-
-    selectArrivee.addEventListener('change', (e) => {
-        formArrivee.value = e.target.value;
-        const loc = extractLocation(e.target);
-        if (loc) {
-            cityArrivee.innerText = loc.city;
-            iataArrivee.innerText = loc.iata;
-        }
-    });
-
-    selectClasse.addEventListener('change', (e) => {
-        formClasse.value = e.target.value;
     });
 
     // --- OUVERTURE/FERMETURE DU DROPDOWN PASSAGERS ---
@@ -239,18 +304,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- INITIALISATION AU CHARGEMENT DE LA PAGE ---
-    
-    // Actualisation des IATA/villes au premier rendu (si restauré depuis session)
-    const locDep = extractLocation(selectDepart);
-    if (locDep) {
-        cityDepart.innerText = locDep.city;
-        iataDepart.innerText = locDep.iata;
-    }
-    const locArr = extractLocation(selectArrivee);
-    if (locArr) {
-        cityArrivee.innerText = locArr.city;
-        iataArrivee.innerText = locArr.iata;
-    }
 
     renderCalendar();
 });

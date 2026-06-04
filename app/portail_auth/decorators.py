@@ -19,14 +19,12 @@ from app import db
 from sqlalchemy import text
 
 def _is_truthy(value):
+    """Gère le type bit(1) de MySQL qui retourne des bytes"""
+    if isinstance(value, (bytes, bytearray)):
+        return any(b != 0 for b in value)
     return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
 
-
 def login_required(f):
-    """
-    Décorateur pour exiger que l'utilisateur soit connecté.
-    Si non connecté → redirige vers /auth/login
-    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
@@ -37,26 +35,20 @@ def login_required(f):
 
 
 def admin_required(f):
-    """
-    Décorateur pour exiger que l'utilisateur soit admin.
-    - Si non connecté → redirige vers /auth/login
-    - Si connecté mais pas admin → affiche erreur 403 (Forbidden)
-    """
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             flash('Vous devez être connecté pour accéder à cette page.', 'warning')
             return redirect(url_for('auth.login'))
         
-        # Charger l'utilisateur depuis la BD pour vérifier son statut admin
         user = db.session.execute(
-            text("SELECT * FROM clients WHERE id_client = :id LIMIT 1"),
+            text("SELECT is_admin FROM clients WHERE id_client = :id LIMIT 1"),
             {"id": session['user_id']}
         ).mappings().first()
         
         if not user or not _is_truthy(user['is_admin']):
             flash('Accès refusé. Seuls les administrateurs peuvent accéder à cette page.', 'danger')
-            return redirect(url_for('index'))  # ou un route 403
+            return redirect(url_for('index'))
         
         return f(*args, **kwargs)
     return decorated_function
