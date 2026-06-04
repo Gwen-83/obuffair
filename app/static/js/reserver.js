@@ -156,8 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Mise à jour du texte de la carte résumé
-        const pad = n => n < 10 ? '0' + n : n;
-        const formatDate = (d) => `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
+        const formatDate = (d) => {
+            const str = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        };
         
         allerDisplay.innerText = startDate ? formatDate(startDate) : 'Sélectionnez une date';
         

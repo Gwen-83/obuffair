@@ -22,10 +22,7 @@
 
             {% set search_params = session.get('search_params', {}) %}
             {% set nb_passagers = search_params.get('passagers', 1) | int %}
-            {% set prix_aller = session.get('vol_aller', {}).get('prix', 0) | float %}
-            {% set prix_retour = session.get('vol_retour', {}).get('prix', 0) | float %}
-            {% set prix_options = session.get('options', {}).get('prix', 0) | float %}
-            {% set cart_total = ((prix_aller + prix_retour) + prix_options) * nb_passagers %}
+            {% set cart_total = session.get('total_panier', 0) | float %}
 
             <div class="cart-total">
                 <div class="cart-total-label">Total ({{ nb_passagers }} passager{% if nb_passagers > 1 %}s{% endif %})</div>

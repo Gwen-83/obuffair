@@ -13,12 +13,13 @@
 <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
     <h2 class="title is-3 m-0" style="color: var(--primary);">{{ titre }}</h2>
     {% if is_retour_step %}
-    <form action="{{ url_for('client.booking_flights') }}" method="POST">
-        <input type="hidden" name="reset_aller" value="1">
-        <button type="submit" class="button is-small is-light is-rounded font-weight-bold">
-            <i class="fas fa-arrow-left mr-2"></i> Changer le vol aller
-        </button>
-    </form>
+    <a href="{{ url_for('client.booking_flights', step='aller') }}" class="button is-small is-light is-rounded font-weight-bold">
+        <i class="fas fa-arrow-left mr-2"></i> Voir le vol aller
+    </a>
+    {% elif search_params.get('type_vol') == 'AR' and session.get('vol_aller') %}
+    <a href="{{ url_for('client.booking_flights', step='retour') }}" class="button is-small is-light is-rounded font-weight-bold">
+        Voir le vol retour <i class="fas fa-arrow-right ml-2"></i>
+    </a>
     {% endif %}
 </div>
 <p class="subtitle is-6 has-text-grey mb-6">{{ ville_dep }} ({{ iata_dep }}) vers {{ ville_arr }} ({{ iata_arr }}) • {{ date_vol }}</p>
@@ -64,7 +65,7 @@
                     <div class="is-size-7 has-text-grey font-weight-bold is-flex is-align-items-center" style="gap: 4px;">
                         {{ alt_vol.stops_text }}
                         {% if alt_vol.has_short_layover %}
-                        <span style="color: #FF3B30;"><i class="fas fa-exclamation-triangle"></i> Courte</span>
+                        <span style="color: #FF9500;"><i class="fas fa-exclamation-circle"></i> Escale courte</span>
                         {% endif %}
                     </div>
                 </div>
@@ -96,15 +97,18 @@
     </div>
 
 {% else %}
+    {% set current_selected_vol_id = session.get('vol_retour', {}).get('id_vol')|string if is_retour_step else session.get('vol_aller', {}).get('id_vol')|string %}
+    {% set selected_class = session.get('vol_retour', {}).get('classe') if is_retour_step else session.get('vol_aller', {}).get('classe') %}
     {% for itin in itineraries %}
-    <div class="flighty-booking-card">
-        <div class="flight-info-section">
+    {% set is_selected_flight = (itin.id|string == current_selected_vol_id) %}
+    <div class="flighty-booking-card" id="flight-card-{{ itin.id }}" style="transition: all 0.3s ease; {% if is_selected_flight and nb_passagers > 1 %}border: 2px solid var(--primary); box-shadow: var(--shadow-premium);{% endif %}">
+        <div class="flight-info-section" style="flex: 1.2 1 0%; padding-right: 1.5rem; min-width: 280px;">
             <div class="flight-header">
                 <span class="airline-info"><i class="fas fa-plane"></i> O'Buffair {{ itin.segments[0].flight_number }}</span>
                 <span class="badge {% if itin.stops == 0 %}direct{% else %}stop{% endif %}">{{ itin.stops_text }}</span>
             </div>
             
-            <div class="flight-route">
+            <div class="flight-route" style="background: #F8FAFC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
                 <div style="width: 75px;">
                     <div class="flighty-time">{{ itin.dep_time }}</div>
                     <div class="flighty-iata">{{ iata_dep }}</div>
@@ -138,8 +142,8 @@
             <div class="flight-amenities" style="flex-direction: column; gap: 4px;">
                 {% for seg in itin.segments %}
                     {% if not loop.last %}
-                        <span><i class="fas fa-clock" style="color: var(--flighty-orange);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})
-                        {% if seg.is_short_layover %}<strong style="color: #FF3B30; margin-left: 6px;"><i class="fas fa-exclamation-triangle"></i> Escale courte</strong>{% endif %}</span>
+                        <span><i class="fas fa-clock" style="color: var(--flighty-gray);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})
+                        {% if seg.is_short_layover %}<strong style="color: #FF9500; margin-left: 6px;"><i class="fas fa-exclamation-circle"></i> Escale courte</strong>{% endif %}</span>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -151,61 +155,144 @@
             {% endif %}
         </div>
         
-        <div class="flight-tariffs-section">
+        {% if nb_passagers > 1 %}
+        <form action="{{ form_action }}" method="POST" style="flex: 1 1 0%; display: flex; flex-direction: column; justify-content: center; height: 100%;">
+            <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+            <input type="hidden" name="classe" value="Mixte">
+            <input type="hidden" name="prix" id="prix-{{ itin.id }}" value="0">
+            <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
+            <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
+            <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
+            <div id="hidden-classes-container-{{ itin.id }}"></div>
+            
+            <div class="flight-tariffs-section" style="display: flex; align-items: stretch; gap: 12px; width: 100%;">
+                {% if itin.cap_eco > 0 %}
+                <div class="tariff-btn eco" style="flex: 1; cursor: default; display: flex; flex-direction: column; padding: 12px; min-height: unset;">
+                    <div class="t-class eco" style="font-size: 0.8rem; margin-bottom: 2px;">Economy</div>
+                    <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_eco }} €</div>
+                    {% if itin.avail_eco == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                    {% elif itin.avail_eco <= (nb_passagers + 3) %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
+                    <ul class="t-features mt-1 mb-2" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> 1 Bagage cabine</li></ul>
+                    
+                    <div class="is-flex is-align-items-center is-justify-content-center mt-auto pt-2" style="gap: 8px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'Eco', -1, {{ itin.price_eco }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_eco == 0 %}disabled{% endif %}>
+                            <i class="fas fa-minus" style="color: var(--flighty-text);"></i>
+                        </button>
+                        <span class="has-text-weight-bold is-size-6" style="min-width: 14px; text-align: center;" id="count-{{ itin.id }}-Eco">0</span>
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'Eco', 1, {{ itin.price_eco }}, {{ itin.avail_eco }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_eco == 0 %}disabled{% endif %}>
+                            <i class="fas fa-plus" style="color: var(--flighty-text);"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if itin.cap_biz > 0 %}
+                <div class="tariff-btn biz" style="flex: 1; cursor: default; display: flex; flex-direction: column; padding: 12px; min-height: unset;">
+                    <div class="t-class biz" style="font-size: 0.8rem; margin-bottom: 2px;">Business</div>
+                    <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_biz }} €</div>
+                    {% if itin.avail_biz == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                    {% elif itin.avail_biz <= (nb_passagers + 3) %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
+                    <ul class="t-features mt-1 mb-2" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> 2 Bagages soute</li></ul>
+                    
+                    <div class="is-flex is-align-items-center is-justify-content-center mt-auto pt-2" style="gap: 8px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'Business', -1, {{ itin.price_biz }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_biz == 0 %}disabled{% endif %}>
+                            <i class="fas fa-minus" style="color: var(--flighty-text);"></i>
+                        </button>
+                        <span class="has-text-weight-bold is-size-6" style="min-width: 14px; text-align: center;" id="count-{{ itin.id }}-Business">0</span>
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'Business', 1, {{ itin.price_biz }}, {{ itin.avail_biz }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_biz == 0 %}disabled{% endif %}>
+                            <i class="fas fa-plus" style="color: var(--flighty-text);"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if itin.cap_first > 0 %}
+                <div class="tariff-btn first" style="flex: 1; cursor: default; display: flex; flex-direction: column; padding: 12px; min-height: unset;">
+                    <div class="t-class first" style="font-size: 0.8rem; margin-bottom: 2px;">First</div>
+                    <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_first }} €</div>
+                    {% if itin.avail_first == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                    {% elif itin.avail_first <= (nb_passagers + 3) %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
+                    <ul class="t-features mt-1 mb-2" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> Salon VIP</li></ul>
+                    
+                    <div class="is-flex is-align-items-center is-justify-content-center mt-auto pt-2" style="gap: 8px; border-top: 1px solid rgba(0,0,0,0.05);">
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'First', -1, {{ itin.price_first }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_first == 0 %}disabled{% endif %}>
+                            <i class="fas fa-minus" style="color: var(--flighty-text);"></i>
+                        </button>
+                        <span class="has-text-weight-bold is-size-6" style="min-width: 14px; text-align: center;" id="count-{{ itin.id }}-First">0</span>
+                        <button type="button" class="button is-rounded is-white shadow-sm" onclick="updateMultiClass('{{ itin.id }}', 'First', 1, {{ itin.price_first }}, {{ itin.avail_first }})" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; min-width: 24px; padding: 0; font-size: 0.7rem;" {% if itin.avail_first == 0 %}disabled{% endif %}>
+                            <i class="fas fa-plus" style="color: var(--flighty-text);"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mt-3 is-flex is-justify-content-space-between is-align-items-center" style="font-size: 0.85rem;">
+                <div class="has-text-grey">
+                    <span class="has-text-weight-bold" style="color: var(--flighty-text);"><span id="total-count-{{ itin.id }}">0</span>/{{ nb_passagers }}</span> passagers assignés
+                </div>
+                <button type="submit" class="button is-primary is-small is-rounded px-4 font-weight-bold" id="btn-submit-{{ itin.id }}" disabled>
+                    Valider (<span id="total-price-{{ itin.id }}">0.00</span> €)
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <div class="flight-tariffs-section" style="display: flex; align-items: stretch; justify-content: flex-end; gap: 12px; height: 100%; flex: 1 1 0%;">
             {% if itin.cap_eco > 0 %}
-                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <form class="tariff-form" action="{{ form_action }}" method="POST" style="display: flex; flex: 1;">
                     <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                     <input type="hidden" name="classe" value="Eco">
                     <input type="hidden" name="prix" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco < nb_passagers %}disabled{% endif %}>
-                        <div class="t-class eco">Economy</div>
-                        <div class="t-price">{{ itin.price_eco }} €</div>
-                        {% if itin.avail_eco < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_eco == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
-                        {% elif itin.avail_eco <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
-                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 1 Bagage cabine</li></ul>
+                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Eco' %}border: 2px solid var(--primary); background-color: #F8FAFC;{% endif %}">
+                        <div class="t-class eco" style="font-size: 0.8rem; margin-bottom: 2px;">Economy</div>
+                        <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_eco }} €</div>
+                        {% if itin.avail_eco < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                        {% elif itin.avail_eco <= 4 %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-1 mb-1" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> 1 Bagage cabine</li></ul>
                     </button>
                 </form>
             {% endif %}
 
             {% if itin.cap_biz > 0 %}
-                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <form class="tariff-form" action="{{ form_action }}" method="POST" style="display: flex; flex: 1;">
                     <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                     <input type="hidden" name="classe" value="Business">
                     <input type="hidden" name="prix" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz < nb_passagers %}disabled{% endif %}>
-                        <div class="t-class biz">Business</div>
-                        <div class="t-price">{{ itin.price_biz }} €</div>
-                        {% if itin.avail_biz < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_biz == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
-                        {% elif itin.avail_biz <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
-                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 2 Bagages soute</li></ul>
+                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Business' %}border: 2px solid var(--primary); background-color: #F0F4F8;{% endif %}">
+                        <div class="t-class biz" style="font-size: 0.8rem; margin-bottom: 2px;">Business</div>
+                        <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_biz }} €</div>
+                        {% if itin.avail_biz < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                        {% elif itin.avail_biz <= 4 %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-1 mb-1" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> 2 Bagages soute</li></ul>
                     </button>
                 </form>
             {% endif %}
 
             {% if itin.cap_first > 0 %}
-                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                <form class="tariff-form" action="{{ form_action }}" method="POST" style="display: flex; flex: 1;">
                     <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                     <input type="hidden" name="classe" value="First">
                     <input type="hidden" name="prix" value="{{ itin.price_first }}">
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn first" {% if itin.avail_first < nb_passagers %}disabled{% endif %}>
-                        <div class="t-class first">First</div>
-                        <div class="t-price">{{ itin.price_first }} €</div>
-                        {% if itin.avail_first < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_first == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
-                        {% elif itin.avail_first <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
-                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> Salon VIP</li></ul>
+                    <button type="submit" class="tariff-btn first" {% if itin.avail_first < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'First' %}border: 2px solid var(--primary); background-color: #F4F4F5;{% endif %}">
+                        <div class="t-class first" style="font-size: 0.8rem; margin-bottom: 2px;">First</div>
+                        <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_first }} €</div>
+                        {% if itin.avail_first < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
+                        {% elif itin.avail_first <= 4 %}<div class="seats-left-badge" style="font-size: 0.65rem; padding: 2px 6px;">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-1 mb-1" style="font-size: 0.75rem;"><li><i class="fas fa-check yes mr-1"></i> Salon VIP</li></ul>
                     </button>
                 </form>
             {% endif %}
         </div>
+        {% endif %}
     </div>
     {% endfor %}
     
@@ -225,4 +312,10 @@
     {% endif %}
 {% endif %}
 
+<div id="bookingFlightsData" 
+     data-max-passengers="{{ nb_passagers }}" 
+     data-selected-flight="{{ session.get('vol_retour', {}).get('id_vol') if is_retour_step else session.get('vol_aller', {}).get('id_vol') }}"
+     data-selected-classes='{{ (session.get("vol_retour", {}).get("classes", []) if is_retour_step else session.get("vol_aller", {}).get("classes", [])) | tojson | safe }}'
+     style="display:none;"></div>
+<script src="{{ url_for('static', filename='js/booking_options.js') }}"></script>
 {% endblock %}
