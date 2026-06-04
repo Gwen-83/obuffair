@@ -58,4 +58,6 @@ class User(db.Model):
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
 
 class Reservation(db.Model):
+    __tablename__ = 'reservations'
+    __table_args__ = {'extend_existing': True}
     id_reservation = db.Column(db.Integer, primary_key = True)

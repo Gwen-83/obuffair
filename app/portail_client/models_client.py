@@ -8,6 +8,7 @@ from datetime import datetime
 
 class Aeroport(db.Model):
     __tablename__ = 'aeroports'
+    __table_args__ = {'extend_existing': True}
     id_aeroport = db.Column(db.String(3), primary_key=True)
     nom = db.Column(db.String(100), nullable=False)
     ville = db.Column(db.String(100), nullable=False)
@@ -20,6 +21,7 @@ class Aeroport(db.Model):
 
 class Avion(db.Model):
     __tablename__ = 'avions'
+    __table_args__ = {'extend_existing': True}
     immatriculation = db.Column(db.String(10), primary_key=True)
     modele = db.Column(db.String(50), nullable=False)
     capacite_eco = db.Column(db.Integer, nullable=False)
@@ -33,6 +35,7 @@ class Avion(db.Model):
 
 class Vol(db.Model):
     __tablename__ = 'vols'
+    __table_args__ = {'extend_existing': True}
     id_vol = db.Column(db.Integer, primary_key=True)
     immatriculation_avion = db.Column(db.String(10), db.ForeignKey('avions.immatriculation'), nullable=False)
     id_aeroport_depart = db.Column(db.String(3), db.ForeignKey('aeroports.id_aeroport'), nullable=False)
@@ -49,6 +52,7 @@ class Vol(db.Model):
 
 class Reservation(db.Model):
     __tablename__ = 'reservations'
+    __table_args__ = {'extend_existing': True}
     id_reservation = db.Column(db.Integer, primary_key=True)
     id_client = db.Column(db.Integer, db.ForeignKey('clients.id_client'), nullable=False)
     date_reservation = db.Column(db.DateTime, default=datetime.utcnow)

@@ -16,6 +16,7 @@ class Avion(db.Model):
     Chaque instance = une ligne dans la table 'avions'.
     """
     __tablename__ = 'avions'
+    __table_args__ = {'extend_existing': True}
     
     # Immatriculation de l'avion (clé primaire, ex: F-ABCD)
     immatriculation = db.Column(db.String(10), primary_key=True, nullable=False)
@@ -72,6 +73,8 @@ class Avion(db.Model):
         return max(0, self.nb_rangees) * max(0, self.largeur_rangee)
 
 class Vols(db.Model):
+    __tablename__ = 'vols'
+    __table_args__ = {'extend_existing': True}
     
     id_vol = db.Column(db.Integer, primary_key = True)
 
@@ -136,6 +139,7 @@ class Aeroport(db.Model):
     Modèle pour les aéroports gérés par la compagnie.
     """
     __tablename__ = 'aeroports'
+    __table_args__ = {'extend_existing': True}
 
     id_aeroport = db.Column(db.String(4), primary_key=True, nullable=False)
     nom = db.Column(db.String(120), nullable=False)
