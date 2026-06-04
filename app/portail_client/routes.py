@@ -262,6 +262,9 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
     # Requête large en BDD : +/- 1 jour pour compenser les décalages horaires UTC vs Local
     start_bound = target_date - timedelta(days=1)
     end_bound = target_date + timedelta(days=2)
+    
+    # Sécurité anti-fantômes : on ne remonte aucun vol qui part dans moins de 2 heures
+    now_bound = datetime.utcnow() + timedelta(hours=2)
 
     # 1. Vols Directs
     direct_flights = db.session.execute(text("""
@@ -270,11 +273,13 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
         AND id_aeroport_arrivee = :destination
         AND DATE(date_heure_dep_utc) >= :start_bound
         AND DATE(date_heure_dep_utc) < :end_bound
+        AND date_heure_dep_utc > :now_bound
     """), {
         'origin': origin,
         'destination': destination,
         'start_bound': start_bound,
-        'end_bound': end_bound
+        'end_bound': end_bound,
+        'now_bound': now_bound
     }).mappings().all()
     
     for f in direct_flights:
@@ -291,11 +296,13 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
             AND id_aeroport_arrivee != :destination
             AND DATE(date_heure_dep_utc) >= :start_bound
             AND DATE(date_heure_dep_utc) < :end_bound
+            AND date_heure_dep_utc > :now_bound
         """), {
             'origin': origin,
             'destination': destination,
             'start_bound': start_bound,
-            'end_bound': end_bound
+            'end_bound': end_bound,
+            'now_bound': now_bound
         }).mappings().all()
         
         for leg1 in first_legs:
@@ -388,6 +395,8 @@ def booking_flights():
                 'prix_biz': float(request.form.get('prix_biz', 0)),
                 'prix_first': float(request.form.get('prix_first', 0))
             }
+            
+        return redirect(url_for('client.booking_flights'))
             
     search_params = session.get('search_params', {})
     
@@ -622,6 +631,8 @@ def booking_passengers():
             else:
                 session['vol_aller'] = vol_final
                 
+        return redirect(url_for('client.booking_passengers'))
+                
     # Garde-fou : s'il n'y a pas de vol_aller sélectionné, retour au début
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
@@ -635,6 +646,11 @@ def booking_options():
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
         
+    if request.method == 'POST':
+        session['passagers_data'] = request.form.to_dict()
+        session.modified = True
+        return redirect(url_for('client.booking_options'))
+
     # Extraire les infos pour la map de l'avion (On base la map sur le premier segment)
     vol_id = str(session['vol_aller']['id_vol']).split('_')[0]
     avion_info = db.session.execute(text("""
@@ -659,30 +675,42 @@ def booking_payment():
         return redirect(url_for('client.booking'))
         
     if request.method == 'POST':
-        # Gestion du changement de classe sur la page des options
-        nouvelle_classe = request.form.get('nouvelle_classe')
-        nouveau_prix = request.form.get('nouveau_prix')
-        if nouvelle_classe and nouveau_prix:
-            session['vol_aller']['classe'] = nouvelle_classe
-            session['vol_aller']['prix'] = float(nouveau_prix)
+        # Vérification : POST depuis la page d'options OU soumission finale du paiement
+        if 'bagages' in request.form or 'siege_selectionne' in request.form:
+            # Gestion du changement de classe sur la page des options
+            nouvelle_classe = request.form.get('nouvelle_classe')
+            nouveau_prix = request.form.get('nouveau_prix')
+            if nouvelle_classe and nouveau_prix:
+                session['vol_aller']['classe'] = nouvelle_classe
+                session['vol_aller']['prix'] = float(nouveau_prix)
+                
+            siege = request.form.get('siege_selectionne', '')
+            bagages = request.form.get('bagages', '0')
+            repas = request.form.get('repas', 'standard')
             
-        siege = request.form.get('siege_selectionne', '')
-        bagages = request.form.get('bagages', '0')
-        repas = request.form.get('repas', 'standard')
-        
-        prix_options = 0
-        if bagages == '1': prix_options += 45
-        elif bagages == '2': prix_options += 80
-        
-        if repas in ['premium', 'vegetarien']: prix_options += 15
-        
-        session['options'] = {
-            'siege': siege,
-            'bagages': bagages,
-            'repas': repas,
-            'prix': prix_options
-        }
-        session.modified = True
+            prix_options = 0
+            if bagages == '1': prix_options += 45
+            elif bagages == '2': prix_options += 80
+            
+            if repas in ['premium', 'vegetarien']: prix_options += 15
+            
+            session['options'] = {
+                'siege': siege,
+                'bagages': bagages,
+                'repas': repas,
+                'prix': prix_options
+            }
+            session.modified = True
+            return redirect(url_for('client.booking_payment'))
+        else:
+            # Soumission finale du paiement (Redirection vers mes-reservations)
+            flash('Paiement réussi ! Votre réservation est confirmée.', 'success')
+            session.pop('search_params', None)
+            session.pop('vol_aller', None)
+            session.pop('vol_retour', None)
+            session.pop('options', None)
+            session.pop('passagers_data', None)
+            return redirect(url_for('client.mes_reservations'))
         
     return render_template('client/booking_payment.html')
 

@@ -8,6 +8,7 @@
 {% block booking_content %}
 {% set form_action = url_for('client.booking_flights') if (search_params.get('type_vol') == 'AR' and not is_retour_step) else url_for('client.booking_passengers') %}
 {% set input_name = 'id_vol_aller_temp' if (search_params.get('type_vol') == 'AR' and not is_retour_step) else 'id_vol_final' %}
+{% set nb_passagers = search_params.get('passagers', 1) | int %}
 
 <div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
     <h2 class="title is-3 m-0" style="color: var(--primary);">{{ titre }}</h2>
@@ -159,11 +160,11 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco == 0 %}disabled{% endif %}>
+                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco < nb_passagers %}disabled{% endif %}>
                         <div class="t-class eco">Economy</div>
                         <div class="t-price">{{ itin.price_eco }} €</div>
-                        {% if itin.avail_eco == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
-                        {% elif itin.avail_eco <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
+                        {% if itin.avail_eco < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_eco == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
+                        {% elif itin.avail_eco <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
                         <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 1 Bagage cabine</li></ul>
                     </button>
                 </form>
@@ -177,11 +178,11 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz == 0 %}disabled{% endif %}>
+                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz < nb_passagers %}disabled{% endif %}>
                         <div class="t-class biz">Business</div>
                         <div class="t-price">{{ itin.price_biz }} €</div>
-                        {% if itin.avail_biz == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
-                        {% elif itin.avail_biz <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
+                        {% if itin.avail_biz < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_biz == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
+                        {% elif itin.avail_biz <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
                         <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 2 Bagages soute</li></ul>
                     </button>
                 </form>
@@ -195,11 +196,11 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn first" {% if itin.avail_first == 0 %}disabled{% endif %}>
+                    <button type="submit" class="tariff-btn first" {% if itin.avail_first < nb_passagers %}disabled{% endif %}>
                         <div class="t-class first">First</div>
                         <div class="t-price">{{ itin.price_first }} €</div>
-                        {% if itin.avail_first == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
-                        {% elif itin.avail_first <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
+                        {% if itin.avail_first < nb_passagers %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">{% if itin.avail_first == 0 %}Complet{% else %}Insuffisant{% endif %}</div>
+                        {% elif itin.avail_first <= (nb_passagers + 3) %}<div class="seats-left-badge">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
                         <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> Salon VIP</li></ul>
                     </button>
                 </form>

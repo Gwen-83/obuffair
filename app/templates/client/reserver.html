@@ -37,7 +37,7 @@
                         <label class="flighty-label">Type de vol</label>
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
-                                <select id="selectTypeVol">
+                                <select id="selectTypeVol" style="background-color: white; border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;">
                                     <option value="AR" {% if search_params.get('type_vol', 'AR') == 'AR' %}selected{% endif %}>Aller-retour</option>
                                     <option value="AS" {% if search_params.get('type_vol') == 'AS' %}selected{% endif %}>Aller simple</option>
                                 </select>
@@ -52,7 +52,7 @@
                         <label class="flighty-label">Passagers</label>
                         <div class="dropdown" id="passengerDropdown">
                             <div class="dropdown-trigger">
-                                <button type="button" class="button is-white" aria-haspopup="true" aria-controls="dropdown-menu" style="border: 1px solid #E5E5EA; border-radius: 12px; height: 2.8em; justify-content: flex-start; padding: 0 16px;">
+                                <button type="button" class="button is-white" aria-haspopup="true" aria-controls="dropdown-menu" style="background-color: white; border: 1px solid #E5E5EA; border-radius: 12px; height: 2.8em; justify-content: flex-start; padding: 0 16px;">
                                     <span class="icon is-small"><i class="fas fa-user" style="color: var(--primary);"></i></span>
                                     <span id="passengerCountText" style="font-weight: 600; color: var(--flighty-text); margin-left: 8px;">{{ search_params.get('passagers', '1') }}</span>
                                 </button>
