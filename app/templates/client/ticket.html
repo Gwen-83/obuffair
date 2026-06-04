@@ -96,64 +96,19 @@ endblock %} {% block extra_css %}
                   <div class="control">
                     <div class="select is-fullwidth">
                       <select name="categorie">
-                        <option
-                          value="reservation"
-                          {%
-                          if
-                          form_data.categorie=""
-                          ="reservation"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="reservation" {% if form_data.categorie == 'reservation' %}selected{% endif %}>
                           Réservation
                         </option>
-                        <option
-                          value="vol"
-                          {%
-                          if
-                          form_data.categorie=""
-                          ="vol"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="vol" {% if form_data.categorie == 'vol' %}selected{% endif %}>
                           Vol
                         </option>
-                        <option
-                          value="bagage"
-                          {%
-                          if
-                          form_data.categorie=""
-                          ="bagage"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="bagage" {% if form_data.categorie == 'bagage' %}selected{% endif %}>
                           Bagages
                         </option>
-                        <option
-                          value="paiement"
-                          {%
-                          if
-                          form_data.categorie=""
-                          ="paiement"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="paiement" {% if form_data.categorie == 'paiement' %}selected{% endif %}>
                           Paiement
                         </option>
-                        <option
-                          value="autre"
-                          {%
-                          if
-                          form_data.categorie=""
-                          ="autre"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="autre" {% if form_data.categorie == 'autre' %}selected{% endif %}>
                           Autre
                         </option>
                       </select>
@@ -167,40 +122,13 @@ endblock %} {% block extra_css %}
                   <div class="control">
                     <div class="select is-fullwidth">
                       <select name="priorite">
-                        <option
-                          value="normale"
-                          {%
-                          if
-                          form_data.priorite=""
-                          ="normale"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="normale" {% if form_data.priorite == 'normale' %}selected{% endif %}>
                           Normale
                         </option>
-                        <option
-                          value="haute"
-                          {%
-                          if
-                          form_data.priorite=""
-                          ="haute"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="haute" {% if form_data.priorite == 'haute' %}selected{% endif %}>
                           Haute
                         </option>
-                        <option
-                          value="basse"
-                          {%
-                          if
-                          form_data.priorite=""
-                          ="basse"
-                          %}selected{%
-                          endif
-                          %}
-                        >
+                        <option value="basse" {% if form_data.priorite == 'basse' %}selected{% endif %}>
                           Basse
                         </option>
                       </select>
