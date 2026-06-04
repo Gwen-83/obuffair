@@ -50,7 +50,7 @@ def admin_required(f):
             {"id": session['user_id']}
         ).mappings().first()
         
-        if not user or not user['is_admin']:
+        if not user or str(user['is_admin']).lower() not in ('1', 'true', 't', 'yes', 'y'):
             flash('Accès refusé. Seuls les administrateurs peuvent accéder à cette page.', 'danger')
             return redirect(url_for('index'))  # ou un route 403
         

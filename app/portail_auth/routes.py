@@ -130,7 +130,7 @@ def login():
                 session['email'] = user['email']
                 session['prenom'] = user['prenom']
                 session['nom'] = user['nom']
-                session['is_admin'] = bool(user['is_admin'])
+                session['is_admin'] = str(user['is_admin']).lower() in ('1', 'true', 't', 'yes', 'y')
                 
                 logger.info(f'Utilisateur connecté: {email}')
                 flash(f'Connexion réussie','success')
