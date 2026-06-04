@@ -9,6 +9,7 @@ from app import db
 from sqlalchemy import func, cast, Date, text
 from app.model import Aeroport, Vols, User
 from datetime import datetime, timedelta, timezone
+import re
 
 
 # Blueprint
@@ -77,7 +78,7 @@ def accueil():
 
     return render_template('client/acceuil.html', loyalty_info=loyalty_info, next_flight=next_flight, destinations=destinations)
 
-@client_bp.route('/profil')
+@client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():
     """Profil"""
     user_id = session.get('user_id')
@@ -91,7 +92,50 @@ def profil():
     if not client_connecte:
         return redirect(url_for('client.accueil'))
         
-    return render_template('client/profil.html', client=client_connecte)
+    if request.method == 'POST':
+        client_connecte.prenom = request.form.get('prenom', client_connecte.prenom)
+        client_connecte.nom = request.form.get('nom', client_connecte.nom)
+        client_connecte.email = request.form.get('email', client_connecte.email)
+        
+        # Validation et sauvegarde du numéro de téléphone
+        num_tel = request.form.get('numero_telephone')
+        if num_tel and re.match(r'^\+33\d \d{2} \d{2} \d{2} \d{2}$', num_tel):
+            client_connecte.numero_telephone = num_tel
+        elif not num_tel: # Si le champ est vidé
+            client_connecte.numero_telephone = None
+            
+        db.session.commit()
+        session['prenom'] = client_connecte.prenom
+        session['nom'] = client_connecte.nom
+        flash('Vos informations ont été mises à jour avec succès.', 'success')
+        return redirect(url_for('client.profil'))
+        
+    prochains_billets = client_connecte.get_prochains_vols()
+    prochains_vols_data = []
+    
+    if prochains_billets:
+        mois_fr = {1: 'Jan', 2: 'Fév', 3: 'Mars', 4: 'Avr', 5: 'Mai', 6: 'Juin', 
+                   7: 'Juil', 8: 'Août', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Déc'}
+        for billet in prochains_billets:
+            vol = billet.vol
+            date_vol = f"{vol.date_heure_dep_utc.day} {mois_fr[vol.date_heure_dep_utc.month]} {vol.date_heure_dep_utc.year}"
+            
+            status_text = "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize()
+            status_class = "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed"
+            
+            prochains_vols_data.append({
+                'flight_number': f"OB{vol.id_vol}",
+                'date': date_vol,
+                'status_text': status_text,
+                'status_class': status_class,
+                'dep_iata': vol.id_aeroport_depart,
+                'arr_iata': vol.id_aeroport_arrivee,
+                'dep_time': vol.date_heure_dep_utc.strftime('%H:%M'),
+                'arr_time': vol.date_heure_arr_utc.strftime('%H:%M'),
+                'pnr': f"X{billet.id_reservation}B9Q{billet.id_billet}"
+            })
+            
+    return render_template('client/profil.html', client=client_connecte, prochains_vols=prochains_vols_data)
 
 @client_bp.route('/booking')
 @login_required
