@@ -18,6 +18,10 @@ from flask import session, redirect, url_for, flash
 from app import db
 from sqlalchemy import text
 
+def _is_truthy(value):
+    return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
+
+
 def login_required(f):
     """
     Décorateur pour exiger que l'utilisateur soit connecté.
@@ -50,7 +54,7 @@ def admin_required(f):
             {"id": session['user_id']}
         ).mappings().first()
         
-        if not user or not user['is_admin']:
+        if not user or not _is_truthy(user['is_admin']):
             flash('Accès refusé. Seuls les administrateurs peuvent accéder à cette page.', 'danger')
             return redirect(url_for('index'))  # ou un route 403
         
