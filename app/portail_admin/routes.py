@@ -6,7 +6,7 @@ Gère aussi les droits d'accès et logs d'audit.
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
-from app.model import Avion, Vols, Support, Aeroport
+from app.model import Avion, Vols, Support, Aeroport, User
 from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
@@ -460,6 +460,29 @@ def support():
         t.date_creation = t.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(t.date_creation, 'strftime') else t.date_creation
     
     return render_template('admin/html/support.html', tickets=tickets, stats=stats)
+
+@admin_bp.route('/support/<int:id_ticket>', methods=['GET', 'POST'])
+@admin_required
+def support_detail(id_ticket):
+    """Détail et réponse à un ticket de support"""
+    ticket = db.session.get(Support, id_ticket)
+    if not ticket:
+        flash('Ticket introuvable.', 'danger')
+        return redirect(url_for('admin.support'))
+
+    # Récupérer l'email du client s'il existe (pour réponse par mail)
+    user_email = None
+    try:
+        if getattr(ticket, 'id_client', None):
+            user = db.session.get(User, ticket.id_client)
+            if user and getattr(user, 'email', None):
+                user_email = user.email
+    except Exception:
+        user_email = None
+
+    ticket.date_creation = ticket.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_creation, 'strftime') else ticket.date_creation
+    ticket.date_modification = ticket.date_modification.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_modification, 'strftime') else ticket.date_modification
+    return render_template('admin/html/support_detail.html', ticket=ticket, user_email=user_email)
 
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required

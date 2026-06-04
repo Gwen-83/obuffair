@@ -1,0 +1,311 @@
+{% extends "components/base.html" %} {% block title %}Support - O'Buffair{%
+endblock %} {% block extra_css %}
+<style>
+  .support-hero {
+    background: linear-gradient(135deg, #002a5c 0%, #004b9e 100%);
+    padding: 3rem 1.5rem;
+    color: white;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0, 42, 92, 0.18);
+    margin-bottom: 2rem;
+  }
+  .support-hero .title {
+    color: white;
+  }
+  .support-card {
+    border-radius: 18px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
+  }
+  .support-aside {
+    border-radius: 18px;
+    background: #f7f9ff;
+    border: 1px solid rgba(0, 42, 92, 0.08);
+  }
+  .highlight-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(255, 199, 44, 0.16);
+    color: #002a5c;
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<section class="section">
+  <div class="container" style="max-width: 1100px">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div
+      class="notification is-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} is-light"
+    >
+      <button class="delete"></button>
+      {{ message }}
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <div class="support-hero">
+      <h1 class="title is-2">Besoin d'aide ? Envoyez un ticket au support</h1>
+      <p class="subtitle is-5" style="max-width: 760px">
+        Que vous soyez connecté ou non, notre équipe support est prête à vous
+        accompagner. Si vous êtes connecté, vos informations sont préremplies
+        pour accélérer l’envoi.
+      </p>
+    </div>
+
+    <div class="columns is-variable is-6">
+      <div class="column is-7">
+        <div class="box support-card">
+          <h2 class="title is-4">Votre demande</h2>
+          <p class="subtitle is-6">
+            Expliquez votre problème avec le plus de détails possible.
+          </p>
+
+          <form method="POST" action="{{ url_for('client.support') }}">
+            {% if user_info %}
+            <div class="box has-background-white-bis mb-5">
+              <p class="has-text-weight-semibold">Données préremplies</p>
+              <p>
+                <strong>Nom :</strong> {{ user_info.nom or 'Non renseigné' }}
+              </p>
+              <p>
+                <strong>Email :</strong> {{ user_info.email or 'Non renseigné'
+                }}
+              </p>
+            </div>
+            {% else %}
+            <div class="field">
+              <label class="label">Nom complet</label>
+              <div class="control">
+                <input
+                  class="input"
+                  type="text"
+                  name="nom_contact"
+                  value="{{ form_data.nom_contact }}"
+                  placeholder="Votre nom complet"
+                  required
+                />
+              </div>
+            </div>
+            <div class="field">
+              <label class="label">Adresse email</label>
+              <div class="control has-icons-left">
+                <input
+                  class="input"
+                  type="email"
+                  name="email_contact"
+                  value="{{ form_data.email_contact }}"
+                  placeholder="exemple@domaine.com"
+                  required
+                />
+                <span class="icon is-small is-left"
+                  ><i class="fas fa-envelope"></i
+                ></span>
+              </div>
+            </div>
+            {% endif %}
+
+            <div class="field">
+              <label class="label">Sujet</label>
+              <div class="control">
+                <input
+                  class="input"
+                  type="text"
+                  name="titre"
+                  value="{{ form_data.titre }}"
+                  placeholder="Décrivez brièvement votre problème"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="columns is-variable is-3">
+              <div class="column">
+                <div class="field">
+                  <label class="label">Catégorie</label>
+                  <div class="control">
+                    <div class="select is-fullwidth">
+                      <select name="categorie">
+                        <option
+                          value="reservation"
+                          {%
+                          if
+                          form_data.categorie=""
+                          ="reservation"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Réservation
+                        </option>
+                        <option
+                          value="vol"
+                          {%
+                          if
+                          form_data.categorie=""
+                          ="vol"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Vol
+                        </option>
+                        <option
+                          value="bagage"
+                          {%
+                          if
+                          form_data.categorie=""
+                          ="bagage"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Bagages
+                        </option>
+                        <option
+                          value="paiement"
+                          {%
+                          if
+                          form_data.categorie=""
+                          ="paiement"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Paiement
+                        </option>
+                        <option
+                          value="autre"
+                          {%
+                          if
+                          form_data.categorie=""
+                          ="autre"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Autre
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="column">
+                <div class="field">
+                  <label class="label">Priorité</label>
+                  <div class="control">
+                    <div class="select is-fullwidth">
+                      <select name="priorite">
+                        <option
+                          value="normale"
+                          {%
+                          if
+                          form_data.priorite=""
+                          ="normale"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Normale
+                        </option>
+                        <option
+                          value="haute"
+                          {%
+                          if
+                          form_data.priorite=""
+                          ="haute"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Haute
+                        </option>
+                        <option
+                          value="basse"
+                          {%
+                          if
+                          form_data.priorite=""
+                          ="basse"
+                          %}selected{%
+                          endif
+                          %}
+                        >
+                          Basse
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="label">Description</label>
+              <div class="control">
+                <textarea
+                  class="textarea"
+                  name="description"
+                  rows="8"
+                  placeholder="Décrivez votre demande, le numéro de réservation concerné et toute information utile."
+                  required
+                >
+{{ form_data.description }}</textarea
+                >
+              </div>
+            </div>
+
+            <div
+              class="field is-grouped is-justify-content-space-between is-align-items-center"
+            >
+              <div>
+                <span class="tag is-info is-light"
+                  >Nous répondons généralement en moins de 24h</span
+                >
+              </div>
+              <div class="control">
+                <button type="submit" class="button is-primary">
+                  Envoyer le ticket
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="column is-5">
+        <aside class="box support-aside">
+          <h3 class="title is-5">Conseils pour votre ticket</h3>
+          <p class="mb-4">
+            Plus votre demande contient de détails, plus notre support sera
+            rapide et précis.
+          </p>
+          <ul>
+            <li>Expliquez clairement le problème.</li>
+            <li>Indiquez votre numéro de réservation si nécessaire.</li>
+            <li>Précisez si vous avez déjà contacté le service.</li>
+            <li>Ajoutez votre prénom / email si vous n’êtes pas connecté.</li>
+          </ul>
+
+          <div class="mt-6">
+            <p class="has-text-weight-semibold">Besoin d’un suivi rapide ?</p>
+            <p>
+              Choisissez la priorité <strong>Haute</strong> uniquement si vous
+              êtes bloqué sur un départ imminent.
+            </p>
+          </div>
+
+          <div class="mt-6">
+            <div class="highlight-tag">
+              <span class="icon"><i class="fas fa-shield-alt"></i></span>
+              <span>Conversation sécurisée</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
