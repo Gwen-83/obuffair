@@ -7,7 +7,79 @@ O'Buffair{% endblock %} {% block content %}
       <span>Support Client</span>
     </h1>
 
+    <!-- Introduction -->
+    <div class="content">
+      <p class="has-text-grey">
+        Cette page centralise les demandes de support client. Utilisez les
+        filtres ci-dessous pour retrouver rapidement un ticket, puis ouvrez-le
+        pour gérer la conversation ou changer son statut.
+      </p>
+    </div>
+
     <!-- Filtres et stats -->
+    <div class="box mb-4">
+      <div class="columns is-mobile is-multiline">
+        <div class="column is-6-mobile is-3-tablet">
+          <div class="field has-addons">
+            <div class="control is-expanded">
+              <input
+                class="input"
+                type="text"
+                name="q"
+                placeholder="Rechercher par titre, contenu ou client"
+              />
+            </div>
+            <div class="control">
+              <a class="button is-info">Rechercher</a>
+            </div>
+          </div>
+        </div>
+        <div class="column is-6-mobile is-3-tablet">
+          <div class="field">
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="statut">
+                  <option value="">Tous statuts</option>
+                  <option value="nouveau">Nouveau</option>
+                  <option value="en cours">En cours</option>
+                  <option value="resolu">Résolu</option>
+                  <option value="ferme">Fermé</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-6-mobile is-3-tablet">
+          <div class="field">
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="categorie">
+                  <option value="">Toutes catégories</option>
+                  <option value="reservation">Réservation</option>
+                  <option value="vol">Vol</option>
+                  <option value="bagage">Bagages</option>
+                  <option value="paiement">Paiement</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="column is-6-mobile is-3-tablet">
+          <div class="field">
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="priorite">
+                  <option value="">Toutes priorités</option>
+                  <option value="haute">Haute</option>
+                  <option value="normale">Normale</option>
+                  <option value="basse">Basse</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="columns is-multiline">
       <div class="column is-3">
         <div class="box has-background-info">
@@ -61,7 +133,10 @@ O'Buffair{% endblock %} {% block content %}
           {% if tickets %} {% for ticket in tickets %}
           <tr>
             <td><strong>#{{ ticket.id_ticket }}</strong></td>
-            <td>{{ ticket.id_client }}</td>
+            <td>
+              {% if ticket.client_name %} {{ ticket.client_name }} {% else %} {{
+              ticket.id_client }} {% endif %}
+            </td>
             <td>{{ ticket.titre }}</td>
             <td>
               {% if ticket.categorie == 'reservation' %}
@@ -102,9 +177,23 @@ O'Buffair{% endblock %} {% block content %}
             </td>
             <td>{{ ticket.date_creation }}</td>
             <td>
-              <button class="button is-small is-info" title="Voir le détail">
+              <a
+                class="button is-small is-info"
+                title="Voir le détail"
+                href="{{ url_for('admin.support_detail', ticket_id=ticket.id_ticket) }}"
+              >
                 <span class="icon is-small"><i class="fas fa-eye"></i></span>
-              </button>
+                <span>Voir</span>
+              </a>
+              {% if ticket.statut != 'resolu' %}
+              <a
+                class="button is-small is-success ml-2"
+                title="Marquer comme résolu"
+                href="#"
+              >
+                <span class="icon is-small"><i class="fas fa-check"></i></span>
+              </a>
+              {% endif %}
             </td>
           </tr>
           {% endfor %} {% else %}

@@ -6,7 +6,7 @@ Gère aussi les droits d'accès et logs d'audit.
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
-from app.model import Avion, Vols, Support, Aeroport
+from app.model import Avion, Vols, Support, Aeroport, User
 from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
@@ -460,6 +460,64 @@ def support():
         t.date_creation = t.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(t.date_creation, 'strftime') else t.date_creation
     
     return render_template('admin/html/support.html', tickets=tickets, stats=stats)
+
+
+@admin_bp.route('/support/<int:ticket_id>')
+@admin_required
+def support_detail(ticket_id):
+    """Affiche le détail d'un ticket de support"""
+    ticket = db.session.query(Support).filter(Support.id_ticket == ticket_id).first()
+    if not ticket:
+        flash('Ticket introuvable', 'danger')
+        return redirect(url_for('admin.support'))
+
+    # formater la date
+    ticket.date_creation = ticket.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_creation, 'strftime') else ticket.date_creation
+
+    # récupérer le nom du client si disponible
+    client = None
+    try:
+        client = db.session.query(User).filter(User.id_client == ticket.id_client).first()
+    except Exception:
+        client = None
+
+    client_name = f"{client.prenom} {client.nom}" if client else None
+
+    return render_template('admin/html/support_detail.html', ticket=ticket, client_name=client_name)
+
+
+@admin_bp.route('/support/<int:ticket_id>/resoudre', methods=['POST'])
+@admin_required
+def mark_resolved(ticket_id):
+    t = db.session.query(Support).filter(Support.id_ticket == ticket_id).first()
+    if not t:
+        flash('Ticket introuvable', 'danger')
+        return redirect(url_for('admin.support'))
+    try:
+        t.statut = 'resolu'
+        db.session.commit()
+        flash('Ticket marqué comme résolu', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de la mise à jour: {str(e)}', 'danger')
+    return redirect(url_for('admin.support_detail', ticket_id=ticket_id))
+
+
+@admin_bp.route('/support/<int:ticket_id>/fermer', methods=['POST'])
+@admin_required
+def close_ticket(ticket_id):
+    t = db.session.query(Support).filter(Support.id_ticket == ticket_id).first()
+    if not t:
+        flash('Ticket introuvable', 'danger')
+        return redirect(url_for('admin.support'))
+    try:
+        t.statut = 'ferme'
+        db.session.commit()
+        flash('Ticket fermé', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur lors de la fermeture: {str(e)}', 'danger')
+    return redirect(url_for('admin.support_detail', ticket_id=ticket_id))
 
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required

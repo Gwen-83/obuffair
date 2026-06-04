@@ -1,0 +1,64 @@
+{% extends 'components/base.html' %} {% block title %}Détail ticket - Admin -
+O'Buffair{% endblock %} {% block content %}
+<section class="section">
+  <div class="container">
+    <h1 class="title">
+      <span class="icon"><i class="fas fa-ticket-alt"></i></span>
+      <span>Ticket #{{ ticket.id_ticket }} - {{ ticket.titre }}</span>
+    </h1>
+
+    <div class="box">
+      <div class="columns">
+        <div class="column is-two-thirds">
+          <p>
+            <strong>Client :</strong> {% if client_name %}{{ client_name }}{%
+            else %}ID {{ ticket.id_client }}{% endif %}
+          </p>
+          <p><strong>Catégorie :</strong> {{ ticket.categorie }}</p>
+          <p><strong>Priorité :</strong> {{ ticket.priorite }}</p>
+          <p><strong>Statut :</strong> {{ ticket.statut }}</p>
+          <p><strong>Créé :</strong> {{ ticket.date_creation }}</p>
+
+          <hr />
+          <h2 class="subtitle">Description</h2>
+          <div class="content">
+            <p>{{ ticket.description }}</p>
+          </div>
+
+          <hr />
+          <h2 class="subtitle">Notes internes</h2>
+          <div class="content">
+            <p>{{ ticket.notes_internes or 'Aucune note interne' }}</p>
+          </div>
+        </div>
+
+        <div class="column">
+          <div class="buttons">
+            <a class="button is-link" href="{{ url_for('admin.support') }}"
+              >Retour</a
+            >
+            {% if ticket.statut != 'resolu' %}
+            <form
+              method="post"
+              action="{{ url_for('admin.mark_resolved', ticket_id=ticket.id_ticket) }}"
+              style="display: inline"
+            >
+              <button class="button is-success" type="submit">
+                Marquer comme résolu
+              </button>
+            </form>
+            {% endif %}
+            <form
+              method="post"
+              action="{{ url_for('admin.close_ticket', ticket_id=ticket.id_ticket) }}"
+              style="display: inline"
+            >
+              <button class="button is-light">Fermer</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
