@@ -6,12 +6,41 @@ Gère aussi les droits d'accès et logs d'audit.
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
-from app.portail_admin.modele_admin import Avion, Vols, Support
-from app.portail_admin.forms import FormAjouterAvion
+from app.portail_admin.modele_admin import Avion, Vols, Support, Aeroport
+from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
 from datetime import datetime
 from app.algos.yield_management import calculer_prix
+
+_aeroports_schema_verified = False
+
+def ensure_aeroports_decalage_column():
+    global _aeroports_schema_verified
+    if _aeroports_schema_verified:
+        return
+    try:
+        result = db.session.execute(
+            text(
+                "SELECT CHARACTER_MAXIMUM_LENGTH "
+                "FROM INFORMATION_SCHEMA.COLUMNS "
+                "WHERE table_schema = DATABASE() "
+                "AND table_name = 'aeroports' "
+                "AND column_name = 'decalage_utc'"
+            )
+        ).fetchone()
+        if result and (result[0] is None or result[0] < 10):
+            db.session.execute(
+                text(
+                    "ALTER TABLE aeroports MODIFY COLUMN decalage_utc VARCHAR(10) NOT NULL DEFAULT '+00:00'"
+                )
+            )
+            db.session.commit()
+    except Exception:
+        db.session.rollback()
+    finally:
+        _aeroports_schema_verified = True
+
 # Blueprint
 admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 
@@ -80,6 +109,151 @@ def config_avion():
             flash(f'Erreur lors de l\'ajout : {str(e)}', 'danger')
     
     return render_template('admin/html/config_avion.html', avions=avions, form=form)
+
+@admin_bp.route('/infrastructures', methods=['GET', 'POST'])
+@admin_required
+def infrastructures():
+    """Gestion des aéroports et de leurs infrastructures."""
+    selected_id = request.args.get('selected', '').upper()
+    original_id = request.form.get('original_id') or selected_id
+    form = FormAeroport(original_id=original_id)
+    selected_airport = None
+
+    ensure_aeroports_decalage_column()
+
+    if form.validate_on_submit():
+        original_id = form.original_id.data or form.id_aeroport.data
+        id_aeroport = form.id_aeroport.data.upper()
+        try:
+            existing_aeroport = db.session.execute(
+                text("SELECT id_aeroport FROM aeroports WHERE id_aeroport = :id"),
+                {'id': original_id}
+            ).fetchone()
+
+            if existing_aeroport:
+                db.session.execute(
+                    text(
+                        "UPDATE aeroports SET id_aeroport = :new_id, nom = :nom, ville = :ville, pays = :pays, decalage_utc = :utc, "
+                        "latitude = :latitude, longitude = :longitude, terminals_count = :terminals_count, gates_total = :gates_total, "
+                        "lounges_count = :lounges_count, parkings_count = :parkings_count, services = :services, contact_phone = :contact_phone, "
+                        "contact_email = :contact_email, description = :description, model_3d_url = :model_3d_url "
+                        "WHERE id_aeroport = :orig"
+                    ),
+                    {
+                        'new_id': id_aeroport,
+                        'nom': form.nom.data,
+                        'ville': form.ville.data,
+                        'pays': form.pays.data,
+                        'utc': form.decalage_utc.data,
+                        'latitude': form.latitude.data,
+                        'longitude': form.longitude.data,
+                        'terminals_count': form.terminals_count.data or 0,
+                        'gates_total': form.gates_total.data or 0,
+                        'lounges_count': form.lounges_count.data or 0,
+                        'parkings_count': form.parkings_count.data or 0,
+                        'services': form.services.data,
+                        'contact_phone': form.contact_phone.data,
+                        'contact_email': form.contact_email.data,
+                        'description': form.description.data,
+                        'model_3d_url': form.model_3d_url.data,
+                        'orig': original_id
+                    }
+                )
+            else:
+                db.session.execute(
+                    text(
+                        "INSERT INTO aeroports (id_aeroport, nom, ville, pays, decalage_utc, latitude, longitude, terminals_count, gates_total, lounges_count, parkings_count, services, contact_phone, contact_email, description, model_3d_url) "
+                        "VALUES (:id_aeroport, :nom, :ville, :pays, :utc, :latitude, :longitude, :terminals_count, :gates_total, :lounges_count, :parkings_count, :services, :contact_phone, :contact_email, :description, :model_3d_url)"
+                    ),
+                    {
+                        'id_aeroport': id_aeroport,
+                        'nom': form.nom.data,
+                        'ville': form.ville.data,
+                        'pays': form.pays.data,
+                        'utc': form.decalage_utc.data,
+                        'latitude': form.latitude.data,
+                        'longitude': form.longitude.data,
+                        'terminals_count': form.terminals_count.data or 0,
+                        'gates_total': form.gates_total.data or 0,
+                        'lounges_count': form.lounges_count.data or 0,
+                        'parkings_count': form.parkings_count.data or 0,
+                        'services': form.services.data,
+                        'contact_phone': form.contact_phone.data,
+                        'contact_email': form.contact_email.data,
+                        'description': form.description.data,
+                        'model_3d_url': form.model_3d_url.data
+                    }
+                )
+            db.session.commit()
+            flash(f'Aéroport {id_aeroport} enregistré avec succès', 'success')
+            return redirect(url_for('admin.infrastructures', selected=id_aeroport))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Erreur lors de l’enregistrement : {str(e)}', 'danger')
+
+    if selected_id:
+        selected_row = db.session.execute(
+            text(
+                "SELECT a.id_aeroport, a.nom, a.ville, a.pays, a.decalage_utc, a.latitude, a.longitude, "
+                "COALESCE(a.terminals_count, 0) AS terminals_count, COALESCE(a.gates_total, 0) AS gates_total, "
+                "COALESCE(a.lounges_count, 0) AS lounges_count, COALESCE(a.parkings_count, 0) AS parkings_count, "
+                "a.services, a.contact_phone, a.contact_email, a.description, a.model_3d_url "
+                "FROM aeroports a "
+                "WHERE a.id_aeroport = :code LIMIT 1"
+            ),
+            {'code': selected_id}
+        ).mappings().first()
+        if selected_row:
+            selected_airport = dict(selected_row)
+            if request.method == 'GET':
+                form.id_aeroport.data = selected_airport['id_aeroport']
+                form.nom.data = selected_airport['nom']
+                form.ville.data = selected_airport['ville']
+                form.pays.data = selected_airport['pays']
+                form.decalage_utc.data = selected_airport['decalage_utc']
+                form.latitude.data = selected_airport['latitude']
+                form.longitude.data = selected_airport['longitude']
+                form.terminals_count.data = selected_airport['terminals_count']
+                form.gates_total.data = selected_airport['gates_total']
+                form.lounges_count.data = selected_airport['lounges_count']
+                form.parkings_count.data = selected_airport['parkings_count']
+                form.services.data = selected_airport['services']
+                form.contact_phone.data = selected_airport['contact_phone']
+                form.contact_email.data = selected_airport['contact_email']
+                form.description.data = selected_airport['description']
+                form.model_3d_url.data = selected_airport['model_3d_url']
+                form.original_id.data = selected_airport['id_aeroport']
+        else:
+            flash('Aéroport introuvable', 'danger')
+            return redirect(url_for('admin.infrastructures'))
+
+    aeroport_rows = db.session.execute(
+        text(
+            "SELECT a.id_aeroport, a.nom, a.ville, a.pays, a.decalage_utc, "
+            "COALESCE(a.terminals_count, 0) AS terminals_count, COALESCE(a.gates_total, 0) AS gates_total, "
+            "COALESCE(a.lounges_count, 0) AS lounges_count, COALESCE(a.parkings_count, 0) AS parkings_count "
+            "FROM aeroports a "
+            "ORDER BY a.ville, a.nom"
+        )
+    ).mappings().all()
+
+    aeroport_rows = [dict(row) for row in aeroport_rows]
+
+    return render_template('admin/html/infrastructures.html', airports=aeroport_rows, form=form, selected_airport=selected_airport)
+
+
+@admin_bp.route('/aeroports/<string:id_aeroport>/delete', methods=['POST'])
+@admin_required
+def supprimer_aeroport(id_aeroport):
+    try:
+        db.session.execute(text('DELETE FROM aeroports WHERE id_aeroport = :id'), {'id': id_aeroport})
+        db.session.commit()
+        flash(f'Aéroport {id_aeroport} supprimé', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erreur suppression : {str(e)}', 'danger')
+    return redirect(url_for('admin.infrastructures'))
+
 
 @admin_bp.route('/api/avion/<string:immatriculation>', methods=['DELETE'])
 @admin_required

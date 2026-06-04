@@ -129,3 +129,31 @@ class Support(db.Model):
     
     def __repr__(self):
         return f'<Support #{self.id_ticket}: {self.titre} ({self.statut})'
+
+
+class Aeroport(db.Model):
+    """
+    Modèle pour les aéroports gérés par la compagnie.
+    """
+    __tablename__ = 'aeroports'
+
+    id_aeroport = db.Column(db.String(4), primary_key=True, nullable=False)
+    nom = db.Column(db.String(120), nullable=False)
+    ville = db.Column(db.String(100), nullable=False)
+    pays = db.Column(db.String(100), nullable=False)
+    decalage_utc = db.Column(db.String(10), nullable=False, default='+00:00')
+    latitude = db.Column(db.String(50), nullable=True)
+    longitude = db.Column(db.String(50), nullable=True)
+    terminals_count = db.Column(db.Integer, nullable=False, default=0)
+    gates_total = db.Column(db.Integer, nullable=False, default=0)
+    lounges_count = db.Column(db.Integer, nullable=False, default=0)
+    parkings_count = db.Column(db.Integer, nullable=False, default=0)
+    services = db.Column(db.Text, nullable=True)
+    contact_phone = db.Column(db.String(50), nullable=True)
+    contact_email = db.Column(db.String(100), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    model_3d_url = db.Column(db.Text, nullable=True)
+    date_modification = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def __repr__(self):
+        return f'<Aéroport {self.id_aeroport} - {self.nom}>'

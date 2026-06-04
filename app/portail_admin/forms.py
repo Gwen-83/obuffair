@@ -4,8 +4,8 @@ Validation stricte des données critiques (horaires, capacités).
 """
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, IntegerField, BooleanField, SubmitField
-from wtforms.validators import DataRequired, Length, Regexp, ValidationError, NumberRange, Optional
+from wtforms import StringField, IntegerField, BooleanField, SubmitField, TextAreaField, HiddenField
+from wtforms.validators import DataRequired, Length, Regexp, ValidationError, NumberRange, Optional, Email
 from app.portail_admin.modele_admin import Avion
 from app import db
 from sqlalchemy import text
@@ -154,3 +154,126 @@ class FormAjouterAvion(FlaskForm):
             raise ValidationError('La rangée de fin du first doit se trouver avant le business')
         if self.nb_rangees.data and field.data and field.data > self.nb_rangees.data:
             raise ValidationError('La rangée de fin du first doit être inférieure ou égale au nombre total de rangées')
+
+
+class FormAeroport(FlaskForm):
+    def __init__(self, original_id=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_id = original_id
+
+    original_id = HiddenField()
+
+    id_aeroport = StringField(
+        'Code aéroport',
+        validators=[
+            DataRequired(message='Le code de l’aéroport est requis'),
+            Length(min=3, max=4, message='Le code doit faire entre 3 et 4 caractères'),
+            Regexp(r'^[A-Z]{3,4}$', message='Utilisez uniquement des lettres majuscules, ex: CDG')
+        ]
+    )
+
+    nom = StringField(
+        'Nom de l’aéroport',
+        validators=[
+            DataRequired(message='Le nom est requis'),
+            Length(min=3, max=120, message='Le nom doit comporter entre 3 et 120 caractères')
+        ]
+    )
+
+    ville = StringField(
+        'Ville',
+        validators=[
+            DataRequired(message='La ville est requise'),
+            Length(min=2, max=100)
+        ]
+    )
+
+    pays = StringField(
+        'Pays',
+        validators=[
+            DataRequired(message='Le pays est requis'),
+            Length(min=2, max=100)
+        ]
+    )
+
+    decalage_utc = StringField(
+        'Décalage UTC',
+        validators=[
+            DataRequired(message='Le décalage UTC est requis'),
+            Regexp(r'^[+-](0\d|1[0-2])(:[0-5][0-9])?$', message='Format UTC invalide, ex: +01:00 ou -05:00')
+        ]
+    )
+
+    latitude = StringField(
+        'Latitude',
+        validators=[
+            Optional(),
+            Regexp(r'^-?\d{1,2}(\.\d+)?$', message='La latitude doit être un nombre valide')
+        ]
+    )
+
+    longitude = StringField(
+        'Longitude',
+        validators=[
+            Optional(),
+            Regexp(r'^-?\d{1,3}(\.\d+)?$', message='La longitude doit être un nombre valide')
+        ]
+    )
+
+    terminals_count = IntegerField(
+        'Terminaux',
+        validators=[Optional(), NumberRange(min=0, message='Valeur positive requise')]
+    )
+
+    gates_total = IntegerField(
+        'Nombre de gates',
+        validators=[Optional(), NumberRange(min=0, message='Valeur positive requise')]
+    )
+
+    lounges_count = IntegerField(
+        'Salons',
+        validators=[Optional(), NumberRange(min=0, message='Valeur positive requise')]
+    )
+
+    parkings_count = IntegerField(
+        'Parkings',
+        validators=[Optional(), NumberRange(min=0, message='Valeur positive requise')]
+    )
+
+    services = StringField(
+        'Services disponibles',
+        validators=[Optional(), Length(max=200)]
+    )
+
+    contact_phone = StringField(
+        'Contact téléphone',
+        validators=[Optional(), Length(max=50)]
+    )
+
+    contact_email = StringField(
+        'Contact email',
+        validators=[Optional(), Email(message='Adresse email invalide')]
+    )
+
+    description = TextAreaField(
+        'Description & infrastructure',
+        validators=[Optional(), Length(max=500)]
+    )
+
+    model_3d_url = StringField(
+        'URL modèle 3D',
+        validators=[Optional(), Length(max=255)]
+    )
+
+    soumettre = SubmitField('Enregistrer l’aéroport')
+
+    def validate_id_aeroport(self, field):
+        if self._original_id and field.data == self._original_id:
+            return
+
+        aeroport_existant = db.session.execute(
+            text('SELECT id_aeroport FROM aeroports WHERE id_aeroport = :code LIMIT 1'),
+            {'code': field.data}
+        ).fetchone()
+        if aeroport_existant:
+            raise ValidationError('Ce code d’aéroport existe déjà')

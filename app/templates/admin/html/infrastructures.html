@@ -1,0 +1,820 @@
+{% extends "components/base.html" %} {% block title %}Infrastructure Aéroports -
+O'Buffair{% endblock %} {% block content %}
+<div class="container mt-6 mb-6" style="max-width: 1400px">
+  <div class="level mb-5">
+    <div class="level-left">
+      <div>
+        <h1 class="title is-2 mb-2" style="color: var(--primary)">
+          <i class="fas fa-building mr-3" style="color: var(--accent)"></i
+          >Gestion des aéroports
+        </h1>
+        <p class="subtitle is-6 mt-1" style="color: var(--medium-gray)">
+          Créez, modifiez et consultez les infrastructures aéroportuaires :
+          terminaux, gates, parkings, salons VIP et plan 3D interactif.
+        </p>
+      </div>
+    </div>
+    <div class="level-right">
+      <div class="level-item">
+        <div class="tags are-medium">
+          <span
+            class="tag"
+            style="
+              background-color: var(--primary);
+              color: white;
+              font-weight: 600;
+            "
+          >
+            <i class="fas fa-map-marker-alt mr-2"></i> Aéroports : {{
+            airports|length }}
+          </span>
+          {% if selected_airport %}
+          <span class="tag is-info is-light" style="font-weight: 600">
+            <i class="fas fa-info-circle mr-2"></i> Détail : {{
+            selected_airport.id_aeroport }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %} {% if
+  messages %}
+  <div class="mb-5">
+    {% for category, message in messages %}
+    <div
+      class="notification is-{{ 'danger' if category == 'danger' else 'success' }} is-light"
+      style="border-left: 4px solid var(--{{ 'danger' if category == 'danger' else 'success' }});"
+    >
+      <button
+        class="delete"
+        onclick="this.parentElement.style.display = 'none'"
+      ></button>
+      <i
+        class="fas {{ 'fa-exclamation-triangle' if category == 'danger' else 'fa-check-circle' }} mr-2"
+      ></i>
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %} {% endwith %}
+
+  <div class="columns is-variable is-5 mb-5">
+    <div class="column is-5">
+      <div
+        class="box"
+        style="
+          border-top: 4px solid var(--primary);
+          box-shadow: var(--shadow-md);
+        "
+      >
+        <h2 class="title is-4 mb-4" style="color: var(--primary)">
+          <i class="fas fa-pencil-alt mr-2" style="color: var(--accent)"></i
+          >Ajouter / Modifier un aéroport
+        </h2>
+
+        <form method="POST" novalidate>
+          {{ form.hidden_tag() }}
+
+          <div class="field">
+            <label class="label">{{ form.id_aeroport.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.id_aeroport(class="input" ~ (' is-danger' if
+              form.id_aeroport.errors else ''), placeholder="Ex: CDG, BRU,
+              JFK…") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-hashtag"></i
+              ></span>
+            </div>
+            {% for error in form.id_aeroport.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+            <p class="help is-info">
+              Entrez un code IATA (3 lettres), puis complétez les informations
+              manuellement.
+            </p>
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.nom.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.nom(class="input" ~ (' is-danger' if form.nom.errors else
+              ''), placeholder="Ex: Aéroport Charles de Gaulle") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-landmark"></i
+              ></span>
+            </div>
+            {% for error in form.nom.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.ville.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.ville(class="input" ~ (' is-danger' if form.ville.errors
+              else ''), placeholder="Ex: Paris") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-city"></i
+              ></span>
+            </div>
+            {% for error in form.ville.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.pays.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.pays(class="input" ~ (' is-danger' if form.pays.errors
+              else ''), placeholder="Ex: France") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-globe"></i
+              ></span>
+            </div>
+            {% for error in form.pays.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.decalage_utc.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.decalage_utc(class="input" ~ (' is-danger' if
+              form.decalage_utc.errors else ''), placeholder="Ex: +01:00") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-clock"></i
+              ></span>
+            </div>
+            {% for error in form.decalage_utc.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column is-half">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.latitude.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.latitude(class="input" ~ (' is-danger' if
+                  form.latitude.errors else ''), placeholder="48.8566") }}
+                </div>
+                {% for error in form.latitude.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column is-half">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.longitude.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.longitude(class="input" ~ (' is-danger' if
+                  form.longitude.errors else ''), placeholder="2.3522") }}
+                </div>
+                {% for error in form.longitude.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.terminals_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.terminals_count(class="input" ~ (' is-danger' if
+                  form.terminals_count.errors else ''), type="number",
+                  placeholder="Ex: 3") }}
+                </div>
+                {% for error in form.terminals_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.gates_total.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.gates_total(class="input" ~ (' is-danger' if
+                  form.gates_total.errors else ''), type="number",
+                  placeholder="Ex: 24") }}
+                </div>
+                {% for error in form.gates_total.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="columns is-mobile is-variable is-2">
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.lounges_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.lounges_count(class="input" ~ (' is-danger' if
+                  form.lounges_count.errors else ''), type="number",
+                  placeholder="Ex: 4") }}
+                </div>
+                {% for error in form.lounges_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="column">
+              <div class="field">
+                <label class="label is-small"
+                  >{{ form.parkings_count.label.text }}</label
+                >
+                <div class="control">
+                  {{ form.parkings_count(class="input" ~ (' is-danger' if
+                  form.parkings_count.errors else ''), type="number",
+                  placeholder="Ex: 6") }}
+                </div>
+                {% for error in form.parkings_count.errors %}
+                <p class="help is-danger">{{ error }}</p>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.services.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.services(class="input" ~ (' is-danger' if
+              form.services.errors else ''), placeholder="Ex: WiFi, lounges,
+              parkings VIP") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-concierge-bell"></i
+              ></span>
+            </div>
+            {% for error in form.services.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.contact_phone.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.contact_phone(class="input" ~ (' is-danger' if
+              form.contact_phone.errors else ''), placeholder="Ex: +33 1 23 45
+              67 89") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-phone"></i
+              ></span>
+            </div>
+            {% for error in form.contact_phone.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.contact_email.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.contact_email(class="input" ~ (' is-danger' if
+              form.contact_email.errors else ''), placeholder="Ex:
+              info@airport.com") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-envelope"></i
+              ></span>
+            </div>
+            {% for error in form.contact_email.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.description.label.text }}</label>
+            <div class="control">
+              {{ form.description(class="textarea" ~ (' is-danger' if
+              form.description.errors else ''), placeholder="Détails
+              d'infrastructure comme le terminal principal, zone cargo,
+              navettes, etc.") }}
+            </div>
+            {% for error in form.description.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="field">
+            <label class="label">{{ form.model_3d_url.label.text }}</label>
+            <div class="control has-icons-left">
+              {{ form.model_3d_url(class="input" ~ (' is-danger' if
+              form.model_3d_url.errors else ''), placeholder="URL d'un modèle 3D
+              externe (optionnel)") }}
+              <span class="icon is-small is-left"
+                ><i class="fas fa-cube"></i
+              ></span>
+            </div>
+            {% for error in form.model_3d_url.errors %}
+            <p class="help is-danger">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <div class="control mt-4">
+            {{ form.soumettre(class="button is-primary is-fullwidth",
+            style="font-weight: 700;") }}
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="column is-7">
+      <div
+        class="box"
+        style="border-top: 4px solid var(--info); box-shadow: var(--shadow-md)"
+      >
+        <h2 class="title is-4 mb-4" style="color: var(--primary)">
+          <i class="fas fa-map mr-2" style="color: var(--info)"></i>Vue
+          détaillée de l'aéroport
+        </h2>
+
+        {% if selected_airport %}
+        <div class="columns is-multiline mb-5">
+          <div class="column is-half">
+            <div
+              class="box has-background-light"
+              style="border-left: 4px solid var(--primary)"
+            >
+              <p class="has-text-weight-semibold" style="color: var(--primary)">
+                {{ selected_airport.nom }} ({{ selected_airport.id_aeroport }})
+              </p>
+              <p>{{ selected_airport.ville }}, {{ selected_airport.pays }}</p>
+              <p>UTC : {{ selected_airport.decalage_utc }}</p>
+              {% if selected_airport.latitude and selected_airport.longitude %}
+              <p>
+                Coordonnées : {{ selected_airport.latitude }}, {{
+                selected_airport.longitude }}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="column is-half">
+            <div
+              class="box has-background-light"
+              style="border-left: 4px solid var(--accent)"
+            >
+              <div class="columns is-mobile is-multiline has-text-centered">
+                <div class="column is-half">
+                  <p class="heading is-size-6">Terminaux</p>
+                  <p class="title is-4">
+                    {{ selected_airport.terminals_count or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Gates</p>
+                  <p class="title is-4">
+                    {{ selected_airport.gates_total or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Salons</p>
+                  <p class="title is-4">
+                    {{ selected_airport.lounges_count or 0 }}
+                  </p>
+                </div>
+                <div class="column is-half">
+                  <p class="heading is-size-6">Parkings</p>
+                  <p class="title is-4">
+                    {{ selected_airport.parkings_count or 0 }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="box mb-5"
+          style="
+            padding: 1rem 1rem 0.75rem;
+            border-top: 4px solid var(--secondary);
+          "
+        >
+          <h3 class="title is-5" style="color: var(--primary)">
+            Services et description
+          </h3>
+          <p>
+            <strong>Services :</strong> {{ selected_airport.services or 'Non
+            renseigné' }}
+          </p>
+          <p>
+            <strong>Contact :</strong> {{ selected_airport.contact_phone or
+            'N/A' }} / {{ selected_airport.contact_email or 'N/A' }}
+          </p>
+          <p class="mt-3">
+            {{ selected_airport.description or 'Aucune description
+            d’infrastructure disponible.' }}
+          </p>
+        </div>
+
+        <div
+          class="box"
+          style="
+            border-top: 4px solid var(--primary);
+            padding: 0;
+            overflow: hidden;
+            border-radius: 12px;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 0.85rem 1.25rem 0.75rem;
+              background: var(--primary);
+            "
+          >
+            <h3 class="title is-5 mb-0" style="color: white">
+              <i class="fas fa-globe mr-2" style="color: var(--accent)"></i>Vue
+              3D — Photogrammétrie Cesium
+            </h3>
+            <div style="display: flex; gap: 0.5rem; align-items: center">
+              <button
+                id="btn-tilt-down"
+                class="button is-small is-dark"
+                title="Vue inclinée"
+                style="font-size: 0.8rem"
+              >
+                <span class="icon is-small"
+                  ><i class="fas fa-mountain"></i
+                ></span>
+              </button>
+              <button
+                id="btn-tilt-top"
+                class="button is-small is-dark"
+                title="Vue de dessus"
+                style="font-size: 0.8rem"
+              >
+                <span class="icon is-small"
+                  ><i class="fas fa-arrows-alt-v"></i
+                ></span>
+              </button>
+              <button
+                id="btn-reset"
+                class="button is-small is-warning"
+                title="Recentrer"
+                style="font-size: 0.8rem"
+              >
+                <span class="icon is-small"
+                  ><i class="fas fa-crosshairs"></i
+                ></span>
+              </button>
+            </div>
+          </div>
+          <div
+            id="cesiumContainer"
+            style="
+              height: 460px;
+              width: 100%;
+              display: block;
+              background: #0b0e17;
+            "
+          ></div>
+          <div
+            style="
+              padding: 0.5rem 1rem;
+              background: #0f172a;
+              display: flex;
+              align-items: center;
+              gap: 0.75rem;
+            "
+          >
+            <span style="color: #94a3b8; font-size: 0.78rem">
+              <i
+                class="fas fa-info-circle mr-1"
+                style="color: var(--accent)"
+              ></i>
+              Clic + glisser pour orbiter · Scroll pour zoomer · Clic droit pour
+              translater
+            </span>
+            <span style="color: #475569; font-size: 0.72rem; margin-left: auto">
+              Powered by
+              <a
+                href="https://cesium.com"
+                target="_blank"
+                style="color: #7dd3fc"
+                >Cesium Ion</a
+              >
+            </span>
+          </div>
+        </div>
+        {% else %}
+        <div class="notification is-info is-light">
+          <p>
+            Sélectionnez un aéroport dans le tableau ci-dessous pour voir sa vue
+            détaillée, piloter le plan 3D et modifier ses infrastructures.
+          </p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div
+    class="box"
+    style="border-top: 4px solid var(--secondary); box-shadow: var(--shadow-md)"
+  >
+    <div class="level mb-4">
+      <div class="level-left">
+        <h2 class="title is-4" style="color: var(--primary)">
+          <i class="fas fa-list mr-2" style="color: var(--secondary)"></i>Liste
+          des aéroports
+        </h2>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="table is-fullwidth is-hoverable is-striped">
+        <thead style="background-color: var(--primary); color: white">
+          <tr>
+            <th>Code</th>
+            <th>Nom</th>
+            <th>Ville</th>
+            <th>Pays</th>
+            <th>Terminaux</th>
+            <th>Gates</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for aeroport in airports %}
+          <tr>
+            <td><strong>{{ aeroport.id_aeroport }}</strong></td>
+            <td>{{ aeroport.nom }}</td>
+            <td>{{ aeroport.ville }}</td>
+            <td>{{ aeroport.pays }}</td>
+            <td class="has-text-centered">
+              {{ aeroport.terminals_count or 0 }}
+            </td>
+            <td class="has-text-centered">{{ aeroport.gates_total or 0 }}</td>
+            <td>
+              <div class="buttons is-right">
+                <a
+                  class="button is-small is-link"
+                  href="{{ url_for('admin.infrastructures', selected=aeroport.id_aeroport) }}"
+                >
+                  <span class="icon"><i class="fas fa-eye"></i></span>
+                  <span>Voir</span>
+                </a>
+                <form
+                  method="POST"
+                  action="{{ url_for('admin.supprimer_aeroport', id_aeroport=aeroport.id_aeroport) }}"
+                  style="display: inline-block"
+                >
+                  <button
+                    class="button is-small is-danger"
+                    type="submit"
+                    onclick="return confirm('Supprimer l\'aéroport {{ aeroport.id_aeroport }} ?');"
+                  >
+                    <span class="icon"><i class="fas fa-trash-alt"></i></span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<style>
+  #cesiumContainer {
+    position: relative;
+  }
+  #cesiumContainer canvas {
+    border-radius: 0 !important;
+  }
+  /* Masquer le logo Cesium pour interface propre */
+  .cesium-credit-logoContainer {
+    display: none !important;
+  }
+  .cesium-credit-expand-link {
+    color: #64748b !important;
+    font-size: 0.7rem !important;
+  }
+  .cesium-viewer-bottom {
+    bottom: 0 !important;
+  }
+</style>
+
+<!-- CesiumJS -->
+<script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
+<link
+  href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css"
+  rel="stylesheet"
+/>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2YmEzNWQ5ZC03Y2M0LTRhZTgtYTdkYi0xYjAwNTFhODgyOTUiLCJpZCI6Mzk5OTY4LCJzdWIiOiJHd2VuODMiLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoiT2J1ZmZhaXIiLCJpYXQiOjE3ODA0MDAwOTd9.IETeBmojt7Q3B8nz42CI2yTZH_Md5Djh9cdhE0YNcls';
+
+      // ── Données aéroport depuis Jinja ─────────────────────────────────────────
+      const hasAirport  = {{ 'true' if selected_airport else 'false' }};
+      const airportLat  = {{ (selected_airport.latitude  | float) if (selected_airport and selected_airport.latitude)  else 48.8566 }};
+      const airportLng  = {{ (selected_airport.longitude | float) if (selected_airport and selected_airport.longitude) else 2.3522  }};
+      const airportName = {{ (selected_airport.nom if selected_airport else 'Aéroports')|tojson }};
+      const airportCode = {{ (selected_airport.id_aeroport if selected_airport else '')|tojson }};
+
+      // ── Initialisation Cesium Viewer ──────────────────────────────────────────
+    const viewer = new Cesium.Viewer('cesiumContainer', {
+      baseLayerPicker:      false,
+      geocoder:             false,
+      homeButton:           false,
+      sceneModePicker:      false,
+      navigationHelpButton: false,
+      animation:            false,
+      timeline:             false,
+      fullscreenButton:     true,
+      shadows:              false,
+      msaaSamples:          4,
+  });
+
+  // Terrain async (Cesium >= 1.110)
+  Cesium.createWorldTerrainAsync({ requestVertexNormals: true })
+      .then(tp => { viewer.terrainProvider = tp; })
+      .catch(() => {});
+
+  // Imagery (non déprécié)
+  viewer.imageryLayers.removeAll();
+  viewer.imageryLayers.addImageryProvider(
+      new Cesium.IonImageryProvider({ assetId: 2 })
+  );
+
+      // ── Bâtiments OSM 3D (Cesium Ion asset 96188) ────────────────────────────
+      Cesium.createOsmBuildings().then(tileset => {
+        viewer.scene.primitives.add(tileset);
+      }).catch(() => {
+        // OSM buildings indisponible — on continue sans
+      });
+
+      // ── Positionnement caméra sur l'aéroport ─────────────────────────────────
+      const flyToAirport = (lat, lng, heading = 30, pitch = -35, altitude = 1800) => {
+        viewer.camera.flyTo({
+          destination : Cesium.Cartesian3.fromDegrees(lng, lat, altitude),
+          orientation : {
+            heading : Cesium.Math.toRadians(heading),
+            pitch   : Cesium.Math.toRadians(pitch),
+            roll    : 0,
+          },
+          duration : 2.5,
+          easingFunction : Cesium.EasingFunction.CUBIC_IN_OUT,
+        });
+      };
+
+      // ── Marqueur épingle aéroport ─────────────────────────────────────────────
+      if (hasAirport) {
+        viewer.entities.add({
+          position : Cesium.Cartesian3.fromDegrees(airportLng, airportLat),
+          billboard : {
+            image  : 'data:image/svg+xml,' + encodeURIComponent(`
+              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="60" viewBox="0 0 52 60">
+                <defs>
+                  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
+                    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#00000066"/>
+                  </filter>
+                </defs>
+                <path d="M26 0 C11.6 0 0 11.6 0 26 C0 43 26 60 26 60 C26 60 52 43 52 26 C52 11.6 40.4 0 26 0Z"
+                      fill="#0f2346" filter="url(#sh)"/>
+                <circle cx="26" cy="24" r="14" fill="#ffc72c"/>
+                <text x="26" y="29" text-anchor="middle" font-size="12" font-weight="800"
+                      font-family="Arial,sans-serif" fill="#0f2346">✈</text>
+              </svg>`),
+            verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
+            scale          : 0.85,
+            disableDepthTestDistance : Number.POSITIVE_INFINITY,
+          },
+          label : {
+            text            : airportCode,
+            font            : 'bold 14px Arial',
+            fillColor       : Cesium.Color.WHITE,
+            outlineColor    : Cesium.Color.fromCssColorString('#0f2346'),
+            outlineWidth    : 3,
+            style           : Cesium.LabelStyle.FILL_AND_OUTLINE,
+            pixelOffset     : new Cesium.Cartesian2(0, -70),
+            verticalOrigin  : Cesium.VerticalOrigin.BOTTOM,
+            disableDepthTestDistance : Number.POSITIVE_INFINITY,
+            backgroundColor : Cesium.Color.fromCssColorString('#0f2346cc'),
+            showBackground  : true,
+            backgroundPadding : new Cesium.Cartesian2(8, 4),
+          },
+        });
+
+        // Vol vers l'aéroport au chargement
+        flyToAirport(airportLat, airportLng);
+      } else {
+        // Vue Europe par défaut
+        viewer.camera.flyTo({
+          destination : Cesium.Cartesian3.fromDegrees(10, 48, 4000000),
+          orientation : { heading: 0, pitch: Cesium.Math.toRadians(-60), roll: 0 },
+          duration    : 1.5,
+        });
+      }
+
+      // ── Boutons de contrôle ───────────────────────────────────────────────────
+      document.getElementById('btn-tilt-down')?.addEventListener('click', () => {
+        flyToAirport(airportLat, airportLng, 30, -35, 1800);
+      });
+      document.getElementById('btn-tilt-top')?.addEventListener('click', () => {
+        flyToAirport(airportLat, airportLng, 0, -89, 1200);
+      });
+      document.getElementById('btn-reset')?.addEventListener('click', () => {
+        flyToAirport(airportLat, airportLng, 30, -35, 1800);
+      });
+
+      // ── Autocomplétion : préremplissage formulaire ────────────────────────────
+      const airports = {{ airports|tojson }};
+      const airportCatalog = {
+        BRU: { id_aeroport:'BRU', nom:'Brussels Airport',             ville:'Bruxelles', pays:'Belgique',      decalage_utc:'+02:00', latitude:'50.9014', longitude:'4.4844',   terminals_count:1, gates_total:50,  lounges_count:6,  parkings_count:7,  services:'WiFi, salons VIP, train, duty-free, café et business centre', contact_phone:'+32 2 753 79 11',    contact_email:'info@brusselsairport.be', description:"Aéroport international belge desservant l'Europe et le monde." },
+        CDG: { id_aeroport:'CDG', nom:'Aéroport Charles de Gaulle',   ville:'Paris',     pays:'France',        decalage_utc:'+01:00', latitude:'49.0097', longitude:'2.5479',   terminals_count:3, gates_total:109, lounges_count:10, parkings_count:6,  services:'WiFi, salons VIP, train TGV, duty-free, navettes VIP',        contact_phone:'+33 1 70 36 39 50',  contact_email:'contact@adp.fr',          description:"Hub principal de Paris avec terminals 1, 2 et 3, services cargo et salons d'affaires." },
+        LHR: { id_aeroport:'LHR', nom:'London Heathrow',              ville:'Londres',   pays:'Royaume-Uni',   decalage_utc:'+01:00', latitude:'51.4700', longitude:'-0.4543',  terminals_count:4, gates_total:88,  lounges_count:12, parkings_count:8,  services:'WiFi, salons VIP, bus express, duty-free, restauration',      contact_phone:'+44 844 335 1801',   contact_email:'info@heathrow.com',       description:'Aéroport international majeur avec plusieurs terminaux et navettes rapides.' },
+        JFK: { id_aeroport:'JFK', nom:'John F. Kennedy International',ville:'New York',  pays:'États-Unis',    decalage_utc:'-04:00', latitude:'40.6413', longitude:'-73.7781', terminals_count:6, gates_total:128, lounges_count:14, parkings_count:10, services:'WiFi, salons VIP, transport urbain, duty-free, assistance internationale', contact_phone:'+1 718-244-4444', contact_email:'info@jfkairport.com', description:'Aéroport américain majeur avec terminaux internationaux et services haut de gamme.' },
+        AMS: { id_aeroport:'AMS', nom:'Amsterdam Schiphol',           ville:'Amsterdam', pays:'Pays-Bas',      decalage_utc:'+02:00', latitude:'52.3105', longitude:'4.7683',   terminals_count:1, gates_total:100, lounges_count:15, parkings_count:9,  services:'WiFi, salons VIP, train direct, duty-free, restaurants',      contact_phone:'+31 20 794 0800',    contact_email:'info@schiphol.nl',        description:'Plate-forme logistique et hub européen avec un vaste terminal unique.' },
+        FRA: { id_aeroport:'FRA', nom:'Frankfurt Airport',            ville:'Francfort', pays:'Allemagne',     decalage_utc:'+02:00', latitude:'50.0379', longitude:'8.5622',   terminals_count:2, gates_total:95,  lounges_count:11, parkings_count:7,  services:'WiFi, salons VIP, train ICE, duty-free, zones cargo',         contact_phone:'+49 69 690 00',      contact_email:'service@fraport.de',      description:'Grand hub européen avec terminaux interconnectés et services cargo.' },
+      };
+
+      const allCandidates = [
+        ...Object.values(airportCatalog),
+        ...airports.filter(a => a && a.id_aeroport)
+      ].reduce((acc, a) => {
+        const code = a.id_aeroport?.toUpperCase();
+        if (!code || acc.some(e => e.id_aeroport === code)) return acc;
+        acc.push({ id_aeroport:code, nom:a.nom||'', ville:a.ville||'', pays:a.pays||'',
+          decalage_utc:a.decalage_utc||'', latitude:a.latitude||'', longitude:a.longitude||'',
+          terminals_count:a.terminals_count||0, gates_total:a.gates_total||0,
+          lounges_count:a.lounges_count||0, parkings_count:a.parkings_count||0,
+          services:a.services||'', contact_phone:a.contact_phone||'',
+          contact_email:a.contact_email||'', description:a.description||'' });
+        return acc;
+      }, []);
+
+      const formFields = {
+        id_aeroport:     document.querySelector('input[name="id_aeroport"]'),
+        nom:             document.querySelector('input[name="nom"]'),
+        ville:           document.querySelector('input[name="ville"]'),
+        pays:            document.querySelector('input[name="pays"]'),
+        decalage_utc:    document.querySelector('input[name="decalage_utc"]'),
+        latitude:        document.querySelector('input[name="latitude"]'),
+        longitude:       document.querySelector('input[name="longitude"]'),
+        terminals_count: document.querySelector('input[name="terminals_count"]'),
+        gates_total:     document.querySelector('input[name="gates_total"]'),
+        lounges_count:   document.querySelector('input[name="lounges_count"]'),
+        parkings_count:  document.querySelector('input[name="parkings_count"]'),
+        services:        document.querySelector('input[name="services"]'),
+        contact_phone:   document.querySelector('input[name="contact_phone"]'),
+        contact_email:   document.querySelector('input[name="contact_email"]'),
+        description:     document.querySelector('textarea[name="description"]'),
+      };
+
+      const fillForm = (data) => {
+        if (!data) return;
+        Object.entries(formFields).forEach(([key, input]) => {
+          if (!input || data[key] == null) return;
+          input.value = data[key];
+        });
+      };
+
+      const fetchAirportData = async (code) => {
+        try {
+          const r = await fetch(`/admin/api/aeroports/${code}`);
+          if (!r.ok) return null;
+          return await r.json();
+        } catch { return null; }
+      };
+
+      const idField = formFields.id_aeroport;
+      if (idField) {
+        idField.setAttribute('autocomplete', 'off');
+        let fillTimeout = null;
+        idField.addEventListener('input', (e) => {
+          const val = e.target.value.trim().toUpperCase();
+          e.target.value = val;
+          clearTimeout(fillTimeout);
+          if (!val.match(/^[A-Z]{3,4}$/)) return;
+          fillTimeout = setTimeout(async () => {
+            const local = allCandidates.find(a => a.id_aeroport === val);
+            if (local) { fillForm(local); return; }
+            const remote = await fetchAirportData(val);
+            if (remote?.id_aeroport) fillForm(remote);
+          }, 300);
+        });
+      }
+
+    });
+</script>
+{% endblock %}
