@@ -1,0 +1,93 @@
+:root { 
+    --primary: #002A5C; 
+    --primary-light: #004B9E; 
+    --accent: #FFC72C; 
+    --bg-light: #F2F2F7; /* Gris Flighty iOS */
+    --flighty-text: #1C1C1E;
+    --flighty-gray: #8E8E93;
+    --radius-xl: 24px;
+    --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+}
+
+/* Panneau de recherche supérieur */
+.search-panel { 
+    background: white; border-radius: var(--radius-xl); 
+    box-shadow: var(--shadow-soft); padding: 1.5rem 2rem; 
+    margin-bottom: 2rem; border: 1px solid rgba(0,0,0,0.02);
+}
+
+.flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block;}
+.select select { border-radius: 12px; border: 1px solid #E5E5EA; font-weight: 600; color: var(--flighty-text); height: 2.8em; box-shadow: none !important;}
+.select select:focus { border-color: var(--primary); }
+
+/* Calendrier Flighty Style (iOS native look) */
+.flighty-calendar-card { 
+    background: white; border-radius: var(--radius-xl); 
+    box-shadow: var(--shadow-soft); padding: 2rem; height: 100%;
+    border: 1px solid rgba(0,0,0,0.02);
+}
+.calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.calendar-title { font-size: 22px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px;}
+
+.calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px 0; text-align: center; }
+.weekday { font-size: 13px; color: var(--flighty-gray); font-weight: 700; padding-bottom: 10px; }
+
+/* Design des jours (Cercles et Pilules) */
+.day { 
+    height: 44px; display: flex; align-items: center; justify-content: center;
+    font-size: 17px; font-weight: 600; cursor: pointer; color: var(--flighty-text);
+    position: relative; z-index: 2; margin: 0 4px; transition: color 0.2s;
+}
+.day:hover:not(.disabled) { color: var(--primary); }
+.day.disabled { color: #D1D1D6; cursor: not-allowed; font-weight: 500;}
+
+/* État Sélectionné (Cercle plein) */
+.day.selected { color: white; font-weight: 700;}
+.day.selected::after {
+    content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 44px; height: 44px; background: var(--primary); border-radius: 50%; z-index: -1;
+    box-shadow: 0 4px 10px rgba(0, 42, 92, 0.2);
+}
+
+/* État "Dans la plage" (Pilule continue) */
+.day.in-range { color: var(--primary); }
+.day.in-range::before, .day.range-start::before, .day.range-end::before {
+    content: ''; position: absolute; top: 0; bottom: 0; left: -4px; right: -4px;
+    background: rgba(0, 42, 92, 0.08); z-index: -2;
+}
+/* Bords arrondis pour le début et la fin de la pilule */
+.day.range-start::before { left: 50%; border-top-left-radius: 22px; border-bottom-left-radius: 22px; }
+.day.range-end::before { right: 50%; border-top-right-radius: 22px; border-bottom-right-radius: 22px; }
+
+/* Autocomplete Dropdown */
+.autocomplete-dropdown {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 1000; max-height: 250px; overflow-y: auto;
+    display: none; border: 1px solid #E5E5EA; margin-top: 4px;
+}
+.autocomplete-item {
+    padding: 10px 15px; cursor: pointer; font-weight: 600; color: var(--flighty-text);
+    border-bottom: 1px solid #F2F2F7;
+}
+.autocomplete-item:last-child { border-bottom: none; }
+.autocomplete-item:hover { background: #F2F2F7; color: var(--primary); }
+.autocomplete-iata { font-size: 11px; color: var(--flighty-gray); background: #F2F2F7; padding: 2px 6px; border-radius: 6px; margin-left: 8px; }
+
+/* Panneau Récapitulatif (Flighty Style) */
+.summary-card { 
+    background: white; border-radius: var(--radius-xl); 
+    padding: 2rem; height: 100%; box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column;
+}
+.route-display { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+.iata-code { font-size: 32px; font-weight: 800; color: var(--flighty-text); line-height: 1; letter-spacing: -1px;}
+.city-name { font-size: 14px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+.flight-path { flex-grow: 1; height: 2px; background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); margin: 0 20px; position: relative; top: -10px; display: flex; justify-content: center; align-items: center;}
+.flight-path i { background: white; padding: 0 10px; color: var(--flighty-gray); font-size: 14px;}
+
+.date-box { background: var(--bg-light); border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; }
+.date-value { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-top: 4px;}
+
+.button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border-radius: 14px; border: none; height: 3.5em; font-size: 16px; transition: transform 0.2s;}
+.button.is-accent:hover:not([disabled]) { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 199, 44, 0.4); }

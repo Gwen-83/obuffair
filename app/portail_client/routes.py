@@ -377,6 +377,7 @@ def booking_flights():
             session['search_params'] = request.form.to_dict()
             session.pop('vol_aller', None)
             session.pop('vol_retour', None)
+            session.pop('options', None)
             
         # Sélection temporaire du vol aller pour un A/R
         elif 'id_vol_aller_temp' in request.form:
@@ -563,6 +564,25 @@ def booking_payment():
     """Payement"""
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
+        
+    if request.method == 'POST':
+        siege = request.form.get('siege_selectionne', '')
+        bagages = request.form.get('bagages', '0')
+        repas = request.form.get('repas', 'standard')
+        
+        prix_options = 0
+        if bagages == '1': prix_options += 45
+        elif bagages == '2': prix_options += 80
+        
+        if repas in ['premium', 'vegetarien']: prix_options += 15
+        
+        session['options'] = {
+            'siege': siege,
+            'bagages': bagages,
+            'repas': repas,
+            'prix': prix_options
+        }
+        session.modified = True
         
     return render_template('client/booking_payment.html')
 

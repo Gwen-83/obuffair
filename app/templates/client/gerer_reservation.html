@@ -3,77 +3,7 @@
 {% block title %}Gérer ma réservation - O'Buffair{% endblock %}
 
 {% block extra_css %}
-    <style>
-        /* Harmonisation des variables globales (Flighty x O'Buffair) */
-        :root {
-            --primary: #002A5C; 
-            --primary-light: #004B9E; 
-            --accent: #FFC72C; 
-            --bg-light: #F2F2F7; /* Gris Flighty iOS */
-            --flighty-text: #1C1C1E;
-            --flighty-gray: #8E8E93;
-            --flighty-green: #34C759;
-            --flighty-red: #FF3B30;
-            --flighty-orange: #FF9500;
-            --radius-lg: 16px;
-            --radius-xl: 24px;
-            --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
-        }
-        
-        body { 
-            background-color: var(--bg-light); 
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
-            -webkit-font-smoothing: antialiased; 
-        }
-
-        /* --- FLIGHTY APP CARDS (Vols & Formulaires) --- */
-        .flighty-card {
-            background: white; border-radius: var(--radius-xl);
-            padding: 24px; box-shadow: var(--shadow-soft);
-            margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
-        }
-
-        .option-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid #E5E5EA;
-        }
-
-        /* Style pour les options (siège, repas) */
-        .option-box {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            border: 1px solid #E5E5EA;
-            border-radius: var(--radius-lg);
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .option-box .current-selection {
-            font-weight: 600;
-        }
-
-        .option-box .current-selection .tag {
-            font-size: 0.85rem;
-        }
-
-        /* Zone de danger pour l'annulation */
-        .danger-zone {
-            border: 2px solid var(--flighty-red);
-            background-color: rgba(255, 59, 48, 0.05);
-        }
-
-        .danger-zone .option-title {
-            color: var(--flighty-red);
-            border-bottom-color: rgba(255, 59, 48, 0.2);
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gerer_reservation.css') }}">
 {% endblock %}
 
 {% block content %}

@@ -138,6 +138,10 @@
                 <span class="icon"><i class="fas fa-user"></i></span>
                 <span>Mon profil</span>
               </a>
+              <a href="{{ url_for('client.support') }}" class="navbar-item">
+                <span class="icon"><i class="fas fa-headset"></i></span>
+                <span>Support</span>
+              </a>
               <hr class="navbar-divider" />
               <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                 <span class="icon"><i class="fas fa-sign-out-alt"></i></span>
@@ -210,8 +214,6 @@
                     >Gérer ma réservation</a
                   >
                 </li>
-                <li><a href="/">Tarifs spéciaux</a></li>
-                <li><a href="/">Statut du vol</a></li>
               </ul>
             </div>
           </div>
@@ -231,7 +233,10 @@
                 <strong>Email :</strong><br />
                 <a href="mailto:contact@obuffair.com">contact@obuffair.com</a>
               </p>
-              <a href="{{ url_for('client.support') }}" class="navbar-item">
+              <a
+                href="{{ url_for('client.support') }}"
+                style="margin-top: 0.75rem"
+              >
                 <span class="icon"><i class="fas fa-headset"></i></span>
                 <span>Support</span>
               </a>
