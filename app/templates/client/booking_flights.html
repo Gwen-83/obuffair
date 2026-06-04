@@ -39,47 +39,46 @@
         justify-content: center;
     }
     
-    .flight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .flight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
     .airline-info { font-size: 13px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
     
     /* Badges (Direct vs Escale) */
-    .badge { padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
     .badge.direct { background: #E5F8EB; color: #248A3D; }
     .badge.stop { background: #FFF4E5; color: #E67E22; }
 
     /* Itinéraire (Gros IATA) */
     .flight-route { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .flighty-time { font-size: 20px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; }
-    .flighty-iata { font-size: 32px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1.1; margin: 0;}
-    .flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; }
+    .flighty-iata { font-size: 32px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; margin: 2px 0;}
+    .flighty-city { font-size: 12px; color: var(--flighty-gray); font-weight: 600; }
     
     /* Ligne de vol (Flighty style pointillés) */
-    .flight-path-wrapper { flex-grow: 1; margin: 0 20px; position: relative; display: flex; flex-direction: column; align-items: center; }
+    .flight-path-wrapper { flex-grow: 1; margin: 0 16px; position: relative; display: flex; flex-direction: column; align-items: center; }
     .flight-path-line { 
         width: 100%; height: 2px; position: relative; top: 10px; z-index: 1;
         background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); 
     }
-    .flight-duration { font-size: 11px; font-weight: 800; color: var(--flighty-text); background: var(--flighty-bg); padding: 0 8px; z-index: 2; border-radius: 10px;}
-    .flight-stop-info { font-size: 10px; font-weight: 600; color: var(--flighty-gray); margin-top: 12px; text-align: center;}
+    .flight-duration { font-size: 11px; font-weight: 800; color: var(--flighty-text); background: var(--flighty-bg); padding: 0 6px; z-index: 2; border-radius: 10px;}
+    .flight-stop-info { font-size: 10px; font-weight: 600; color: var(--flighty-gray); margin-top: 14px; text-align: center;}
 
     /* Équipements (Wi-Fi, USB...) */
     .flight-amenities { display: flex; gap: 12px; font-size: 11px; font-weight: 600; color: var(--flighty-gray); border-top: 1px solid #E5E5EA; padding-top: 12px;}
-    .flight-amenities i { color: var(--primary); font-size: 14px;}
+    .flight-amenities i { color: var(--primary); font-size: 12px;}
 
     /* --- SECTION DROITE : TARIFS (ECO/BIZ/FIRST) --- */
     .flight-tariffs-section { 
         flex: 1 1 45%; 
         display: flex; 
         background: #F9F9FB; 
-        border-left: 1px solid #D1D1D6;
+        border-left: 1px solid #E5E5EA;
     }
     
     .tariff-form { display: contents; }
     .tariff-btn { 
         flex: 1; padding: 16px 12px; border: none; background: transparent; 
-        border-right: 1px solid #D1D1D6; display: flex; flex-direction: column; 
-        align-items: flex-start; justify-content: flex-start; gap: 4px;
-        cursor: pointer; transition: all 0.2s; text-align: left;
+        border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; 
+        align-items: flex-start; cursor: pointer; transition: all 0.2s; text-align: left;
     }
     .tariff-btn:last-child { border-right: none; }
     
@@ -88,27 +87,138 @@
     .tariff-btn.biz:hover { background: rgba(0, 42, 92, 0.05); }
     .tariff-btn.first:hover { background: rgba(255, 199, 44, 0.1); }
 
-    .t-header { display: flex; justify-content: space-between; width: 100%; align-items: baseline; gap: 4px;}
-    .t-class { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
+    .t-class { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
     .t-class.eco { color: var(--flighty-blue); }
     .t-class.biz { color: var(--primary); }
     .t-class.first { color: var(--accent); }
 
-    .t-price { font-size: 18px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; margin: 0;}
-
-    .t-seats-left { font-size: 10px; font-weight: 700; color: var(--flighty-orange); margin: 2px 0; }
+    .t-price { font-size: 22px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; margin-bottom: 8px;}
     
-    .t-features { font-size: 11px; color: var(--flighty-gray); font-weight: 500; line-height: 1.4; list-style: none; margin: 2px 0 0 0; padding: 0;}
-    .t-features li { position: relative; padding-left: 12px; margin-bottom: 2px; }
-    .t-features li::before {
-        content: '•'; position: absolute; left: 0; color: var(--flighty-gray); font-size: 10px; top: 1px;
+    .t-features { font-size: 11px; color: var(--flighty-gray); font-weight: 500; line-height: 1.5; }
+    .t-features i { font-size: 9px; width: 12px; }
+    .t-features .yes { color: var(--flighty-green); }
+    .t-features .no { color: #D1D1D6; }
+
+    /* =========================================================
+       NOUVEAU DESIGN : SUGGESTION PROCHAIN VOL (FLIGHTY STYLE)
+       ========================================================= */
+    .flighty-empty-state {
+        background: transparent;
+        padding: 40px 20px;
+        text-align: center;
     }
     
-    /* Pagination O'Buffair Styles */
-    .pagination-link.is-current {
-        background-color: var(--primary);
-        border-color: var(--primary);
-        color: white;
+    .flighty-suggestion-card {
+        background: var(--flighty-bg);
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+        border: 1px solid rgba(0,0,0,0.04);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: 32px;
+        transition: transform 0.2s;
+    }
+    
+    @media (min-width: 768px) {
+        .flighty-suggestion-card {
+            flex-direction: row;
+            text-align: left;
+            align-items: center;
+            justify-content: space-between;
+        }
+    }
+
+    .suggestion-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: rgba(52, 199, 89, 0.15); /* Soft Flighty Green */
+        color: var(--flighty-green);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+    }
+    
+    @media (min-width: 768px) {
+        .suggestion-icon-wrapper {
+            margin-bottom: 0;
+            margin-right: 20px;
+        }
+    }
+
+    .suggestion-text-content {
+        flex-grow: 1;
+        margin-bottom: 24px;
+    }
+    
+    @media (min-width: 768px) {
+        .suggestion-text-content {
+            margin-bottom: 0;
+            margin-right: 20px;
+        }
+    }
+
+    .suggestion-title {
+        font-size: 18px;
+        font-weight: 800;
+        color: var(--flighty-text);
+        letter-spacing: -0.5px;
+        margin-bottom: 4px;
+    }
+
+    .suggestion-desc {
+        font-size: 14px;
+        font-weight: 500;
+        color: var(--flighty-gray);
+    }
+
+    .suggestion-date {
+        color: var(--flighty-text);
+        font-weight: 800;
+    }
+
+    /* Bouton Pilule Flighty iOS */
+    .flighty-btn-pill {
+        background-color: var(--flighty-text);
+        color: var(--flighty-bg);
+        border: none;
+        border-radius: 24px;
+        padding: 14px 28px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s, opacity 0.2s;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .flighty-btn-pill:hover {
+        transform: scale(1.02);
+        opacity: 0.9;
+    }
+    .flighty-btn-pill i {
+        margin-left: 8px;
+    }
+
+    /* Lien Modifier ma recherche */
+    .flighty-link-secondary {
+        color: var(--flighty-gray);
+        font-weight: 600;
+        font-size: 14px;
+        text-decoration: none;
+        transition: color 0.2s;
+        display: inline-block;
+        margin-top: 24px;
+    }
+    .flighty-link-secondary:hover {
+        color: var(--flighty-text);
     }
 </style>
 {% endblock %}
@@ -130,7 +240,54 @@
 </div>
 <p class="subtitle is-6 has-text-grey mb-6">{{ ville_dep }} ({{ iata_dep }}) vers {{ ville_arr }} ({{ iata_arr }}) • {{ date_vol }}</p>
 
-{% if itineraries %}
+{% if not itineraries %}
+    <div class="flighty-empty-state">
+        <i class="fas fa-plane-slash is-size-1 mb-4" style="color: #D1D1D6;"></i>
+        <p class="title is-4 m-0" style="color: var(--flighty-text); font-weight: 800; letter-spacing: -0.5px;">Aucun vol trouvé</p>
+        <p class="subtitle is-6 mt-2" style="color: var(--flighty-gray); font-weight: 500;">
+            Nous n'avons trouvé aucun vol correspondant à votre recherche pour le {{ search_params.get('date_aller') if not is_retour_step else search_params.get('date_retour') }}.
+        </p>
+        
+        {% if next_available_date_formatted %}
+        <div class="flighty-suggestion-card">
+            <div class="is-flex is-align-items-center is-flex-direction-column is-flex-direction-row-tablet" style="width: 100%;">
+                
+                <div class="is-flex is-align-items-center mb-4 mb-0-tablet" style="flex-grow: 1;">
+                    <div class="suggestion-icon-wrapper">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="suggestion-text-content has-text-left">
+                        <h3 class="suggestion-title">Alternative disponible</h3>
+                        <p class="suggestion-desc">Bonne nouvelle, un vol est programmé le <span class="suggestion-date">{{ next_available_date_formatted }}</span>.</p>
+                    </div>
+                </div>
+
+                <div class="suggestion-action">
+                    <form action="{{ url_for('client.booking_flights') }}" method="POST">
+                        <input type="hidden" name="update_date_only" value="1">
+                        
+                        {% if is_retour_step %}
+                            <input type="hidden" name="date_aller" value="{{ search_params.get('date_aller') }}">
+                            <input type="hidden" name="date_retour" value="{{ next_available_date_str }}">
+                        {% else %}
+                            <input type="hidden" name="date_aller" value="{{ next_available_date_str }}">
+                            <input type="hidden" name="date_retour" value="{{ search_params.get('date_retour', '') }}">
+                        {% endif %}
+                        
+                        <button type="submit" class="flighty-btn-pill">
+                            Voir ce vol <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+                
+            </div>
+        </div>
+        {% endif %}
+        
+        <a href="{{ url_for('client.booking') }}" class="flighty-link-secondary">Modifier mes critères de recherche</a>
+    </div>
+
+{% else %}
     {% for itin in itineraries %}
     <div class="flighty-booking-card">
         <div class="flight-info-section">
@@ -152,7 +309,7 @@
                     <div class="flight-stop-info">
                         {% if itin.stops == 0 %}Sans escale
                         {% elif itin.stops == 1 %}Escale à {{ itin.segments[0].arr_iata }}
-                        {% else %}Mutiples Escales
+                        {% else %}Multiples Escales
                         {% endif %}
                     </div>
                 </div>
@@ -184,6 +341,7 @@
             <form class="tariff-form" action="{{ form_action }}" method="POST">
                 <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                 <input type="hidden" name="classe" value="Eco">
+                <input type="hidden" name="prix" value="{{ itin.price_eco }}">
                 <button type="submit" class="tariff-btn eco">
                     <div class="t-header">
                         <div class="t-class eco">Economy</div>
@@ -196,6 +354,7 @@
             <form class="tariff-form" action="{{ form_action }}" method="POST">
                 <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                 <input type="hidden" name="classe" value="Business">
+                <input type="hidden" name="prix" value="{{ itin.price_biz }}">
                 <button type="submit" class="tariff-btn biz">
                     <div class="t-header">
                         <div class="t-class biz">Business</div>
@@ -208,6 +367,7 @@
             <form class="tariff-form" action="{{ form_action }}" method="POST">
                 <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
                 <input type="hidden" name="classe" value="First">
+                <input type="hidden" name="prix" value="{{ itin.price_first }}">
                 <button type="submit" class="tariff-btn first">
                     <div class="t-header">
                         <div class="t-class first">First</div>
@@ -234,13 +394,6 @@
         </ul>
     </nav>
     {% endif %}
-{% else %}
-    <div class="notification" style="background: white; border-radius: 16px; border: 1px solid #E5E5EA; text-align: center; padding: 3rem;">
-        <i class="fas fa-plane-slash" style="font-size: 3rem; color: #D1D1D6; margin-bottom: 1rem;"></i>
-        <h3 class="title is-4" style="color: var(--primary);">Aucun vol trouvé</h3>
-        <p class="subtitle is-6 has-text-grey">Nous ne trouvons malheureusement aucun vol (direct ou avec escale) pour cet itinéraire à la date du {{ date_vol }}.</p>
-        <a href="{{ url_for('client.booking') }}" class="button is-accent mt-4">Modifier ma recherche</a>
-    </div>
 {% endif %}
 
 {% endblock %}
