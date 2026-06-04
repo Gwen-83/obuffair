@@ -6,7 +6,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 from flask import Blueprint, render_template, request, session, url_for, redirect
 from app import db
 from sqlalchemy import func, cast, Date, text
-from app.model import Aeroport, Vols
+from app.model import Aeroport, Vols, User
 from datetime import datetime, timedelta, timezone
 
 
@@ -71,7 +71,18 @@ def accueil():
 @client_bp.route('/profil')
 def profil():
     """Profil"""
-    return render_template('client/profil.html')
+    user_id = session.get('user_id')
+    
+    # Si l'utilisateur n'est pas connecté, on le redirige
+    if not user_id:
+        return redirect(url_for('client.accueil'))
+        
+    # Récupération du client en base de données
+    client_connecte = db.session.get(User, user_id)
+    if not client_connecte:
+        return redirect(url_for('client.accueil'))
+        
+    return render_template('client/profil.html', client=client_connecte)
 
 @client_bp.route('/booking')
 def booking():

@@ -138,7 +138,7 @@
             <div class="column is-9">
                 
                 <div id="tab-dashboard" class="content-tab">
-                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Bienvenue, Antoine</h2>
+                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Bienvenue, {{ client.prenom }}</h2>
                     
                     <div class="columns mb-5 is-variable is-4">
                         <div class="column is-5">
@@ -148,9 +148,9 @@
                                         <p class="loyalty-tier">Gold Member</p>
                                         <i class="fas fa-plane" style="color: var(--accent); opacity: 0.5; font-size: 1.5rem;"></i>
                                     </div>
-                                    <p class="loyalty-number">1034 5678 9012</p>
+                                    <p class="loyalty-number">OB-{{ "%06d" | format(client.id_client) }}</p>
                                     <div class="mt-5">
-                                        <p class="is-uppercase is-size-6 font-weight-bold" style="letter-spacing: 1px;">Antoine Hardy</p>
+                                        <p class="is-uppercase is-size-6 font-weight-bold" style="letter-spacing: 1px;">{{ client.prenom }} {{ client.nom }}</p>
                                         <p class="is-size-7" style="color: rgba(255,255,255,0.5);">Valide jusqu'au 12/2026</p>
                                     </div>
                                 </div>
@@ -162,7 +162,7 @@
                                 <div class="premium-content">
                                     <p class="is-size-6 font-weight-bold is-uppercase" style="color: rgba(255,255,255,0.7); letter-spacing: 1px;">Miles Prime Disponibles</p>
                                     <p class="miles-value">
-                                        42 500 <i class="fas fa-star" style="color: var(--accent); font-size: 2.5rem;"></i>
+                                        {{ client.points_fidelite }} <i class="fas fa-star" style="color: var(--accent); font-size: 2.5rem;"></i>
                                     </p>
                                     
                                     <div class="mt-5">
@@ -223,19 +223,19 @@
                                 <div class="column is-6">
                                     <div class="field">
                                         <label class="form-label">Prénom</label>
-                                        <div class="control"><input class="input flighty-input" type="text" value="Antoine"></div>
+                                        <div class="control"><input class="input flighty-input" type="text" name="prenom" value="{{ client.prenom }}"></div>
                                     </div>
                                 </div>
                                 <div class="column is-6">
                                     <div class="field">
                                         <label class="form-label">Nom</label>
-                                        <div class="control"><input class="input flighty-input" type="text" value="Hardy"></div>
+                                        <div class="control"><input class="input flighty-input" type="text" name="nom" value="{{ client.nom }}"></div>
                                     </div>
                                 </div>
                                 <div class="column is-6">
                                     <div class="field">
                                         <label class="form-label">Email de contact</label>
-                                        <div class="control"><input class="input flighty-input" type="email" value="antoine.hardy.2025@enac.fr"></div>
+                                        <div class="control"><input class="input flighty-input" type="email" name="email" value="{{ client.email }}"></div>
                                     </div>
                                 </div>
                                 <div class="column is-6">
