@@ -5,6 +5,8 @@ Gère le profil, modifications de réservation et gestion de compte.
 
 from flask import Blueprint, render_template
 
+from .models_client import Aeroport
+
 
 # Blueprint
 client_bp = Blueprint('client', __name__, url_prefix='/client')
@@ -48,7 +50,8 @@ def profil():
 @client_bp.route('/booking')
 def booking():
     """Réservation"""
-    return render_template('client/reserver.html')
+    aeroports = Aeroport.query.order_by(Aeroport.ville.asc()).all()
+    return render_template('client/reserver.html', aeroports=aeroports)
 
 @client_bp.route('/booking-flights', methods=['GET', 'POST'])
 def booking_flights():

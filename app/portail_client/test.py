@@ -12,5 +12,3 @@ def get_test_output():
         return str(result)
     except Exception as e:
         return f"Erreur : {e}"
-    
-
