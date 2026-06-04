@@ -112,7 +112,7 @@
         </div>
 
         <div class="navbar-end">
-          {% if session.get('is_admin') %}
+          {% if session.get('is_admin') is true %}
           <div class="navbar-item has-dropdown is-hoverable">
             <a class="navbar-link">
               <i class="fas fa-tools" style="margin-right: 0.5rem"></i>Admin
@@ -138,7 +138,10 @@
                 <span class="icon"><i class="fas fa-plane"></i></span>
                 <span>Flotte</span>
               </a>
-              <a href="{{ url_for('admin.infrastructures') }}" class="navbar-item">
+              <a
+                href="{{ url_for('admin.infrastructures') }}"
+                class="navbar-item"
+              >
                 <span class="icon"><i class="fas fa-building"></i></span>
                 <span>Infrastructures</span>
               </a>

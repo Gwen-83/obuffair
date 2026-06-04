@@ -16,7 +16,7 @@ from werkzeug.security import generate_password_hash, check_password_hash  # Has
 from app import db  # Accès à la base de données
 from app.model import User  # Modèle User
 from app.portail_auth.forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm  # Formulaires
-from app.portail_auth.email_utils import send_reset_password_email, send_verification_email  # Utilitaires pour envoyer les emails
+from app.portail_auth.email_utils import send_reset_password_email  # Utilitaires pour envoyer les emails
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError  # Exception si email dupliqué en BD
 
@@ -53,9 +53,6 @@ def register():
                 method='pbkdf2:sha256'
             )
             
-            # Générer un token de vérification d'email (64 caractères sécurisés)
-            verification_token = secrets.token_urlsafe(64)
-            
             user = User(
                 email=email,
                 mot_de_passe=hashed_password,
@@ -63,26 +60,14 @@ def register():
                 nom=nom,
                 date_naissance=form.date_naissance.data if form.date_naissance.data else None,
                 points_fidelite=0,
-                is_admin=False,
-                email_verified=False,
-                email_verification_token=verification_token,
-                email_verification_token_expiration=datetime.utcnow() + timedelta(hours=24)
+                is_admin=False
             )
             
             db.session.add(user)
             db.session.commit()
             
             logger.info(f'Nouvel utilisateur créé: {email}')
-            
-            # Envoyer l'email de vérification
-            from flask import current_app
-            if send_verification_email(email, verification_token, current_app):
-                flash('Inscription réussie! Un email de vérification a été envoyé à votre adresse.', 'success')
-                logger.info(f'Email de vérification envoyé à: {email}')
-            else:
-                flash('Inscription réussie mais erreur lors de l\'envoi de l\'email. Vérifiez votre boîte mail.', 'warning')
-                logger.error(f'Erreur lors de l\'envoi de l\'email de vérification à: {email}')
-
+            flash('Inscription réussie! Vous pouvez vous connecter.', 'success')
             return redirect(url_for('auth.login'))
         
         except IntegrityError:
@@ -117,12 +102,6 @@ def login():
             
             # cherche user par email
             user = db.session.execute(text("SELECT * FROM clients WHERE email = :email LIMIT 1"),{"email": email}).mappings().first()
-            
-            # Vérifier que l'email est confirmé (avant de vérifier le mot de passe)
-            if user and not user['email_verified']:
-                logger.warning(f'Tentative de connexion avec email non vérifié: {email}')
-                flash('Veuillez vérifier votre email avant de vous connecter.', 'warning')
-                return render_template('auth/login.html', form=form)
             
             # user exist + mdp correct avec hash dans bdd
             if user and check_password_hash(user['mot_de_passe'], password):
@@ -269,30 +248,3 @@ def reset_password(token):
     return render_template('auth/reset_password.html', form=form)
 
 
-@auth_bp.route('/verify-email/<token>', methods=['GET'])
-def verify_email(token):
-    """
-    Route pour vérifier l'email avec un token.
-    Généré lors de l'inscription, permet de confirmer l'adresse email.
-    """
-    # Cherche user avec le token de vérification
-    user = db.session.execute(text("SELECT * FROM clients WHERE email_verification_token = :token LIMIT 1"),{"token": token}).mappings().first()
-    
-    # Vérif user existe et token en vie
-    if not user or user['email_verification_token_expiration'] < datetime.utcnow():
-        logger.warning(f'Token de vérification invalide ou expiré: {token}')
-        flash('Lien de vérification invalide ou expiré. Veuillez vous réinscrire.', 'danger')
-        return redirect(url_for('auth.register'))
-    
-    # Vérifier l'email et supprimer le token
-    db.session.execute(
-        text("UPDATE clients SET email_verified = true, email_verification_token = NULL, email_verification_token_expiration = NULL WHERE id_client = :id"),
-        {"id": user['id_client']}
-    )
-    
-    db.session.commit()
-    
-    logger.info(f"Email vérifié pour: {user['email']}")
-    flash('Email vérifié avec succès! Vous pouvez vous connecter.', 'success')
-    
-    return redirect(url_for('auth.login'))
