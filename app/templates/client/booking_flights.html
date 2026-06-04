@@ -107,8 +107,21 @@
 {% endblock %}
 
 {% block booking_content %}
-<h2 class="title is-3" style="color: var(--primary);">Sélectionnez votre vol aller</h2>
-<p class="subtitle is-6 has-text-grey mb-6">Paris (CDG) vers Rome (FCO) • Mercredi 14 Juin 2026</p>
+{% set form_action = url_for('client.booking_flights') if (search_params.get('type_vol') == 'AR' and not is_retour_step) else url_for('client.booking_passengers') %}
+{% set input_name = 'id_vol_aller_temp' if (search_params.get('type_vol') == 'AR' and not is_retour_step) else 'id_vol_final' %}
+
+<div class="is-flex is-justify-content-space-between is-align-items-center mb-2">
+    <h2 class="title is-3 m-0" style="color: var(--primary);">{{ titre }}</h2>
+    {% if is_retour_step %}
+    <form action="{{ url_for('client.booking_flights') }}" method="POST">
+        <input type="hidden" name="reset_aller" value="1">
+        <button type="submit" class="button is-small is-light is-rounded font-weight-bold">
+            <i class="fas fa-arrow-left mr-2"></i> Changer le vol aller
+        </button>
+    </form>
+    {% endif %}
+</div>
+<p class="subtitle is-6 has-text-grey mb-6">{{ ville_dep }} ({{ iata_dep }}) vers {{ ville_arr }} ({{ iata_arr }}) • {{ date_vol }}</p>
 
 <div class="flighty-booking-card">
     
@@ -121,8 +134,8 @@
         <div class="flight-route">
             <div style="width: 75px;">
                 <div class="flighty-time">10:30</div>
-                <div class="flighty-iata">CDG</div>
-                <div class="flighty-city">Paris</div>
+                <div class="flighty-iata">{{ iata_dep }}</div>
+                <div class="flighty-city">{{ ville_dep }}</div>
             </div>
             
             <div class="flight-path-wrapper">
@@ -133,8 +146,8 @@
             
             <div class="has-text-right" style="width: 75px;">
                 <div class="flighty-time">12:35</div>
-                <div class="flighty-iata">FCO</div>
-                <div class="flighty-city">Rome</div>
+                <div class="flighty-iata">{{ iata_arr }}</div>
+                <div class="flighty-city">{{ ville_arr }}</div>
             </div>
         </div>
 
@@ -147,8 +160,8 @@
     
     <div class="flight-tariffs-section">
         
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="1">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="1">
             <input type="hidden" name="classe" value="Eco">
             <button type="submit" class="tariff-btn eco">
                 <div class="t-header">
@@ -162,8 +175,8 @@
             </button>
         </form>
 
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="1">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="1">
             <input type="hidden" name="classe" value="Business">
             <button type="submit" class="tariff-btn biz">
                 <div class="t-header">
@@ -179,8 +192,8 @@
             </button>
         </form>
 
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="1">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="1">
             <input type="hidden" name="classe" value="First">
             <button type="submit" class="tariff-btn first">
                 <div class="t-header">
@@ -209,8 +222,8 @@
         <div class="flight-route">
             <div style="width: 75px;">
                 <div class="flighty-time">15:45</div>
-                <div class="flighty-iata">CDG</div>
-                <div class="flighty-city">Paris</div>
+                <div class="flighty-iata">{{ iata_dep }}</div>
+                <div class="flighty-city">{{ ville_dep }}</div>
             </div>
             
             <div class="flight-path-wrapper">
@@ -221,8 +234,8 @@
             
             <div class="has-text-right" style="width: 75px;">
                 <div class="flighty-time">20:15</div>
-                <div class="flighty-iata">FCO</div>
-                <div class="flighty-city">Rome</div>
+                <div class="flighty-iata">{{ iata_arr }}</div>
+                <div class="flighty-city">{{ ville_arr }}</div>
             </div>
         </div>
 
@@ -233,8 +246,8 @@
     </div>
     
     <div class="flight-tariffs-section">
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="2">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="2">
             <input type="hidden" name="classe" value="Eco">
             <button type="submit" class="tariff-btn eco">
                 <div class="t-header">
@@ -247,8 +260,8 @@
             </button>
         </form>
 
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="2">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="2">
             <input type="hidden" name="classe" value="Business">
             <button type="submit" class="tariff-btn biz">
                 <div class="t-header">
@@ -262,8 +275,8 @@
             </button>
         </form>
 
-        <form class="tariff-form" action="{{ url_for('client.booking_passengers') }}" method="POST">
-            <input type="hidden" name="id_vol" value="2">
+        <form class="tariff-form" action="{{ form_action }}" method="POST">
+            <input type="hidden" name="{{ input_name }}" value="2">
             <input type="hidden" name="classe" value="First">
             <button type="submit" class="tariff-btn first" disabled style="opacity: 0.5; cursor: not-allowed;">
                 <div class="t-header">

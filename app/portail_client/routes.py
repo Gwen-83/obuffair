@@ -3,7 +3,7 @@ Routes client : recherche vols, détail vol, panier, checkout, historique réser
 Gère le profil, modifications de réservation et gestion de compte.
 """
 
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, session, url_for, redirect
 
 from .models_client import Aeroport
 
@@ -56,11 +56,76 @@ def booking():
 @client_bp.route('/booking-flights', methods=['GET', 'POST'])
 def booking_flights():
     """Sélection vol"""
-    return render_template('client/booking_flights.html')
+    if request.method == 'POST':
+        # S'il clique sur "Changer le vol aller"
+        if 'reset_aller' in request.form:
+            session.pop('vol_aller', None)
+            
+        # Nouvelle recherche depuis reserver.html
+        elif 'type_vol' in request.form:
+            session['search_params'] = request.form.to_dict()
+            session.pop('vol_aller', None)
+            session.pop('vol_retour', None)
+            
+        # Sélection temporaire du vol aller pour un A/R
+        elif 'id_vol_aller_temp' in request.form:
+            session['vol_aller'] = {
+                'id_vol': request.form.get('id_vol_aller_temp'),
+                'classe': request.form.get('classe')
+            }
+            
+    search_params = session.get('search_params', {})
+    type_vol = search_params.get('type_vol', 'AS')
+    vol_aller_choisi = session.get('vol_aller') is not None
+    
+    # Détermine si on est à l'étape du choix du vol retour
+    is_retour_step = (type_vol == 'AR') and vol_aller_choisi
+    
+    # Inverse dynamiquement le départ/arrivée si on est sur le retour
+    if is_retour_step:
+        iata_dep = search_params.get('arrivee', 'FCO')
+        iata_arr = search_params.get('depart', 'CDG')
+        date_vol = search_params.get('date_retour', 'Sélectionnez une date')
+        titre = "Sélectionnez votre vol retour"
+    else:
+        iata_dep = search_params.get('depart', 'CDG')
+        iata_arr = search_params.get('arrivee', 'FCO')
+        date_vol = search_params.get('date_aller', 'Sélectionnez une date')
+        titre = "Sélectionnez votre vol aller"
+
+    # Récupère le vrai nom des villes depuis la BDD (ou fallback sur le code IATA)
+    aero_dep = Aeroport.query.get(iata_dep)
+    aero_arr = Aeroport.query.get(iata_arr)
+    ville_dep = aero_dep.ville if aero_dep else iata_dep
+    ville_arr = aero_arr.ville if aero_arr else iata_arr
+
+    return render_template('client/booking_flights.html',
+                           search_params=search_params,
+                           is_retour_step=is_retour_step,
+                           iata_dep=iata_dep,
+                           iata_arr=iata_arr,
+                           ville_dep=ville_dep,
+                           ville_arr=ville_arr,
+                           date_vol=date_vol,
+                           titre=titre)
 
 @client_bp.route('/booking-passengers', methods=['GET', 'POST'])
 def booking_passengers():
     """Information passager"""
+    if request.method == 'POST':
+        # Enregistrement du dernier vol choisi
+        if 'id_vol_final' in request.form:
+            vol_final = {
+                'id_vol': request.form.get('id_vol_final'),
+                'classe': request.form.get('classe')
+            }
+            search_params = session.get('search_params', {})
+            
+            if search_params.get('type_vol') == 'AR':
+                session['vol_retour'] = vol_final
+            else:
+                session['vol_aller'] = vol_final
+                
     return render_template('client/booking_passengers.html')
 
 @client_bp.route('/booking-options', methods=['GET', 'POST'])
