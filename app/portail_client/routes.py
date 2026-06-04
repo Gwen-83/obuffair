@@ -5,7 +5,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 
 from flask import Blueprint, render_template, request, session, url_for, redirect
 from app import db
-from sqlalchemy import func, cast, Date
+from sqlalchemy import func, cast, Date, text
 from app.model import Aeroport, Vols
 from datetime import datetime, timedelta, timezone
 
@@ -76,7 +76,7 @@ def profil():
 @client_bp.route('/booking')
 def booking():
     """Réservation"""
-    aeroports = Aeroport.query.order_by(Aeroport.ville.asc()).all()
+    aeroports = db.session.execute(text("SELECT * FROM aeroports ORDER BY ville ASC")).mappings().all()
     return render_template('client/reserver.html', aeroports=aeroports)
 
 def format_duration(td):
@@ -91,7 +91,7 @@ def calculate_yield_prices(legs, type_vol):
     Logique de Yield Management (Pricing dynamique).
     Prend en compte : l'heure locale, les correspondances et le type de trajet.
     """
-    base_price = sum(leg.prix_de_base for leg in legs)
+    base_price = sum(leg['prix_de_base'] for leg in legs)
     
     # 1. Discount de correspondance (Réseau Hub-and-Spoke)
     # Vol avec escale = inconfort = prix réduit pour rester compétitif
@@ -103,7 +103,7 @@ def calculate_yield_prices(legs, type_vol):
         
     # 2. Yield management basé sur le temps avant le départ
     # Utilisation de l'heure locale de la machine pour plus de précision
-    first_leg_local = legs[0].date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
+    first_leg_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
     time_to_dep = first_leg_local.replace(tzinfo=None) - datetime.now()
     days_to_dep = time_to_dep.days
     
@@ -144,51 +144,81 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
     end_bound = target_date + timedelta(days=2)
 
     # 1. Vols Directs
-    direct_flights = Vols.query.filter(
-        Vols.id_aeroport_depart == origin,
-        Vols.id_aeroport_arrivee == destination,
-        cast(Vols.date_heure_dep_utc, Date) >= start_bound,
-        cast(Vols.date_heure_dep_utc, Date) < end_bound
-    ).all()
+    direct_flights = db.session.execute(text("""
+        SELECT * FROM vols 
+        WHERE id_aeroport_depart = :origin 
+        AND id_aeroport_arrivee = :destination
+        AND DATE(date_heure_dep_utc) >= :start_bound
+        AND DATE(date_heure_dep_utc) < :end_bound
+    """), {
+        'origin': origin,
+        'destination': destination,
+        'start_bound': start_bound,
+        'end_bound': end_bound
+    }).mappings().all()
     
     for f in direct_flights:
         # Filtrage exact sur le fuseau horaire local de la machine
-        f_local = f.date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
+        f_local = f['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
         if f_local.date() == target_date:
             valid_itineraries.append([f])
 
     # 2. Vols avec 1 Escale
     if max_stops >= 1:
-        first_legs = Vols.query.filter(
-            Vols.id_aeroport_depart == origin, Vols.id_aeroport_arrivee != destination,
-            cast(Vols.date_heure_dep_utc, Date) >= start_bound,
-            cast(Vols.date_heure_dep_utc, Date) < end_bound
-        ).all()
+        first_legs = db.session.execute(text("""
+            SELECT * FROM vols 
+            WHERE id_aeroport_depart = :origin 
+            AND id_aeroport_arrivee != :destination
+            AND DATE(date_heure_dep_utc) >= :start_bound
+            AND DATE(date_heure_dep_utc) < :end_bound
+        """), {
+            'origin': origin,
+            'destination': destination,
+            'start_bound': start_bound,
+            'end_bound': end_bound
+        }).mappings().all()
         
         for leg1 in first_legs:
-            leg1_local = leg1.date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
+            leg1_local = leg1['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
             if leg1_local.date() != target_date:
                 continue
                 
-            min_dep = leg1.date_heure_arr_utc + timedelta(minutes=45) # Escale min
-            max_dep = leg1.date_heure_arr_utc + timedelta(hours=12)   # Escale max
+            min_dep = leg1['date_heure_arr_utc'] + timedelta(minutes=45) # Escale min
+            max_dep = leg1['date_heure_arr_utc'] + timedelta(hours=12)   # Escale max
             
-            second_legs = Vols.query.filter(
-                Vols.id_aeroport_depart == leg1.id_aeroport_arrivee, Vols.id_aeroport_arrivee == destination,
-                Vols.date_heure_dep_utc >= min_dep, Vols.date_heure_dep_utc <= max_dep
-            ).all()
+            second_legs = db.session.execute(text("""
+                SELECT * FROM vols 
+                WHERE id_aeroport_depart = :origin 
+                AND id_aeroport_arrivee = :destination
+                AND date_heure_dep_utc >= :min_dep
+                AND date_heure_dep_utc <= :max_dep
+            """), {
+                'origin': leg1['id_aeroport_arrivee'],
+                'destination': destination,
+                'min_dep': min_dep,
+                'max_dep': max_dep
+            }).mappings().all()
             
             for leg2 in second_legs:
                 valid_itineraries.append([leg1, leg2])
                 
                 # 3. Vols avec 2 Escales (Extension de leg2)
                 if max_stops >= 2:
-                    min_dep2 = leg2.date_heure_arr_utc + timedelta(minutes=45)
-                    max_dep2 = leg2.date_heure_arr_utc + timedelta(hours=12)
-                    third_legs = Vols.query.filter(
-                        Vols.id_aeroport_depart == leg2.id_aeroport_arrivee, Vols.id_aeroport_arrivee == destination,
-                        Vols.date_heure_dep_utc >= min_dep2, Vols.date_heure_dep_utc <= max_dep2
-                    ).all()
+                    min_dep2 = leg2['date_heure_arr_utc'] + timedelta(minutes=45)
+                    max_dep2 = leg2['date_heure_arr_utc'] + timedelta(hours=12)
+                    third_legs = db.session.execute(text("""
+                        SELECT * FROM vols 
+                        WHERE id_aeroport_depart = :origin 
+                        AND id_aeroport_arrivee = :destination
+                        AND date_heure_dep_utc >= :min_dep
+                        AND date_heure_dep_utc <= :max_dep
+                    """), {
+                        'origin': leg2['id_aeroport_arrivee'],
+                        'destination': destination,
+                        'min_dep': min_dep2,
+                        'max_dep': max_dep2
+                    }).mappings().all()
+                    
                     for leg3 in third_legs:
                         valid_itineraries.append([leg1, leg2, leg3])
 
@@ -239,49 +269,50 @@ def booking_flights():
         titre = "Sélectionnez votre vol aller"
 
     # 1. Obtenir les noms des villes
-    aero_dep = Aeroport.query.get(iata_dep)
-    aero_arr = Aeroport.query.get(iata_arr)
-    ville_dep = aero_dep.ville if aero_dep else iata_dep
-    ville_arr = aero_arr.ville if aero_arr else iata_arr
+    aero_dep = db.session.execute(text("SELECT ville FROM aeroports WHERE id_aeroport = :iata"), {'iata': iata_dep}).fetchone()
+    aero_arr = db.session.execute(text("SELECT ville FROM aeroports WHERE id_aeroport = :iata"), {'iata': iata_arr}).fetchone()
+    ville_dep = aero_dep[0] if aero_dep else iata_dep
+    ville_arr = aero_arr[0] if aero_arr else iata_arr
     
     date_vol = datetime.strptime(date_vol_raw, '%Y-%m-%d').strftime('%d/%m/%Y') if date_vol_raw else 'Date invalide'
     
     # 2. Exécuter l'algorithme
     raw_itineraries = search_itineraries(iata_dep, iata_arr, date_vol_raw)
-    all_airports = {a.id_aeroport: a.ville for a in Aeroport.query.all()}
+    all_airports_rows = db.session.execute(text("SELECT id_aeroport, ville FROM aeroports")).fetchall()
+    all_airports = {row[0]: row[1] for row in all_airports_rows}
     
     itineraries_data = []
     for legs in raw_itineraries:
         # Conversion des heures extrêmes en heure locale de la machine
-        dep_time_local = legs[0].date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
-        arr_time_local = legs[-1].date_heure_arr_utc.replace(tzinfo=timezone.utc).astimezone()
+        dep_time_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+        arr_time_local = legs[-1]['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
         
         # Appelle notre nouveau module de Yield Management
         prices = calculate_yield_prices(legs, type_vol)
         
         segments = []
         for i, leg in enumerate(legs):
-            leg_dep_local = leg.date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
-            leg_arr_local = leg.date_heure_arr_utc.replace(tzinfo=timezone.utc).astimezone()
+            leg_dep_local = leg['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+            leg_arr_local = leg['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
             
-            layover = format_duration(legs[i+1].date_heure_dep_utc - leg.date_heure_arr_utc) if i < len(legs) - 1 else None
+            layover = format_duration(legs[i+1]['date_heure_dep_utc'] - leg['date_heure_arr_utc']) if i < len(legs) - 1 else None
             segments.append({
-                'flight_number': f"OB{leg.id_vol}",
-                'dep_iata': leg.id_aeroport_depart,
-                'dep_city': all_airports.get(leg.id_aeroport_depart, leg.id_aeroport_depart),
+                'flight_number': f"OB{leg['id_vol']}",
+                'dep_iata': leg['id_aeroport_depart'],
+                'dep_city': all_airports.get(leg['id_aeroport_depart'], leg['id_aeroport_depart']),
                 'dep_time': leg_dep_local.strftime('%H:%M'),
-                'arr_iata': leg.id_aeroport_arrivee,
-                'arr_city': all_airports.get(leg.id_aeroport_arrivee, leg.id_aeroport_arrivee),
+                'arr_iata': leg['id_aeroport_arrivee'],
+                'arr_city': all_airports.get(leg['id_aeroport_arrivee'], leg['id_aeroport_arrivee']),
                 'arr_time': leg_arr_local.strftime('%H:%M'),
                 'layover': layover
             })
             
         stops = len(legs) - 1
         itineraries_data.append({
-            'id': "_".join(str(leg.id_vol) for leg in legs),  # Ex: "12_15" pour vols 12 + 15
+            'id': "_".join(str(leg['id_vol']) for leg in legs),  # Ex: "12_15" pour vols 12 + 15
             'dep_time': dep_time_local.strftime('%H:%M'),
             'arr_time': arr_time_local.strftime('%H:%M'),
-            'duration': format_duration(legs[-1].date_heure_arr_utc - legs[0].date_heure_dep_utc),
+            'duration': format_duration(legs[-1]['date_heure_arr_utc'] - legs[0]['date_heure_dep_utc']),
             'stops_text': "Direct" if stops == 0 else f"{stops} Escale{'s' if stops > 1 else ''}",
             'stops': stops,
             'price_eco': prices['eco'],
@@ -292,6 +323,19 @@ def booking_flights():
         
     # Trier par heure de départ
     itineraries_data.sort(key=lambda x: x['dep_time'])
+    
+    # --- Logique de Pagination (10 vols max par page) ---
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    total_itineraries = len(itineraries_data)
+    total_pages = (total_itineraries + per_page - 1) // per_page
+    
+    if page < 1: page = 1
+    elif page > total_pages and total_pages > 0: page = total_pages
+        
+    start_idx = (page - 1) * per_page
+    end_idx = start_idx + per_page
+    paginated_itineraries = itineraries_data[start_idx:end_idx]
 
     return render_template('client/booking_flights.html',
                            search_params=search_params,
@@ -301,7 +345,9 @@ def booking_flights():
                            ville_dep=ville_dep,
                            ville_arr=ville_arr,
                            date_vol=date_vol,
-                           itineraries=itineraries_data,
+                           itineraries=paginated_itineraries,
+                           current_page=page,
+                           total_pages=total_pages,
                            titre=titre)
 
 @client_bp.route('/booking-passengers', methods=['GET', 'POST'])

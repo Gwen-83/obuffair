@@ -103,6 +103,13 @@
     .t-features li::before {
         content: '•'; position: absolute; left: 0; color: var(--flighty-gray); font-size: 10px; top: 1px;
     }
+    
+    /* Pagination O'Buffair Styles */
+    .pagination-link.is-current {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
 </style>
 {% endblock %}
 
@@ -212,6 +219,21 @@
         </div>
     </div>
     {% endfor %}
+    
+    <!-- Contrôles de Pagination -->
+    {% if total_pages > 1 %}
+    <nav class="pagination is-centered mt-5 mb-5" role="navigation" aria-label="pagination">
+        <a class="pagination-previous" {% if current_page == 1 %}disabled{% else %}href="{{ url_for('client.booking_flights', page=current_page-1) }}"{% endif %}>Précédent</a>
+        <a class="pagination-next" {% if current_page == total_pages %}disabled{% else %}href="{{ url_for('client.booking_flights', page=current_page+1) }}"{% endif %}>Suivant</a>
+        <ul class="pagination-list">
+            {% for p in range(1, total_pages + 1) %}
+            <li>
+                <a class="pagination-link {% if p == current_page %}is-current{% endif %}" href="{{ url_for('client.booking_flights', page=p) }}" aria-label="Aller à la page {{ p }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+        </ul>
+    </nav>
+    {% endif %}
 {% else %}
     <div class="notification" style="background: white; border-radius: 16px; border: 1px solid #E5E5EA; text-align: center; padding: 3rem;">
         <i class="fas fa-plane-slash" style="font-size: 3rem; color: #D1D1D6; margin-bottom: 1rem;"></i>
