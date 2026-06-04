@@ -7,7 +7,7 @@ from functools import wraps
 from flask import Blueprint, render_template, request, session, url_for, redirect, flash
 from app import db
 from sqlalchemy import func, cast, Date, text
-from app.model import Aeroport, Vols, User
+from app.model import Aeroport, Vols, User, Support
 from datetime import datetime, timedelta, timezone
 import re
 
@@ -136,6 +136,61 @@ def profil():
             })
             
     return render_template('client/profil.html', client=client_connecte, prochains_vols=prochains_vols_data)
+
+@client_bp.route('/support', methods=['GET', 'POST'])
+def support():
+    """Formulaire de ticket de support client"""
+    user_info = {}
+    user_id = session.get('user_id', 0)
+    if user_id:
+        user_record = db.session.get(User, user_id)
+        if user_record:
+            user_info = {
+                'nom': f"{user_record.prenom or ''} {user_record.nom or ''}".strip(),
+                'email': user_record.email
+            }
+
+    form_data = {
+        'titre': request.form.get('titre', '') if request.method == 'POST' else '',
+        'categorie': request.form.get('categorie', 'reservation') if request.method == 'POST' else 'reservation',
+        'priorite': request.form.get('priorite', 'normale') if request.method == 'POST' else 'normale',
+        'description': request.form.get('description', '') if request.method == 'POST' else '',
+        'nom_contact': request.form.get('nom_contact', '') if request.method == 'POST' else (user_info.get('nom') if user_info else ''),
+        'email_contact': request.form.get('email_contact', '') if request.method == 'POST' else (user_info.get('email') if user_info else '')
+    }
+
+    if request.method == 'POST':
+        titre = form_data['titre'].strip()
+        categorie = form_data['categorie'] or 'autre'
+        priorite = form_data['priorite'] or 'normale'
+        description = form_data['description'].strip()
+
+        if not titre or not description:
+            flash('Veuillez renseigner un titre et une description pour votre ticket.', 'danger')
+        else:
+            if not user_info:
+                contact_name = form_data['nom_contact'].strip() or 'Invité'
+                contact_email = form_data['email_contact'].strip() or 'non renseigné'
+                description = f"Contact invité : {contact_name} \nEmail : {contact_email}\n\n{description}"
+
+            ticket = Support(
+                id_client=user_id or 0,
+                titre=titre,
+                description=description,
+                categorie=categorie,
+                priorite=priorite,
+                statut='nouveau'
+            )
+            try:
+                db.session.add(ticket)
+                db.session.commit()
+                flash('Votre demande a bien été envoyée au support. Nous vous répondrons rapidement.', 'success')
+                return redirect(url_for('client.support'))
+            except Exception as e:
+                db.session.rollback()
+                flash('Une erreur est survenue lors de l’envoi de votre ticket. Veuillez réessayer.', 'danger')
+
+    return render_template('client/ticket.html', user_info=user_info, form_data=form_data)
 
 @client_bp.route('/booking')
 @login_required
