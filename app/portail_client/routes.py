@@ -5,7 +5,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 
 from flask import Blueprint, render_template, request, session, url_for, redirect
 
-from .models_client import Aeroport
+from app.model import Aeroport
 
 
 # Blueprint

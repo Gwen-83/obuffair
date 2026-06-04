@@ -6,7 +6,7 @@ Validation stricte des données critiques (horaires, capacités).
 from flask_wtf import FlaskForm
 from wtforms import StringField, IntegerField, BooleanField, SubmitField, TextAreaField, HiddenField
 from wtforms.validators import DataRequired, Length, Regexp, ValidationError, NumberRange, Optional, Email
-from app.portail_admin.modele_admin import Avion
+from app.model import Avion
 from app import db
 from sqlalchemy import text
 
