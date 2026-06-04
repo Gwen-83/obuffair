@@ -485,39 +485,3 @@ O'Buffair{% endblock %} {% block content %}
   </div>
 </div>
 {% endblock %}
-
-        Object.entries(formFields).forEach(([key, input]) => {
-          if (!input || data[key] == null) return;
-          input.value = data[key];
-        });
-      };
-
-      const fetchAirportData = async (code) => {
-        try {
-          const r = await fetch(`/admin/api/aeroports/${code}`);
-          if (!r.ok) return null;
-          return await r.json();
-        } catch { return null; }
-      };
-
-      const idField = formFields.id_aeroport;
-      if (idField) {
-        idField.setAttribute('autocomplete', 'off');
-        let fillTimeout = null;
-        idField.addEventListener('input', (e) => {
-          const val = e.target.value.trim().toUpperCase();
-          e.target.value = val;
-          clearTimeout(fillTimeout);
-          if (!val.match(/^[A-Z]{3,4}$/)) return;
-          fillTimeout = setTimeout(async () => {
-            const local = allCandidates.find(a => a.id_aeroport === val);
-            if (local) { fillForm(local); return; }
-            const remote = await fetchAirportData(val);
-            if (remote?.id_aeroport) fillForm(remote);
-          }, 300);
-        });
-      }
-
-    });
-</script>
-{% endblock %}
