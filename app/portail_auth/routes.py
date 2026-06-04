@@ -12,6 +12,9 @@ import logging  # Pour afficher des logs
 import secrets  # Pour générer des tokens sécurisés
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
+
+def _is_truthy(value):
+    return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
 from werkzeug.security import generate_password_hash, check_password_hash  # Hash et vérification password
 from app import db  # Accès à la base de données
 from app.model import User  # Modèle User
@@ -118,7 +121,7 @@ def login():
             # cherche user par email
             user = db.session.execute(text("SELECT * FROM clients WHERE email = :email LIMIT 1"),{"email": email}).mappings().first()
             
-            if user and not user['email_verified']:
+            if user and not _is_truthy(user['email_verified']):
                 logger.warning(f'Tentative de connexion sans email vérifié: {email}')
                 flash('Veuillez vérifier votre email avant de vous connecter.', 'warning')
                 return render_template('auth/login.html', form=form)
@@ -130,7 +133,7 @@ def login():
                 session['email'] = user['email']
                 session['prenom'] = user['prenom']
                 session['nom'] = user['nom']
-                session['is_admin'] = bool(user['is_admin'])
+                session['is_admin'] = _is_truthy(user['is_admin'])
                 
                 logger.info(f'Utilisateur connecté: {email}')
                 flash(f'Connexion réussie','success')
