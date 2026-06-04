@@ -14,7 +14,10 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 
 def _is_truthy(value):
+    if isinstance(value, (bytes, bytearray)):
+        return value != b'\x00' and len(value) > 0 and any(b != 0 for b in value)
     return str(value).lower() in ('1', 'true', 't', 'yes', 'y')
+
 from werkzeug.security import generate_password_hash, check_password_hash  # Hash et vérification password
 from app import db  # Accès à la base de données
 from app.model import User  # Modèle User
