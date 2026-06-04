@@ -192,6 +192,7 @@ class Billet(db.Model):
     classe = db.Column(db.Enum('Eco', 'Business', 'First'), nullable=False, default='Eco')
     options_repas = db.Column(db.Boolean, default=False)
     bagages_sup = db.Column(db.Integer, default=0)
+    siege = db.Column(db.String(10), nullable=True)
 
     # --- Relations ---
     reservation = db.relationship('Reservation', back_populates='billets')

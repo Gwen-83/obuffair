@@ -1,22 +1,26 @@
-/* AeroLOPA Style Cabin Map */
 .aerolopa-container { 
     background: #F8F9FA; 
     padding: 40px 0; 
     border-radius: var(--radius-xl); 
     border: 1px solid #E5E5EA; 
-    display: flex; justify-content: center; overflow-x: auto; 
     margin-bottom: 24px;
+    overflow-x: auto;
 }
 
-/* Animation et interactivité CSS pour le SVG AeroLOPA */
-.aerolopa-seat rect:first-child { transition: fill 0.2s, opacity 0.2s; }
-.aerolopa-seat:hover:not(.taken) rect:first-child { opacity: 1; filter: brightness(1.2); }
+/* Grid Seat Map */
+.seat-grid { display: flex; flex-direction: column; gap: 8px; align-items: center; width: max-content; margin: 0 auto; padding: 0 20px;}
+.seat-row { display: flex; gap: 8px; align-items: center; }
+.seat-aisle { width: 24px; }
+.seat-cell {
+    width: 44px; height: 52px; border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+    font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; border: 2px solid transparent; box-sizing: border-box;
+}
+.seat-cell:hover:not(.taken) { transform: scale(1.05); filter: brightness(1.1); }
 
-/* État Sélectionné */
-.aerolopa-seat.selected rect:first-child { fill: var(--accent) !important; opacity: 1 !important; stroke: var(--primary); stroke-width: 2px;}
-.aerolopa-seat.selected text { fill: var(--primary) !important; }
+.seat-cell.taken { opacity: 0.3; cursor: not-allowed; text-decoration: line-through; filter: grayscale(100%);}
+.seat-cell.selected { box-shadow: 0 0 0 4px rgba(0, 42, 92, 0.2); transform: scale(1.1); z-index: 10;}
 
-/* État Occupé */
-.aerolopa-seat.taken rect:first-child { fill: #F2F2F7 !important; }
-.aerolopa-seat.taken text { fill: #D1D1D6 !important; text-decoration: line-through; }
-.aerolopa-seat.taken rect:last-child { cursor: not-allowed !important; }
+.seat-First { background: linear-gradient(135deg, #1C1C1E, #3A3A3C); color: #FFD700; border-color: #FFD700;}
+.seat-Business { background: #002A5C; color: white; border-color: #002A5C;}
+.seat-Eco { background: #F0F8FF; color: var(--primary); border-color: #D6E8F9;}
+.seat-Eco.selected { border-color: var(--primary); }

@@ -118,7 +118,7 @@ def profil():
                    7: 'Juil', 8: 'Août', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Déc'}
         for billet in prochains_billets:
             vol = billet.vol
-            date_vol = f"{vol.date_heure_dep_utc.day} {mois_fr[vol.date_heure_dep_utc.month]} {vol.date_heure_dep_utc.year}"
+            date_vol = f"{vol.date_heure_dep_utc.day:02d}-{vol.date_heure_dep_utc.month:02d}-{vol.date_heure_dep_utc.year}"
             
             status_text = "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize()
             status_class = "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed"
@@ -223,9 +223,8 @@ def calculate_yield_prices(legs, type_vol):
         base_price *= 0.75  # -25%
         
     # 2. Yield management basé sur le temps avant le départ
-    # Utilisation de l'heure locale de la machine pour plus de précision
-    first_leg_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
-    time_to_dep = first_leg_local.replace(tzinfo=None) - datetime.now()
+    # Utilisation de l'heure UTC native pour éviter les crashs de fuseaux horaires locaux
+    time_to_dep = legs[0]['date_heure_dep_utc'] - datetime.utcnow()
     days_to_dep = time_to_dep.days
     
     if days_to_dep <= 3:
@@ -304,27 +303,27 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
             if leg1_local.date() != target_date:
                 continue
                 
-            min_dep = leg1['date_heure_arr_utc'] + timedelta(minutes=45) # Escale min
+            min_dep = leg1['date_heure_arr_utc'] + timedelta(minutes=40) # Escale min
             max_dep = leg1['date_heure_arr_utc'] + timedelta(hours=12)   # Escale max
             
-            second_legs = db.session.execute(text("""
+            second_legs_all = db.session.execute(text("""
                 SELECT * FROM vols 
                 WHERE id_aeroport_depart = :origin 
-                AND id_aeroport_arrivee = :destination
                 AND date_heure_dep_utc >= :min_dep
                 AND date_heure_dep_utc <= :max_dep
             """), {
                 'origin': leg1['id_aeroport_arrivee'],
-                'destination': destination,
                 'min_dep': min_dep,
                 'max_dep': max_dep
             }).mappings().all()
             
-            for leg2 in second_legs:
-                valid_itineraries.append([leg1, leg2])
-                
-                # 3. Vols avec 2 Escales (Extension de leg2)
-                if max_stops >= 2:
+            for leg2 in second_legs_all:
+                if leg2['id_aeroport_arrivee'] == destination:
+                    # C'est bien la destination finale : 1 escale
+                    valid_itineraries.append([leg1, leg2])
+                    
+                elif max_stops >= 2:
+                    # 3. Vols avec 2 Escales (On cherche un 3ème segment)
                     min_dep2 = leg2['date_heure_arr_utc'] + timedelta(minutes=45)
                     max_dep2 = leg2['date_heure_arr_utc'] + timedelta(hours=12)
                     third_legs = db.session.execute(text("""
@@ -384,7 +383,10 @@ def booking_flights():
             session['vol_aller'] = {
                 'id_vol': request.form.get('id_vol_aller_temp'),
                 'classe': request.form.get('classe'),
-                'prix': float(request.form.get('prix', 0))
+                'prix': float(request.form.get('prix', 0)),
+                'prix_eco': float(request.form.get('prix_eco', 0)),
+                'prix_biz': float(request.form.get('prix_biz', 0)),
+                'prix_first': float(request.form.get('prix_first', 0))
             }
             
     search_params = session.get('search_params', {})
@@ -416,15 +418,46 @@ def booking_flights():
     ville_dep = aero_dep[0] if aero_dep else iata_dep
     ville_arr = aero_arr[0] if aero_arr else iata_arr
     
-    date_vol = datetime.strptime(date_vol_raw, '%Y-%m-%d').strftime('%d/%m/%Y') if date_vol_raw else 'Date invalide'
+    date_vol = datetime.strptime(date_vol_raw, '%Y-%m-%d').strftime('%d-%m-%Y') if date_vol_raw else 'Date invalide'
     
     # 2. Exécuter l'algorithme
     raw_itineraries = search_itineraries(iata_dep, iata_arr, date_vol_raw)
     all_airports_rows = db.session.execute(text("SELECT id_aeroport, ville FROM aeroports")).fetchall()
     all_airports = {row[0]: row[1] for row in all_airports_rows}
     
+    # Pré-chargement des capacités pour tous les segments de vol retournés
+    unique_leg_ids = set(leg['id_vol'] for legs in raw_itineraries for leg in legs)
+    capacities = {}
+    for leg_id in unique_leg_ids:
+        res = db.session.execute(text("""
+            SELECT a.eco_rang_de, a.eco_rang_a, a.bus_rang_de, a.bus_rang_a, a.first_rang_de, a.first_rang_a, a.largeur_rangee,
+                   COALESCE(SUM(CASE WHEN b.classe = 'Eco' THEN 1 ELSE 0 END), 0) as sold_eco,
+                   COALESCE(SUM(CASE WHEN b.classe = 'Business' THEN 1 ELSE 0 END), 0) as sold_bus,
+                   COALESCE(SUM(CASE WHEN b.classe = 'First' THEN 1 ELSE 0 END), 0) as sold_first
+            FROM vols v
+            JOIN avions a ON v.immatriculation_avion = a.immatriculation
+            LEFT JOIN billets b ON b.id_vol = v.id_vol
+            WHERE v.id_vol = :id_vol
+            GROUP BY v.id_vol, a.immatriculation
+        """), {'id_vol': leg_id}).mappings().first()
+        
+        if res:
+            def cap(de, a, width): return max(0, a - de + 1) * width if a >= de > 0 else 0
+            capacities[leg_id] = {
+                'cap_eco': cap(res['eco_rang_de'], res['eco_rang_a'], res['largeur_rangee']),
+                'cap_bus': cap(res['bus_rang_de'], res['bus_rang_a'], res['largeur_rangee']),
+                'cap_first': cap(res['first_rang_de'], res['first_rang_a'], res['largeur_rangee']),
+                'sold_eco': res['sold_eco'],
+                'sold_bus': res['sold_bus'],
+                'sold_first': res['sold_first']
+            }
+
     itineraries_data = []
     for legs in raw_itineraries:
+        caps = [capacities.get(leg['id_vol']) for leg in legs]
+        if None in caps:
+            continue # Données de capacité manquantes
+
         # Conversion des heures extrêmes en heure locale de la machine
         dep_time_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
         arr_time_local = legs[-1]['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
@@ -437,7 +470,9 @@ def booking_flights():
             leg_dep_local = leg['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
             leg_arr_local = leg['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
             
-            layover = format_duration(legs[i+1]['date_heure_dep_utc'] - leg['date_heure_arr_utc']) if i < len(legs) - 1 else None
+            layover_td = legs[i+1]['date_heure_dep_utc'] - leg['date_heure_arr_utc'] if i < len(legs) - 1 else None
+            layover = format_duration(layover_td) if layover_td else None
+            is_short_layover = (layover_td < timedelta(minutes=60)) if layover_td else False
             segments.append({
                 'flight_number': f"OB{leg['id_vol']}",
                 'dep_iata': leg['id_aeroport_depart'],
@@ -446,10 +481,16 @@ def booking_flights():
                 'arr_iata': leg['id_aeroport_arrivee'],
                 'arr_city': all_airports.get(leg['id_aeroport_arrivee'], leg['id_aeroport_arrivee']),
                 'arr_time': leg_arr_local.strftime('%H:%M'),
-                'layover': layover
+                'layover': layover,
+                'is_short_layover': is_short_layover
             })
             
         stops = len(legs) - 1
+        
+        avail_eco = min(max(0, c['cap_eco'] - c['sold_eco']) for c in caps)
+        avail_bus = min(max(0, c['cap_bus'] - c['sold_bus']) for c in caps)
+        avail_first = min(max(0, c['cap_first'] - c['sold_first']) for c in caps)
+        
         itineraries_data.append({
             'id': "_".join(str(leg['id_vol']) for leg in legs),  # Ex: "12_15" pour vols 12 + 15
             'dep_time': dep_time_local.strftime('%H:%M'),
@@ -460,15 +501,17 @@ def booking_flights():
             'price_eco': prices['eco'],
             'price_biz': prices['biz'],
             'price_first': prices['first'],
+            'avail_eco': avail_eco, 'cap_eco': min(c['cap_eco'] for c in caps),
+            'avail_biz': avail_bus, 'cap_biz': min(c['cap_bus'] for c in caps),
+            'avail_first': avail_first, 'cap_first': min(c['cap_first'] for c in caps),
             'segments': segments
         })
         
     # Trier par heure de départ
     itineraries_data.sort(key=lambda x: x['dep_time'])
     
-    # --- Recherche de la prochaine date disponible si aucun vol ---
-    next_available_date_str = None
-    next_available_date_formatted = None
+    # --- Recherche de jusqu'à 3 dates alternatives si aucun vol ---
+    alternative_vols = []
     
     if not itineraries_data and date_vol_raw:
         try:
@@ -479,7 +522,7 @@ def booking_flights():
             if is_retour_step and search_params.get('date_aller'):
                 min_date = max(min_date, datetime.strptime(search_params.get('date_aller'), '%Y-%m-%d').date())
                 
-            # On cherche à -1 jour et jusqu'à +14 jours (trié par proximité)
+            # On cherche à -1 jour et jusqu'à +7 jours (trié par proximité)
             offsets = [-1] + [i for i in range(1, 15)]
             offsets.sort(key=abs)
             
@@ -489,10 +532,44 @@ def booking_flights():
                     continue
                     
                 check_date_str = check_date.strftime('%Y-%m-%d')
-                if search_itineraries(iata_dep, iata_arr, check_date_str):
-                    next_available_date_str = check_date_str
-                    next_available_date_formatted = check_date.strftime('%d/%m/%Y')
-                    break
+                found_itineraries = search_itineraries(iata_dep, iata_arr, check_date_str)
+                if found_itineraries:
+                    best_itin = found_itineraries[0] # Prendre le premier (souvent le plus tôt/direct)
+                    prices = calculate_yield_prices(best_itin, type_vol)
+                    
+                    alt_has_short = False
+                    for i in range(len(best_itin) - 1):
+                        laytd = best_itin[i+1]['date_heure_dep_utc'] - best_itin[i]['date_heure_arr_utc']
+                        if laytd < timedelta(minutes=60):
+                            alt_has_short = True
+                    
+                    dep_time_local = best_itin[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+                    arr_time_local = best_itin[-1]['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
+                    
+                    alt_stops = len(best_itin) - 1
+                    if alt_stops == 0:
+                        alt_stops_text = "Vol Direct"
+                    elif alt_stops == 1:
+                        alt_stops_text = f"1 Escale ({best_itin[0]['id_aeroport_arrivee']})"
+                    else:
+                        alt_stops_text = f"{alt_stops} Escales"
+                        
+                    alternative_vols.append({
+                        'id_vol': "_".join(str(leg['id_vol']) for leg in best_itin),
+                        'date_str': check_date.strftime('%d-%m-%Y'),
+                        'date_brute': check_date_str,
+                        'prix_eco': prices['eco'],
+                        'id_aeroport_depart': best_itin[0]['id_aeroport_depart'],
+                        'id_aeroport_arrivee': best_itin[-1]['id_aeroport_arrivee'],
+                        'heure_depart_str': dep_time_local.strftime('%H:%M'),
+                        'heure_arrivee_str': arr_time_local.strftime('%H:%M'),
+                        'is_direct': len(best_itin) == 1,
+                        'has_short_layover': alt_has_short,
+                        'stops_text': alt_stops_text
+                    })
+                    
+                    if len(alternative_vols) >= 3:
+                        break
         except Exception:
             pass
     
@@ -518,8 +595,7 @@ def booking_flights():
                            ville_arr=ville_arr,
                            date_vol=date_vol,
                            itineraries=paginated_itineraries,
-                           next_available_date_str=next_available_date_str,
-                           next_available_date_formatted=next_available_date_formatted,
+                           alternative_vols=alternative_vols,
                            current_page=page,
                            total_pages=total_pages,
                            titre=titre)
@@ -534,7 +610,10 @@ def booking_passengers():
             vol_final = {
                 'id_vol': request.form.get('id_vol_final'),
                 'classe': request.form.get('classe'),
-                'prix': float(request.form.get('prix', 0))
+                    'prix': float(request.form.get('prix', 0)),
+                    'prix_eco': float(request.form.get('prix_eco', 0)),
+                    'prix_biz': float(request.form.get('prix_biz', 0)),
+                    'prix_first': float(request.form.get('prix_first', 0))
             }
             search_params = session.get('search_params', {})
             
@@ -556,7 +635,21 @@ def booking_options():
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
         
-    return render_template('client/booking_options.html')
+    # Extraire les infos pour la map de l'avion (On base la map sur le premier segment)
+    vol_id = str(session['vol_aller']['id_vol']).split('_')[0]
+    avion_info = db.session.execute(text("""
+        SELECT a.* FROM vols v JOIN avions a ON v.immatriculation_avion = a.immatriculation WHERE v.id_vol = :id_vol
+    """), {'id_vol': vol_id}).mappings().first()
+
+    try:
+        taken_seats_rows = db.session.execute(text("SELECT siege FROM billets WHERE id_vol = :id_vol AND siege IS NOT NULL"), {'id_vol': vol_id}).fetchall()
+        taken_seats = [r[0] for r in taken_seats_rows if r[0]]
+    except Exception:
+        # Fallback si la colonne 'siege' n'existe pas encore dans MySQL
+        db.session.rollback()
+        taken_seats = []
+
+    return render_template('client/booking_options.html', avion=avion_info, taken_seats=taken_seats)
 
 @client_bp.route('/booking-payment', methods=['GET', 'POST'])
 @login_required
@@ -566,6 +659,13 @@ def booking_payment():
         return redirect(url_for('client.booking'))
         
     if request.method == 'POST':
+        # Gestion du changement de classe sur la page des options
+        nouvelle_classe = request.form.get('nouvelle_classe')
+        nouveau_prix = request.form.get('nouveau_prix')
+        if nouvelle_classe and nouveau_prix:
+            session['vol_aller']['classe'] = nouvelle_classe
+            session['vol_aller']['prix'] = float(nouveau_prix)
+            
         siege = request.form.get('siege_selectionne', '')
         bagages = request.form.get('bagages', '0')
         repas = request.form.get('repas', 'standard')

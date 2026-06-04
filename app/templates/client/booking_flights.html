@@ -23,50 +23,75 @@
 <p class="subtitle is-6 has-text-grey mb-6">{{ ville_dep }} ({{ iata_dep }}) vers {{ ville_arr }} ({{ iata_arr }}) • {{ date_vol }}</p>
 
 {% if not itineraries %}
-    <div class="flighty-empty-state">
-        <i class="fas fa-plane-slash is-size-1 mb-4" style="color: #D1D1D6;"></i>
-        <p class="title is-4 m-0" style="color: var(--flighty-text); font-weight: 800; letter-spacing: -0.5px;">Aucun vol trouvé</p>
-        <p class="subtitle is-6 mt-2" style="color: var(--flighty-gray); font-weight: 500;">
-            Nous n'avons trouvé aucun vol correspondant à votre recherche pour le {{ search_params.get('date_aller') if not is_retour_step else search_params.get('date_retour') }}.
+    <div class="flighty-empty-header">
+        <i class="fas fa-calendar-times is-size-2 mb-3" style="color: var(--flighty-orange);"></i>
+        <h3 class="title is-4 m-0" style="color: var(--flighty-text); font-weight: 800; letter-spacing: -0.5px;">Aucun vol à cette date</h3>
+        <p class="subtitle is-6 mt-2" style="color: var(--flighty-text); font-weight: 500;">
+            Il n'y a pas de vol prévu le {{ search_params.get('date_aller') if not is_retour_step else search_params.get('date_retour') }}.<br>
+            {% if alternative_vols %}
+            Voici les <span style="color: var(--flighty-orange); font-weight: 700;">vols alternatifs</span> :
+            {% else %}
+            <span style="color: var(--flighty-gray);">Aucune alternative n'est disponible dans les prochains jours.</span>
+            {% endif %}
         </p>
-        
-        {% if next_available_date_formatted %}
-        <div class="flighty-suggestion-card">
-            <div class="is-flex is-align-items-center is-flex-direction-column is-flex-direction-row-tablet" style="width: 100%;">
-                
-                <div class="is-flex is-align-items-center mb-4 mb-0-tablet" style="flex-grow: 1;">
-                    <div class="suggestion-icon-wrapper">
-                        <i class="fas fa-calendar-check"></i>
+    </div>
+
+    {% if alternative_vols %}
+        {% for alt_vol in alternative_vols %}
+        <div class="flighty-compact-card">
+            <div class="compact-header">
+                <div class="airline-info">
+                    <i class="fas fa-plane-departure" style="color: var(--accent);"></i> 
+                    O'Buffair {{ alt_vol.id_vol }} • {{ alt_vol.date_str }}
+                </div>
+                <div class="flighty-status" style="font-size: 12px; font-weight: 700; color: var(--flighty-gray);">
+                    Dès {{ alt_vol.prix_eco }} €
+                </div>
+            </div>
+            
+            <div class="compact-body">
+                <div class="compact-route">
+                    <div>
+                        <span class="flighty-iata" style="font-size: 28px;">{{ alt_vol.id_aeroport_depart }}</span>
+                        <i class="fas fa-arrow-right mx-3" style="color: var(--flighty-gray);"></i>
+                        <span class="flighty-iata" style="font-size: 28px;">{{ alt_vol.id_aeroport_arrivee }}</span>
                     </div>
-                    <div class="suggestion-text-content has-text-left">
-                        <h3 class="suggestion-title">Alternative disponible</h3>
-                        <p class="suggestion-desc">Bonne nouvelle, un vol est programmé le <span class="suggestion-date">{{ next_available_date_formatted }}</span>.</p>
+                </div>
+                
+                <div class="compact-details">
+                    <div class="flighty-time" style="font-size: 18px; margin-bottom: 0;">{{ alt_vol.heure_depart_str }} - {{ alt_vol.heure_arrivee_str }}</div>
+                    <div class="is-size-7 has-text-grey font-weight-bold is-flex is-align-items-center" style="gap: 4px;">
+                        {{ alt_vol.stops_text }}
+                        {% if alt_vol.has_short_layover %}
+                        <span style="color: #FF3B30;"><i class="fas fa-exclamation-triangle"></i> Courte</span>
+                        {% endif %}
                     </div>
                 </div>
 
-                <div class="suggestion-action">
-                    <form action="{{ url_for('client.booking_flights') }}" method="POST">
+                <div class="compact-action">
+                    <form action="{{ url_for('client.booking_flights') }}" method="POST" style="margin: 0;">
                         <input type="hidden" name="update_date_only" value="1">
                         
                         {% if is_retour_step %}
                             <input type="hidden" name="date_aller" value="{{ search_params.get('date_aller') }}">
-                            <input type="hidden" name="date_retour" value="{{ next_available_date_str }}">
+                            <input type="hidden" name="date_retour" value="{{ alt_vol.date_brute }}">
                         {% else %}
-                            <input type="hidden" name="date_aller" value="{{ next_available_date_str }}">
+                            <input type="hidden" name="date_aller" value="{{ alt_vol.date_brute }}">
                             <input type="hidden" name="date_retour" value="{{ search_params.get('date_retour', '') }}">
                         {% endif %}
                         
-                        <button type="submit" class="flighty-btn-pill">
-                            Voir ce vol <i class="fas fa-arrow-right"></i>
+                        <button type="submit" class="flighty-btn-select">
+                            Choisir ce vol
                         </button>
                     </form>
                 </div>
-                
             </div>
         </div>
-        {% endif %}
-        
-        <a href="{{ url_for('client.booking') }}" class="flighty-link-secondary">Modifier mes critères de recherche</a>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="has-text-centered mt-5">
+        <a href="{{ url_for('client.booking') }}" class="button is-ghost" style="color: var(--flighty-gray); font-weight: 600;">Modifier ma recherche</a>
     </div>
 
 {% else %}
@@ -86,13 +111,18 @@
                 </div>
                 
                 <div class="flight-path-wrapper">
-                    <div class="flight-duration">{{ itin.duration }}</div>
-                    <div class="flight-path-line"></div>
-                    <div class="flight-stop-info">
-                        {% if itin.stops == 0 %}Sans escale
-                        {% elif itin.stops == 1 %}Escale à {{ itin.segments[0].arr_iata }}
-                        {% else %}Multiples Escales
+                    <div class="flight-path-line">
+                        <div class="flight-duration">{{ itin.duration }}</div>
+                        {% if itin.stops > 0 %}
+                            {% for i in range(itin.stops) %}
+                                <div class="flight-stop-dot" style="left: {{ (i + 1) * (100 / (itin.stops + 1)) }}%;">
+                                    <span class="flight-stop-iata">{{ itin.segments[i].arr_iata }}</span>
+                                </div>
+                            {% endfor %}
                         {% endif %}
+                    </div>
+                    <div class="flight-stop-info">
+                        {% if itin.stops == 0 %}Sans escale{% endif %}
                     </div>
                 </div>
                 
@@ -107,7 +137,8 @@
             <div class="flight-amenities" style="flex-direction: column; gap: 4px;">
                 {% for seg in itin.segments %}
                     {% if not loop.last %}
-                        <span><i class="fas fa-clock" style="color: var(--flighty-orange);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})</span>
+                        <span><i class="fas fa-clock" style="color: var(--flighty-orange);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})
+                        {% if seg.is_short_layover %}<strong style="color: #FF3B30; margin-left: 6px;"><i class="fas fa-exclamation-triangle"></i> Escale courte</strong>{% endif %}</span>
                     {% endif %}
                 {% endfor %}
             </div>
@@ -120,44 +151,59 @@
         </div>
         
         <div class="flight-tariffs-section">
-            <form class="tariff-form" action="{{ form_action }}" method="POST">
-                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
-                <input type="hidden" name="classe" value="Eco">
-                <input type="hidden" name="prix" value="{{ itin.price_eco }}">
-                <button type="submit" class="tariff-btn eco">
-                    <div class="t-header">
+            {% if itin.cap_eco > 0 %}
+                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                    <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                    <input type="hidden" name="classe" value="Eco">
+                    <input type="hidden" name="prix" value="{{ itin.price_eco }}">
+                    <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
+                    <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
+                    <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
+                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco == 0 %}disabled{% endif %}>
                         <div class="t-class eco">Economy</div>
                         <div class="t-price">{{ itin.price_eco }} €</div>
-                    </div>
-                    <ul class="t-features"><li>1 Bagage cabine</li></ul>
-                </button>
-            </form>
+                        {% if itin.avail_eco == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
+                        {% elif itin.avail_eco <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_eco }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 1 Bagage cabine</li></ul>
+                    </button>
+                </form>
+            {% endif %}
 
-            <form class="tariff-form" action="{{ form_action }}" method="POST">
-                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
-                <input type="hidden" name="classe" value="Business">
-                <input type="hidden" name="prix" value="{{ itin.price_biz }}">
-                <button type="submit" class="tariff-btn biz">
-                    <div class="t-header">
+            {% if itin.cap_biz > 0 %}
+                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                    <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                    <input type="hidden" name="classe" value="Business">
+                    <input type="hidden" name="prix" value="{{ itin.price_biz }}">
+                    <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
+                    <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
+                    <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
+                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz == 0 %}disabled{% endif %}>
                         <div class="t-class biz">Business</div>
                         <div class="t-price">{{ itin.price_biz }} €</div>
-                    </div>
-                    <ul class="t-features"><li>2 Bagages soute</li></ul>
-                </button>
-            </form>
+                        {% if itin.avail_biz == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
+                        {% elif itin.avail_biz <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_biz }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> 2 Bagages soute</li></ul>
+                    </button>
+                </form>
+            {% endif %}
 
-            <form class="tariff-form" action="{{ form_action }}" method="POST">
-                <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
-                <input type="hidden" name="classe" value="First">
-                <input type="hidden" name="prix" value="{{ itin.price_first }}">
-                <button type="submit" class="tariff-btn first">
-                    <div class="t-header">
+            {% if itin.cap_first > 0 %}
+                <form class="tariff-form" action="{{ form_action }}" method="POST">
+                    <input type="hidden" name="{{ input_name }}" value="{{ itin.id }}">
+                    <input type="hidden" name="classe" value="First">
+                    <input type="hidden" name="prix" value="{{ itin.price_first }}">
+                    <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
+                    <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
+                    <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
+                    <button type="submit" class="tariff-btn first" {% if itin.avail_first == 0 %}disabled{% endif %}>
                         <div class="t-class first">First</div>
                         <div class="t-price">{{ itin.price_first }} €</div>
-                    </div>
-                    <ul class="t-features"><li>Salon VIP</li></ul>
-                </button>
-            </form>
+                        {% if itin.avail_first == 0 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93;">Complet</div>
+                        {% elif itin.avail_first <= 5 %}<div class="seats-left-badge">Plus que {{ itin.avail_first }} siège(s)</div>{% endif %}
+                        <ul class="t-features mt-2"><li><i class="fas fa-check yes mr-1"></i> Salon VIP</li></ul>
+                    </button>
+                </form>
+            {% endif %}
         </div>
     </div>
     {% endfor %}
