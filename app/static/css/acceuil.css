@@ -1,0 +1,154 @@
+/* Harmonisation des variables globales (Flighty x O'Buffair) */
+:root {
+    --primary: #002A5C;
+    --primary-light: #004B9E;
+    --secondary: #003DA5;
+    --accent: #FFC72C;
+    --success: #2E7D32;
+    --bg-light: #F2F2F7;
+    --flighty-text: #1C1C1E;
+    --flighty-gray: #8E8E93;
+    --flighty-green: #34C759;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+    --shadow-premium: 0 16px 40px rgba(0, 42, 92, 0.15);
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.navbar.is-primary { background-color: var(--primary); }
+
+.hero-booking {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    padding: 4rem 1.5rem 5rem;
+    color: white;
+}
+
+.button.is-primary { background-color: var(--primary); }
+.button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border-radius: 12px; }
+.button.is-accent:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 199, 44, 0.4); }
+
+/* Animations GIF-like pour les destinations */
+@keyframes animFadeText {
+    0%, 20% { opacity: 1; transform: translateY(0); }
+    22% { opacity: 0; transform: translateY(-2px); }
+    25%, 45% { opacity: 1; transform: translateY(0); }
+    47% { opacity: 0; transform: translateY(-2px); }
+    50%, 70% { opacity: 1; transform: translateY(0); }
+    72% { opacity: 0; transform: translateY(-2px); }
+    75%, 95% { opacity: 1; transform: translateY(0); }
+    97% { opacity: 0; transform: translateY(-2px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes animDepartContent {
+    0%, 23% { content: "Paris (CDG)"; }
+    25%, 48% { content: "Lyon (LYS)"; }
+    50%, 73% { content: "Marseille (MRS)"; }
+    75%, 98% { content: "Nice (NCE)"; }
+    100% { content: "Paris (CDG)"; }
+}
+@keyframes animArriveeContent {
+    0%, 23% { content: "Rome (FCO)"; }
+    25%, 48% { content: "Madrid (MAD)"; }
+    50%, 73% { content: "Londres (LHR)"; }
+    75%, 98% { content: "Berlin (BER)"; }
+    100% { content: "Rome (FCO)"; }
+}
+.anim-depart { display: inline-block; animation: animFadeText 8s infinite; }
+.anim-depart::after { content: "Paris (CDG)"; animation: animDepartContent 8s infinite; }
+.anim-arrivee { display: inline-block; animation: animFadeText 8s infinite; }
+.anim-arrivee::after { content: "Rome (FCO)"; animation: animArriveeContent 8s infinite; }
+
+/* --- FLIGHTY APP CARDS --- */
+.flighty-card {
+    background: white; border-radius: var(--radius-xl);
+    padding: 24px; box-shadow: var(--shadow-soft);
+    margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
+}
+
+/* Specific overlapping card for the search */
+.search-overlap-card {
+    margin-top: -3rem;
+    position: relative;
+    z-index: 10;
+}
+
+.flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+.fake-input { background-color: white; border: 1px solid #E5E5EA; border-radius: 12px; padding: 0.5rem 1rem 0.5rem 2.5rem; height: 3em; display: flex; align-items: center; color: var(--flighty-text); font-weight: 600; width: 100%; box-sizing: border-box; cursor: pointer; }
+
+/* Section Fidélité (Premium Dark Theme) */
+.premium-dark-card {
+    background: linear-gradient(135deg, #0B0F19 0%, #001B40 100%);
+    border-radius: var(--radius-xl);
+    padding: 32px; color: white;
+    box-shadow: var(--shadow-premium);
+    position: relative; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.premium-dark-card::before {
+    content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255, 199, 44, 0.08) 0%, transparent 50%);
+    pointer-events: none; z-index: 0;
+}
+.premium-content { position: relative; z-index: 1; }
+.progress.is-premium { background-color: rgba(255,255,255,0.1); }
+.progress.is-premium::-webkit-progress-value { background-color: var(--accent); }
+.progress.is-premium::-moz-progress-bar { background-color: var(--accent); }
+
+/* Flight route summary */
+.flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.flighty-airline { font-size: 14px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
+.flighty-status { padding: 4px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+.status-ontime { background: #E5F8EB; color: #248A3D; }
+
+.flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.flighty-iata { font-size: 40px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; }
+.flighty-time { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-bottom: 4px; }
+.flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+
+.flighty-path {
+    flex-grow: 1; margin: 20px 24px 0 24px; height: 2px;
+    background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px);
+    display: flex; align-items: center; justify-content: center;
+}
+.flighty-path i { color: var(--flighty-gray); font-size: 16px; background: white; padding: 0 10px; }
+
+/* Options style (Siège, Repas) */
+.option-box {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem; border: 1px solid #E5E5EA; border-radius: var(--radius-lg);
+    margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;
+}
+.option-box .current-selection { font-weight: 600; font-size: 0.9rem; }
+
+/* Carousel Destinations (Non connecté) */
+.destinations-section { margin-top: 1rem; margin-bottom: 4rem; }
+.destinations-carousel {
+    display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1.5rem;
+    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+.destinations-carousel::-webkit-scrollbar { display: none; }
+.destinations-carousel { -ms-overflow-style: none; scrollbar-width: none; }
+
+.destination-card {
+    flex: 0 0 280px; scroll-snap-align: start;
+    border-radius: var(--radius-xl); overflow: hidden; position: relative;
+    box-shadow: var(--shadow-soft); cursor: pointer; transition: transform 0.3s;
+    height: 380px;
+}
+.destination-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-premium); }
+.destination-card img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+.destination-card:hover img { transform: scale(1.05); }
+.destination-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,42,92,0.9) 0%, rgba(0,42,92,0) 60%);
+}
+.destination-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem; color: white; }
+.destination-city { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; line-height: 1.2;}
+.destination-price { font-size: 1.1rem; font-weight: 600; color: var(--accent); }

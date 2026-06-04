@@ -2,6 +2,13 @@
 {% set step = 5 %}
 
 {% block booking_content %}
+{% set search_params = session.get('search_params', {}) %}
+{% set nb_passagers = search_params.get('passagers', 1) | int %}
+{% set prix_aller = session.get('vol_aller', {}).get('prix', 0) | float %}
+{% set prix_retour = session.get('vol_retour', {}).get('prix', 0) | float %}
+{% set prix_options = session.get('options', {}).get('prix', 0) | float %}
+{% set cart_total = ((prix_aller + prix_retour) + prix_options) * nb_passagers %}
+
 <div class="columns is-centered">
     <div class="column is-8">
         
@@ -9,12 +16,12 @@
         
         <div class="flighty-card mb-6" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white;">
             <div class="is-flex is-justify-content-space-between mb-4">
-                <span class="is-size-5 font-weight-bold">Paris <i class="fas fa-arrow-right mx-2" style="color: var(--accent);"></i> Rome</span>
-                <span class="title is-4 m-0" style="color: var(--accent);">{{ session.get('cart_total', '124,00') }} €</span>
+                <span class="is-size-5 font-weight-bold">{{ search_params.get('depart') }} <i class="fas fa-arrow-right mx-2" style="color: var(--accent);"></i> {{ search_params.get('arrivee') }}</span>
+                <span class="title is-4 m-0" style="color: var(--accent);">{{ "%.2f"|format(cart_total) }} €</span>
             </div>
             
             <div class="is-flex is-justify-content-space-between is-size-7" style="color: rgba(255,255,255,0.7);">
-                <span>1 Adulte • Classe Eco • Siège 12A</span>
+                <span>{{ nb_passagers }} Passager{% if nb_passagers > 1 %}s{% endif %} • Classe {{ session.get('vol_aller', {}).get('classe', 'Eco') }} • Siège {{ session.get('options', {}).get('siege', 'Non assigné') }}</span>
                 <span>Taxes & frais inclus</span>
             </div>
         </div>
