@@ -85,7 +85,7 @@
         }
 
         .flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
-        .fake-input { background-color: white; border: 1px solid #E5E5EA; border-radius: 12px; padding: 0.5rem 1rem 0.5rem 2.5rem; height: 3em; display: flex; align-items: center; color: var(--flighty-text); font-weight: 600; width: 100%; box-sizing: border-box; cursor: not-allowed; }
+        .fake-input { background-color: white; border: 1px solid #E5E5EA; border-radius: 12px; padding: 0.5rem 1rem 0.5rem 2.5rem; height: 3em; display: flex; align-items: center; color: var(--flighty-text); font-weight: 600; width: 100%; box-sizing: border-box; cursor: pointer; }
         
         /* Section Fidélité (Premium Dark Theme) */
         .premium-dark-card {
@@ -149,12 +149,14 @@
                 <div class="column is-4">
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
-                        <div class="control has-icons-left">
-                            <div class="fake-input">
-                                <span class="anim-depart"></span>
+                        <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
+                            <div class="control has-icons-left">
+                                <div class="fake-input">
+                                    <span class="anim-depart"></span>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
                             </div>
-                            <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
-                        </div>
+                        </a>
                     </div>
                 </div>
                 
@@ -162,12 +164,14 @@
                 <div class="column is-4">
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
-                        <div class="control has-icons-left">
-                            <div class="fake-input">
-                                <span class="anim-arrivee"></span>
+                        <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
+                            <div class="control has-icons-left">
+                                <div class="fake-input">
+                                    <span class="anim-arrivee"></span>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
                             </div>
-                            <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -194,22 +198,22 @@
                             <div style="font-size: 2.5rem; color: var(--accent);">
                                 <i class="fas fa-medal"></i>
                             </div>
-                            <p style="color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Gold Member</p>
+                            <p style="color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">{{ loyalty_info.status if loyalty_info else 'Membre Classic' }}</p>
                         </div>
-                        <p class="title is-4 has-text-white mb-1">Antoine Hardy</p>
+                        <p class="title is-4 has-text-white mb-1">{{ session.get('prenom', 'Prénom') }} {{ session.get('nom', 'Nom') }}</p>
                         
                         <div class="columns is-mobile mt-5 mb-2">
                             <div class="column">
                                 <p class="heading has-text-grey-light mb-1">Points Fidélité</p>
-                                <p class="title is-5 has-text-white">12 450</p>
+                                <p class="title is-5 has-text-white">{{ loyalty_info.points if loyalty_info else '0' }}</p>
                             </div>
                             <div class="column">
                                 <p class="heading has-text-grey-light mb-1">Vols (2026)</p>
-                                <p class="title is-5 has-text-white">8</p>
+                                <p class="title is-5 has-text-white">{{ loyalty_info.flights_year if loyalty_info else '0' }}</p>
                             </div>
                         </div>
-                        <progress class="progress is-small is-premium" value="75" max="100">75%</progress>
-                        <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que 2 550 points avant le statut Platinum</p>
+                        <progress class="progress is-small is-premium" value="{{ loyalty_info.progress_percent if loyalty_info else 0 }}" max="100">{{ loyalty_info.progress_percent if loyalty_info else 0 }}%</progress>
+                        <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que {{ loyalty_info.points_to_next if loyalty_info else '?' }} points avant le statut {{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</p>
                     </div>
                 </div>
             </div>
@@ -217,32 +221,33 @@
             <div class="column is-8">
                 <h3 class="title is-4 mb-4" style="color: var(--primary); font-weight: 800;">Mon Prochain Voyage</h3>
                 
+                {% if next_flight %}
                 <div class="flighty-card">
                     <div class="flighty-header">
                         <div class="flighty-airline">
-                            <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
+                            <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair {{ next_flight.flight_number }} • {{ next_flight.date }}
                         </div>
-                        <div class="flighty-status status-ontime">Confirmé</div>
+                        <div class="flighty-status status-ontime">{{ next_flight.status }}</div>
                     </div>
 
                     <div class="flighty-route">
                         <div style="width: 100px;">
-                            <div class="flighty-time">10:30</div>
-                            <div class="flighty-iata">CDG</div>
-                            <div class="flighty-city">Paris</div>
+                            <div class="flighty-time">{{ next_flight.dep_time }}</div>
+                            <div class="flighty-iata">{{ next_flight.dep_iata }}</div>
+                            <div class="flighty-city">{{ next_flight.dep_city }}</div>
                         </div>
                         <div class="flighty-path">
                             <i class="fas fa-plane"></i>
                         </div>
                         <div style="width: 100px; text-align: right;">
-                            <div class="flighty-time">12:35</div>
-                            <div class="flighty-iata">FCO</div>
-                            <div class="flighty-city">Rome</div>
+                            <div class="flighty-time">{{ next_flight.arr_time }}</div>
+                            <div class="flighty-iata">{{ next_flight.arr_iata }}</div>
+                            <div class="flighty-city">{{ next_flight.arr_city }}</div>
                         </div>
                     </div>
                     
                     <div class="has-text-right mb-4 pb-4" style="border-bottom: 1px solid #E5E5EA;">
-                        <a href="#" class="button is-small is-light is-rounded font-weight-bold">
+                        <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
                             <i class="fas fa-download mr-2"></i> Mon Billet PDF
                         </a>
                     </div>
@@ -252,7 +257,7 @@
                     <div class="option-box">
                         <div>
                             <p class="has-text-grey mb-1"><i class="fas fa-chair mr-2"></i> Siège</p>
-                            <p class="current-selection">Siège actuel : <span class="tag is-light">Non assigné</span></p>
+                            <p class="current-selection">Siège actuel : <span class="tag is-light">{{ next_flight.seat }}</span></p>
                         </div>
                         <button class="button is-primary is-light is-small font-weight-bold">Choisir mon siège</button>
                     </div>
@@ -260,7 +265,7 @@
                     <div class="option-box">
                         <div>
                             <p class="has-text-grey mb-1"><i class="fas fa-utensils mr-2"></i> Repas O'buffet</p>
-                            <p class="current-selection">Sélection : <span class="tag is-info is-light">Standard</span></p>
+                            <p class="current-selection">Sélection : <span class="tag is-info is-light">{{ next_flight.meal }}</span></p>
                         </div>
                         <button class="button is-primary is-light is-small font-weight-bold">Ajouter un menu</button>
                     </div>
@@ -268,11 +273,18 @@
                     <div class="option-box">
                         <div>
                             <p class="has-text-grey mb-1"><i class="fas fa-suitcase-rolling mr-2"></i> Bagages</p>
-                            <p class="current-selection">Inclus : 1 bagage cabine + 1 bagage soute.</p>
+                            <p class="current-selection">Inclus : {{ next_flight.baggage }}</p>
                         </div>
                         <button class="button is-primary is-light is-small font-weight-bold">Ajouter un bagage</button>
                     </div>
                 </div>
+                {% else %}
+                <div class="flighty-card has-text-centered py-6">
+                    <i class="fas fa-plane-slash is-size-1 mb-4" style="color: #E5E5EA;"></i>
+                    <p class="has-text-grey font-weight-bold mb-4">Vous n'avez aucun vol à venir.</p>
+                    <a href="{{ url_for('client.booking') }}" class="button is-accent">Réserver un vol maintenant</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>

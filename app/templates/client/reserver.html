@@ -73,7 +73,7 @@
             border: 1px solid rgba(0,0,0,0.02); display: flex; flex-direction: column;
         }
         .route-display { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-        .iata-code { font-size: 42px; font-weight: 800; color: var(--flighty-text); line-height: 1; letter-spacing: -1px;}
+        .iata-code { font-size: 32px; font-weight: 800; color: var(--flighty-text); line-height: 1; letter-spacing: -1px;}
         .city-name { font-size: 14px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
         .flight-path { flex-grow: 1; height: 2px; background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); margin: 0 20px; position: relative; top: -10px; display: flex; justify-content: center; align-items: center;}
         .flight-path i { background: white; padding: 0 10px; color: var(--flighty-gray); font-size: 14px;}
@@ -89,15 +89,15 @@
 {% block booking_content %}
         <div class="search-panel">
             <div class="columns is-vcentered">
-                <div class="column is-4">
+                <div class="column is-3">
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
                                 <select id="selectDepart">
-                                    <option value="Paris (CDG)" selected>Paris (CDG)</option>
-                                    <option value="Lyon (LYS)">Lyon (LYS)</option>
-                                    <option value="Toulouse (TLS)">Toulouse (TLS)</option>
+                                    {% for aeroport in aeroports %}
+                                    <option value="{{ aeroport.id_aeroport }}" {% if aeroport.id_aeroport == 'CDG' %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
@@ -105,15 +105,15 @@
                     </div>
                 </div>
                 
-                <div class="column is-4">
+                <div class="column is-3">
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
                                 <select id="selectArrivee">
-                                    <option value="Rome (FCO)" selected>Rome (FCO)</option>
-                                    <option value="Madrid (MAD)">Madrid (MAD)</option>
-                                    <option value="Londres (LHR)">Londres (LHR)</option>
+                                    {% for aeroport in aeroports %}
+                                    <option value="{{ aeroport.id_aeroport }}" {% if aeroport.id_aeroport == 'FCO' %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
@@ -121,27 +121,63 @@
                     </div>
                 </div>
 
-                <div class="column is-3">
+                <div class="column is-2">
                     <div class="field">
-                        <label class="flighty-label">Classe de Voyage</label>
+                        <label class="flighty-label">Type de vol</label>
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
-                                <select id="selectClasse">
-                                    <option value="Eco" selected>Économique</option>
-                                    <option value="Business">Business</option>
+                                <select id="selectTypeVol">
+                                    <option value="AR" selected>Aller-retour</option>
+                                    <option value="AS">Aller simple</option>
                                 </select>
                             </div>
-                            <span class="icon is-small is-left"><i class="fas fa-gem" style="color: var(--primary);"></i></span>
+                            <span class="icon is-small is-left"><i id="typeVolIcon" class="fas fa-exchange-alt" style="color: var(--primary);"></i></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="column is-1 has-text-right">
+                <div class="column is-narrow">
                     <div class="field">
-                        <label class="flighty-label">&nbsp;</label>
-                        <button class="button is-light is-rounded" id="btnResetDates" title="Réinitialiser">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
+                        <label class="flighty-label">Passagers</label>
+                        <div class="dropdown" id="passengerDropdown">
+                            <div class="dropdown-trigger">
+                                <button type="button" class="button is-white" aria-haspopup="true" aria-controls="dropdown-menu" style="border: 1px solid #E5E5EA; border-radius: 12px; height: 2.8em; justify-content: flex-start; padding: 0 16px;">
+                                    <span class="icon is-small"><i class="fas fa-user" style="color: var(--primary);"></i></span>
+                                    <span id="passengerCountText" style="font-weight: 600; color: var(--flighty-text); margin-left: 8px;">1</span>
+                                </button>
+                            </div>
+                        <div class="dropdown-menu" id="dropdown-menu" role="menu" style="min-width: auto; padding-top: 4px;">
+                                <div class="dropdown-content" style="border-radius: 16px; padding: 15px; box-shadow: var(--shadow-soft); border: 1px solid rgba(0,0,0,0.05);">
+                                <div class="is-flex is-align-items-center is-justify-content-center">
+                                        <div class="is-flex is-align-items-center">
+                                            <button type="button" class="button is-small is-rounded is-light" id="btnMinusPassenger" style="width: 28px; height: 28px; padding: 0;">-</button>
+                                            <span id="passengerCountDisplay" style="margin: 0 12px; font-weight: bold; color: var(--flighty-text); width: 12px; text-align: center;">1</span>
+                                            <button type="button" class="button is-small is-rounded is-light" id="btnPlusPassenger" style="width: 28px; height: 28px; padding: 0;">+</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="column">
+                    <div class="field">
+                        <label class="flighty-label">Classe</label>
+                        <div class="is-flex">
+                            <div class="control has-icons-left is-expanded" style="width: 100%;">
+                                <div class="select is-fullwidth">
+                                    <select id="selectClasse">
+                                        <option value="Eco" selected>Éco</option>
+                                        <option value="Business">Business</option>
+                                    </select>
+                                </div>
+                                <span class="icon is-small is-left"><i class="fas fa-gem" style="color: var(--primary);"></i></span>
+                            </div>
+                            <button class="button is-light ml-2" id="btnResetDates" title="Réinitialiser" style="border-radius: 12px; height: 2.8em; border: 1px solid #E5E5EA;">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -191,6 +227,8 @@
                             <input type="hidden" name="depart" id="formDepart" value="CDG">
                             <input type="hidden" name="arrivee" id="formArrivee" value="FCO">
                             <input type="hidden" name="classe" id="formClasse" value="Eco">
+                            <input type="hidden" name="type_vol" id="formTypeVol" value="AR">
+                            <input type="hidden" name="passagers" id="formPassagers" value="1">
                             <input type="hidden" name="date_aller" id="formDateAller" value="">
                             <input type="hidden" name="date_retour" id="formDateRetour" value="">
                             

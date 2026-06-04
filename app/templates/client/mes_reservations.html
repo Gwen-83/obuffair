@@ -79,51 +79,64 @@
             </a>
         </div>
         
-        <!-- Vol 1 : À venir, direct -->
+        {% for flight in reservations %}
         <div class="flighty-card">
             <div class="flighty-header">
                 <div class="flighty-airline">
-                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
+                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair {{ flight.flight_number }} • {{ flight.date }}
                 </div>
-                <div class="flighty-status status-ontime">À l'heure</div>
+                <div class="flighty-status {{ flight.status_class }}">{{ flight.status_text }}</div>
             </div>
 
             <div class="flighty-route">
                 <div style="width: 100px;">
-                    <div class="flighty-time">10:30</div>
-                    <div class="flighty-iata">CDG</div>
-                    <div class="flighty-city">Paris</div>
+                    <div class="flighty-time {% if flight.is_delayed %}delayed{% endif %}">
+                        {{ flight.dep_time }}
+                        {% if flight.is_delayed %}
+                        <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">{{ flight.original_dep_time }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flighty-iata">{{ flight.dep_iata }}</div>
+                    <div class="flighty-city">{{ flight.dep_city }}</div>
                 </div>
                 <div class="flighty-path">
+                    {% if not flight.is_direct %}
+                    <div class="flighty-stop">{{ flight.stopover }}</div>
+                    {% endif %}
                     <i class="fas fa-plane"></i>
                 </div>
                 <div style="width: 100px; text-align: right;">
-                    <div class="flighty-time">12:35</div>
-                    <div class="flighty-iata">FCO</div>
-                    <div class="flighty-city">Rome</div>
+                    <div class="flighty-time {% if flight.is_delayed %}delayed{% endif %}">
+                        {{ flight.arr_time }}
+                        {% if flight.is_delayed %}
+                        <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">{{ flight.original_arr_time }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="flighty-iata">{{ flight.arr_iata }}</div>
+                    <div class="flighty-city">{{ flight.arr_city }}</div>
                 </div>
             </div>
 
             <div class="flighty-footer">
                 <div class="flighty-info-group">
                     <span class="flighty-label">Terminal</span>
-                    <span class="flighty-value">2F</span>
+                    <span class="flighty-value">{{ flight.terminal }}</span>
                 </div>
                 <div class="flighty-info-group">
                     <span class="flighty-label">Siège</span>
-                    <span class="flighty-value">12A</span>
+                    <span class="flighty-value">{{ flight.seat }}</span>
                 </div>
                 <div class="flighty-info-group">
                     <span class="flighty-label">Repas à bord</span>
-                    <span class="flighty-value"><i class="fas fa-utensils is-size-6 mr-1" style="color: var(--primary);"></i> Standard</span>
+                    <span class="flighty-value"><i class="fas {{ flight.meal_icon }} is-size-6 mr-1" style="color: {{ flight.meal_color }};"></i> {{ flight.meal }}</span>
                 </div>
                 <div class="flighty-info-group">
                     <span class="flighty-label">Bagages</span>
-                    <span class="flighty-value"><i class="fas fa-suitcase-rolling is-size-6 mr-1" style="color: var(--primary);"></i> 2 en soute</span>
+                    <span class="flighty-value"><i class="fas {{ flight.baggage_icon }} is-size-6 mr-1" style="color: {{ flight.baggage_color }};"></i> {{ flight.baggage }}</span>
                 </div>
                 <div class="flighty-info-group">
                     <span class="flighty-label">PNR (Billet)</span>
-                    <span class="flighty-value" style="font-family: monospace;">X8B9Q2</span>
+                    <span class="flighty-value" style="font-family: monospace;">{{ flight.pnr }}</span>
                 </div>
             </div>
             <div class="mt-4 has-text-right">
@@ -132,61 +145,13 @@
                 </a>
             </div>
         </div>
-        
-        <!-- Vol 2 : À venir, avec escale, retardé -->
-        <div class="flighty-card">
-            <div class="flighty-header">
-                <div class="flighty-airline">
-                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF1409 • 20 Août 2026
-                </div>
-                <div class="flighty-status status-delayed">Retardé</div>
-            </div>
-
-            <div class="flighty-route">
-                <div style="width: 100px;">
-                    <div class="flighty-time delayed">16:15 <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">15:45</span></div>
-                    <div class="flighty-iata">CDG</div>
-                    <div class="flighty-city">Paris</div>
-                </div>
-                <div class="flighty-path">
-                    <div class="flighty-stop">1 Escale: AMS (1h15)</div>
-                    <i class="fas fa-plane"></i>
-                </div>
-                <div style="width: 100px; text-align: right;">
-                    <div class="flighty-time delayed">20:45 <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">20:15</span></div>
-                    <div class="flighty-iata">FCO</div>
-                    <div class="flighty-city">Rome</div>
-                </div>
-            </div>
-
-            <div class="flighty-footer">
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Terminal</span>
-                    <span class="flighty-value">2E</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Siège</span>
-                    <span class="flighty-value">24C</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Repas à bord</span>
-                    <span class="flighty-value"><i class="fas fa-leaf is-size-6 mr-1" style="color: var(--flighty-green);"></i> Végétarien</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Bagages</span>
-                    <span class="flighty-value"><i class="fas fa-suitcase-rolling is-size-6 mr-1" style="color: var(--flighty-gray);"></i> 0 en soute</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">PNR (Billet)</span>
-                    <span class="flighty-value" style="font-family: monospace;">A1C2E3</span>
-                </div>
-            </div>
-            <div class="mt-4 has-text-right">
-                <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
-                    Gérer ma réservation <i class="fas fa-chevron-right ml-2 is-size-7"></i>
-                </a>
-            </div>
+        {% else %}
+        <div class="flighty-card has-text-centered py-6">
+            <i class="fas fa-plane-slash is-size-1 mb-4" style="color: #E5E5EA;"></i>
+            <p class="has-text-grey font-weight-bold mb-4">Vous n'avez aucune réservation.</p>
+            <a href="{{ url_for('client.booking') }}" class="button is-accent">Réserver un vol maintenant</a>
         </div>
+        {% endfor %}
 
     </div>
 </section>

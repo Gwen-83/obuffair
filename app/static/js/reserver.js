@@ -9,7 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectDepart = document.getElementById('selectDepart');
     const selectArrivee = document.getElementById('selectArrivee');
     const selectClasse = document.getElementById('selectClasse');
+    const selectTypeVol = document.getElementById('selectTypeVol');
     
+    // Passagers Dropdown
+    const passengerDropdown = document.getElementById('passengerDropdown');
+    const btnMinusPassenger = document.getElementById('btnMinusPassenger');
+    const btnPlusPassenger = document.getElementById('btnPlusPassenger');
+    const passengerCountText = document.getElementById('passengerCountText');
+    const passengerCountDisplay = document.getElementById('passengerCountDisplay');
+    let passengerCount = 1;
+
     // Resume Elements
     const iataDepart = document.getElementById('iataDepart');
     const cityDepart = document.getElementById('cityDepart');
@@ -20,11 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const formDepart = document.getElementById('formDepart');
     const formArrivee = document.getElementById('formArrivee');
     const formClasse = document.getElementById('formClasse');
+    const formTypeVol = document.getElementById('formTypeVol');
+    const formPassagers = document.getElementById('formPassagers');
     const formDateAller = document.getElementById('formDateAller');
     const formDateRetour = document.getElementById('formDateRetour');
 
     // État du calendrier
-    let currentDate = new Date(2026, 5, 1); // Juin 2026 pour la démo
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Réinitialise l'heure pour comparer uniquement les dates
+    let currentDate = new Date(today.getFullYear(), today.getMonth(), 1); 
     let startDate = null;
     let endDate = null;
 
@@ -52,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 1; i <= daysInMonth; i++) {
             const dateVal = new Date(year, month, i);
             
-            // Simulation : Griser les jours passés (avant le 10 Juin 2026)
-            const isDisabled = i < 10 && month === 5 && year === 2026 ? 'disabled' : '';
+            // Griser les jours passés de manière dynamique
+            const isDisabled = dateVal < today ? 'disabled' : '';
             
             const dayEl = document.createElement('div');
             dayEl.className = `day ${isDisabled}`;
@@ -69,16 +82,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleDayClick(date, el) {
-        if (!startDate || (startDate && endDate)) {
-            // Nouvelle sélection
+        const isOneWay = selectTypeVol.value === 'AS';
+
+        if (isOneWay) {
             startDate = date;
             endDate = null;
-        } else if (date < startDate) {
-            // Clic avant la date de début
-            startDate = date;
         } else {
-            // Sélection de la date de fin
-            endDate = date;
+            if (!startDate || (startDate && endDate)) {
+                // Nouvelle sélection
+                startDate = date;
+                endDate = null;
+            } else if (date < startDate) {
+                // Clic avant la date de début
+                startDate = date;
+            } else {
+                // Sélection de la date de fin
+                endDate = date;
+            }
         }
         updateSelectionUI();
     }
@@ -110,17 +130,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const formatDate = (d) => d.toLocaleDateString('fr-FR', optionsDate);
         
         allerDisplay.innerText = startDate ? formatDate(startDate) : 'Sélectionnez une date';
-        retourDisplay.innerText = endDate ? formatDate(endDate) : 'Sélectionnez une date';
+        
+        const isOneWay = selectTypeVol.value === 'AS';
+        const retourBox = document.getElementById('retourDisplay').parentElement;
+
+        if (isOneWay) {
+            retourDisplay.innerText = 'Pas de retour';
+            retourBox.style.opacity = '0.4';
+        } else {
+            retourDisplay.innerText = endDate ? formatDate(endDate) : 'Sélectionnez une date';
+            retourBox.style.opacity = '1';
+        }
         
         // Mise à jour des inputs cachés pour le backend
         if (startDate) formDateAller.value = startDate.toISOString().split('T')[0];
         if (endDate) formDateRetour.value = endDate.toISOString().split('T')[0];
+        else formDateRetour.value = '';
 
-        // Activation du bouton uniquement si l'aller-retour est sélectionné
-        if (startDate && endDate) {
-            btnContinue.removeAttribute('disabled');
+        // Activation du bouton selon le type de vol
+        if (isOneWay) {
+            if (startDate) btnContinue.removeAttribute('disabled');
+            else btnContinue.setAttribute('disabled', 'true');
         } else {
-            btnContinue.setAttribute('disabled', 'true');
+            if (startDate && endDate) btnContinue.removeAttribute('disabled');
+            else btnContinue.setAttribute('disabled', 'true');
         }
     }
 
@@ -135,18 +168,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updateSummaryPanel() {
         // Mise à jour des IATA et villes Flighty Style
-        const dep = extractLocation(selectDepart.value);
-        const arr = extractLocation(selectArrivee.value);
+        // On récupère le texte visible de l'option sélectionnée (ex: "Paris (CDG)")
+        const depText = selectDepart.options[selectDepart.selectedIndex].text;
+        const arrText = selectArrivee.options[selectArrivee.selectedIndex].text;
         
-        iataDepart.innerText = dep.iata;
+        const dep = extractLocation(depText);
+        const arr = extractLocation(arrText);
+        
+        iataDepart.innerText = selectDepart.value; // La value contient directement le code (ex: CDG)
         cityDepart.innerText = dep.city;
-        formDepart.value = dep.iata;
+        formDepart.value = selectDepart.value;
         
-        iataArrivee.innerText = arr.iata;
+        iataArrivee.innerText = selectArrivee.value;
         cityArrivee.innerText = arr.city;
-        formArrivee.value = arr.iata;
+        formArrivee.value = selectArrivee.value;
         
         formClasse.value = selectClasse.value;
+        formTypeVol.value = selectTypeVol.value;
+        formPassagers.value = passengerCount;
     }
 
     // Écouteurs d'événements
@@ -157,6 +196,55 @@ document.addEventListener('DOMContentLoaded', () => {
     selectDepart.addEventListener('change', updateSummaryPanel);
     selectArrivee.addEventListener('change', updateSummaryPanel);
     selectClasse.addEventListener('change', updateSummaryPanel);
+    
+    // Gestion du dropdown passagers
+    passengerDropdown.querySelector('.dropdown-trigger button').addEventListener('click', (e) => {
+        e.stopPropagation();
+        passengerDropdown.classList.toggle('is-active');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!passengerDropdown.contains(e.target)) {
+            passengerDropdown.classList.remove('is-active');
+        }
+    });
+
+    btnPlusPassenger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (passengerCount < 9) {
+            passengerCount++;
+            updatePassengerUI();
+        }
+    });
+
+    btnMinusPassenger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (passengerCount > 1) {
+            passengerCount--;
+            updatePassengerUI();
+        }
+    });
+
+    function updatePassengerUI() {
+        passengerCountText.innerText = passengerCount;
+        passengerCountDisplay.innerText = passengerCount;
+        formPassagers.value = passengerCount;
+        updateSummaryPanel();
+    }
+    
+    selectTypeVol.addEventListener('change', () => {
+        const isOneWay = selectTypeVol.value === 'AS';
+        const typeVolIcon = document.getElementById('typeVolIcon');
+        if (isOneWay) {
+            typeVolIcon.className = 'fas fa-arrow-right';
+        } else {
+            typeVolIcon.className = 'fas fa-exchange-alt';
+        }
+
+        if (isOneWay && endDate) endDate = null; // Retire la date de retour si on passe en aller simple
+        updateSummaryPanel();
+        updateSelectionUI(); // Actualise l'affichage du calendrier
+    });
 
     // Initialisation
     updateSummaryPanel();
