@@ -20,7 +20,7 @@
                         {% endif %}
                     {% endwith %}
                     
-                    <form method="POST" novalidate>
+                    <form method="POST" novalidate autocomplete="on">
                         {{ form.hidden_tag() }}
                         
                         <!-- Email -->
@@ -28,12 +28,12 @@
                             <label class="label">Email *</label>
                             <div class="control has-icons-left {% if form.email.errors %}has-icons-right{% endif %}">
                                 {% if form.email.errors %}
-                                    {{ form.email(class="input is-danger", type="email") }}
+                                    {{ form.email(class="input is-danger", type="email", autocomplete="username") }}
                                     <span class="icon is-small is-right">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </span>
                                 {% else %}
-                                    {{ form.email(class="input", placeholder="votre.email@example.com", type="email") }}
+                                    {{ form.email(class="input", placeholder="votre.email@example.com", type="email", autocomplete="username") }}
                                     <span class="icon is-small is-left">
                                         <i class="fas fa-envelope"></i>
                                     </span>
@@ -134,7 +134,7 @@
                             </label>
                             <div class="control has-icons-left {% if form.password.errors %}has-icons-right{% endif %}">
                                 {% if form.password.errors %}
-                                    {{ form.password(class="input is-danger", autocomplete="off") }}
+                                    {{ form.password(class="input is-danger", autocomplete="new-password") }}
                                     <span class="icon is-small is-right">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </span>
@@ -168,7 +168,7 @@
                             <label class="label">Confirmer le mot de passe *</label>
                             <div class="control has-icons-left {% if form.confirm_password.errors %}has-icons-right{% endif %}">
                                 {% if form.confirm_password.errors %}
-                                    {{ form.confirm_password(class="input is-danger", autocomplete="off") }}
+                                    {{ form.confirm_password(class="input is-danger", autocomplete="new-password") }}
                                     <span class="icon is-small is-right">
                                         <i class="fas fa-exclamation-triangle"></i>
                                     </span>
