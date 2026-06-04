@@ -6,7 +6,7 @@ Gère aussi les droits d'accès et logs d'audit.
 from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
 from app.portail_auth.decorators import admin_required
 from app import db
-from app.portail_admin.modele_admin import Avion, Vols, Support, Aeroport
+from app.model import Avion, Vols, Support, Aeroport
 from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
