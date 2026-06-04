@@ -152,7 +152,6 @@ class Aeroport(db.Model):
     contact_phone = db.Column(db.String(50), nullable=True)
     contact_email = db.Column(db.String(100), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    model_3d_url = db.Column(db.Text, nullable=True)
     date_modification = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     def __repr__(self):

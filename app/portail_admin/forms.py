@@ -260,11 +260,6 @@ class FormAeroport(FlaskForm):
         validators=[Optional(), Length(max=500)]
     )
 
-    model_3d_url = StringField(
-        'URL modèle 3D',
-        validators=[Optional(), Length(max=255)]
-    )
-
     soumettre = SubmitField('Enregistrer l’aéroport')
 
     def validate_id_aeroport(self, field):

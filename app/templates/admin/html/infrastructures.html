@@ -10,7 +10,7 @@ O'Buffair{% endblock %} {% block content %}
         </h1>
         <p class="subtitle is-6 mt-1" style="color: var(--medium-gray)">
           Créez, modifiez et consultez les infrastructures aéroportuaires :
-          terminaux, gates, parkings, salons VIP et plan 3D interactif.
+          terminaux, gates, parkings et salons VIP.
         </p>
       </div>
     </div>
@@ -307,21 +307,6 @@ O'Buffair{% endblock %} {% block content %}
             {% endfor %}
           </div>
 
-          <div class="field">
-            <label class="label">{{ form.model_3d_url.label.text }}</label>
-            <div class="control has-icons-left">
-              {{ form.model_3d_url(class="input" ~ (' is-danger' if
-              form.model_3d_url.errors else ''), placeholder="URL d'un modèle 3D
-              externe (optionnel)") }}
-              <span class="icon is-small is-left"
-                ><i class="fas fa-cube"></i
-              ></span>
-            </div>
-            {% for error in form.model_3d_url.errors %}
-            <p class="help is-danger">{{ error }}</p>
-            {% endfor %}
-          </div>
-
           <div class="control mt-4">
             {{ form.soumettre(class="button is-primary is-fullwidth",
             style="font-weight: 700;") }}
@@ -419,103 +404,11 @@ O'Buffair{% endblock %} {% block content %}
           </p>
         </div>
 
-        <div
-          class="box"
-          style="
-            border-top: 4px solid var(--primary);
-            padding: 0;
-            overflow: hidden;
-            border-radius: 12px;
-          "
-        >
-          <div
-            style="
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
-              padding: 0.85rem 1.25rem 0.75rem;
-              background: var(--primary);
-            "
-          >
-            <h3 class="title is-5 mb-0" style="color: white">
-              <i class="fas fa-globe mr-2" style="color: var(--accent)"></i>Vue
-              3D — Photogrammétrie Cesium
-            </h3>
-            <div style="display: flex; gap: 0.5rem; align-items: center">
-              <button
-                id="btn-tilt-down"
-                class="button is-small is-dark"
-                title="Vue inclinée"
-                style="font-size: 0.8rem"
-              >
-                <span class="icon is-small"
-                  ><i class="fas fa-mountain"></i
-                ></span>
-              </button>
-              <button
-                id="btn-tilt-top"
-                class="button is-small is-dark"
-                title="Vue de dessus"
-                style="font-size: 0.8rem"
-              >
-                <span class="icon is-small"
-                  ><i class="fas fa-arrows-alt-v"></i
-                ></span>
-              </button>
-              <button
-                id="btn-reset"
-                class="button is-small is-warning"
-                title="Recentrer"
-                style="font-size: 0.8rem"
-              >
-                <span class="icon is-small"
-                  ><i class="fas fa-crosshairs"></i
-                ></span>
-              </button>
-            </div>
-          </div>
-          <div
-            id="cesiumContainer"
-            style="
-              height: 460px;
-              width: 100%;
-              display: block;
-              background: #0b0e17;
-            "
-          ></div>
-          <div
-            style="
-              padding: 0.5rem 1rem;
-              background: #0f172a;
-              display: flex;
-              align-items: center;
-              gap: 0.75rem;
-            "
-          >
-            <span style="color: #94a3b8; font-size: 0.78rem">
-              <i
-                class="fas fa-info-circle mr-1"
-                style="color: var(--accent)"
-              ></i>
-              Clic + glisser pour orbiter · Scroll pour zoomer · Clic droit pour
-              translater
-            </span>
-            <span style="color: #475569; font-size: 0.72rem; margin-left: auto">
-              Powered by
-              <a
-                href="https://cesium.com"
-                target="_blank"
-                style="color: #7dd3fc"
-                >Cesium Ion</a
-              >
-            </span>
-          </div>
-        </div>
         {% else %}
         <div class="notification is-info is-light">
           <p>
             Sélectionnez un aéroport dans le tableau ci-dessous pour voir sa vue
-            détaillée, piloter le plan 3D et modifier ses infrastructures.
+            détaillée et modifier ses infrastructures.
           </p>
         </div>
         {% endif %}
@@ -591,198 +484,8 @@ O'Buffair{% endblock %} {% block content %}
     </div>
   </div>
 </div>
-{% endblock %} {% block extra_js %}
-<style>
-  #cesiumContainer {
-    position: relative;
-  }
-  #cesiumContainer canvas {
-    border-radius: 0 !important;
-  }
-  /* Masquer le logo Cesium pour interface propre */
-  .cesium-credit-logoContainer {
-    display: none !important;
-  }
-  .cesium-credit-expand-link {
-    color: #64748b !important;
-    font-size: 0.7rem !important;
-  }
-  .cesium-viewer-bottom {
-    bottom: 0 !important;
-  }
-</style>
+{% endblock %}
 
-<!-- CesiumJS -->
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Cesium.js"></script>
-<link
-  href="https://cesium.com/downloads/cesiumjs/releases/1.114/Build/Cesium/Widgets/widgets.css"
-  rel="stylesheet"
-/>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-
-      Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiI2YmEzNWQ5ZC03Y2M0LTRhZTgtYTdkYi0xYjAwNTFhODgyOTUiLCJpZCI6Mzk5OTY4LCJzdWIiOiJHd2VuODMiLCJpc3MiOiJodHRwczovL2FwaS5jZXNpdW0uY29tIiwiYXVkIjoiT2J1ZmZhaXIiLCJpYXQiOjE3ODA0MDAwOTd9.IETeBmojt7Q3B8nz42CI2yTZH_Md5Djh9cdhE0YNcls';
-
-      // ── Données aéroport depuis Jinja ─────────────────────────────────────────
-      const hasAirport  = {{ 'true' if selected_airport else 'false' }};
-      const airportLat  = {{ (selected_airport.latitude  | float) if (selected_airport and selected_airport.latitude)  else 48.8566 }};
-      const airportLng  = {{ (selected_airport.longitude | float) if (selected_airport and selected_airport.longitude) else 2.3522  }};
-      const airportName = {{ (selected_airport.nom if selected_airport else 'Aéroports')|tojson }};
-      const airportCode = {{ (selected_airport.id_aeroport if selected_airport else '')|tojson }};
-
-      // ── Initialisation Cesium Viewer ──────────────────────────────────────────
-    const viewer = new Cesium.Viewer('cesiumContainer', {
-      baseLayerPicker:      false,
-      geocoder:             false,
-      homeButton:           false,
-      sceneModePicker:      false,
-      navigationHelpButton: false,
-      animation:            false,
-      timeline:             false,
-      fullscreenButton:     true,
-      shadows:              false,
-      msaaSamples:          4,
-  });
-
-  // Terrain async (Cesium >= 1.110)
-  Cesium.createWorldTerrainAsync({ requestVertexNormals: true })
-      .then(tp => { viewer.terrainProvider = tp; })
-      .catch(() => {});
-
-  // Imagery (non déprécié)
-  viewer.imageryLayers.removeAll();
-  viewer.imageryLayers.addImageryProvider(
-      new Cesium.IonImageryProvider({ assetId: 2 })
-  );
-
-      // ── Bâtiments OSM 3D (Cesium Ion asset 96188) ────────────────────────────
-      Cesium.createOsmBuildings().then(tileset => {
-        viewer.scene.primitives.add(tileset);
-      }).catch(() => {
-        // OSM buildings indisponible — on continue sans
-      });
-
-      // ── Positionnement caméra sur l'aéroport ─────────────────────────────────
-      const flyToAirport = (lat, lng, heading = 30, pitch = -35, altitude = 1800) => {
-        viewer.camera.flyTo({
-          destination : Cesium.Cartesian3.fromDegrees(lng, lat, altitude),
-          orientation : {
-            heading : Cesium.Math.toRadians(heading),
-            pitch   : Cesium.Math.toRadians(pitch),
-            roll    : 0,
-          },
-          duration : 2.5,
-          easingFunction : Cesium.EasingFunction.CUBIC_IN_OUT,
-        });
-      };
-
-      // ── Marqueur épingle aéroport ─────────────────────────────────────────────
-      if (hasAirport) {
-        viewer.entities.add({
-          position : Cesium.Cartesian3.fromDegrees(airportLng, airportLat),
-          billboard : {
-            image  : 'data:image/svg+xml,' + encodeURIComponent(`
-              <svg xmlns="http://www.w3.org/2000/svg" width="52" height="60" viewBox="0 0 52 60">
-                <defs>
-                  <filter id="sh" x="-30%" y="-30%" width="160%" height="160%">
-                    <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#00000066"/>
-                  </filter>
-                </defs>
-                <path d="M26 0 C11.6 0 0 11.6 0 26 C0 43 26 60 26 60 C26 60 52 43 52 26 C52 11.6 40.4 0 26 0Z"
-                      fill="#0f2346" filter="url(#sh)"/>
-                <circle cx="26" cy="24" r="14" fill="#ffc72c"/>
-                <text x="26" y="29" text-anchor="middle" font-size="12" font-weight="800"
-                      font-family="Arial,sans-serif" fill="#0f2346">✈</text>
-              </svg>`),
-            verticalOrigin : Cesium.VerticalOrigin.BOTTOM,
-            scale          : 0.85,
-            disableDepthTestDistance : Number.POSITIVE_INFINITY,
-          },
-          label : {
-            text            : airportCode,
-            font            : 'bold 14px Arial',
-            fillColor       : Cesium.Color.WHITE,
-            outlineColor    : Cesium.Color.fromCssColorString('#0f2346'),
-            outlineWidth    : 3,
-            style           : Cesium.LabelStyle.FILL_AND_OUTLINE,
-            pixelOffset     : new Cesium.Cartesian2(0, -70),
-            verticalOrigin  : Cesium.VerticalOrigin.BOTTOM,
-            disableDepthTestDistance : Number.POSITIVE_INFINITY,
-            backgroundColor : Cesium.Color.fromCssColorString('#0f2346cc'),
-            showBackground  : true,
-            backgroundPadding : new Cesium.Cartesian2(8, 4),
-          },
-        });
-
-        // Vol vers l'aéroport au chargement
-        flyToAirport(airportLat, airportLng);
-      } else {
-        // Vue Europe par défaut
-        viewer.camera.flyTo({
-          destination : Cesium.Cartesian3.fromDegrees(10, 48, 4000000),
-          orientation : { heading: 0, pitch: Cesium.Math.toRadians(-60), roll: 0 },
-          duration    : 1.5,
-        });
-      }
-
-      // ── Boutons de contrôle ───────────────────────────────────────────────────
-      document.getElementById('btn-tilt-down')?.addEventListener('click', () => {
-        flyToAirport(airportLat, airportLng, 30, -35, 1800);
-      });
-      document.getElementById('btn-tilt-top')?.addEventListener('click', () => {
-        flyToAirport(airportLat, airportLng, 0, -89, 1200);
-      });
-      document.getElementById('btn-reset')?.addEventListener('click', () => {
-        flyToAirport(airportLat, airportLng, 30, -35, 1800);
-      });
-
-      // ── Autocomplétion : préremplissage formulaire ────────────────────────────
-      const airports = {{ airports|tojson }};
-      const airportCatalog = {
-        BRU: { id_aeroport:'BRU', nom:'Brussels Airport',             ville:'Bruxelles', pays:'Belgique',      decalage_utc:'+02:00', latitude:'50.9014', longitude:'4.4844',   terminals_count:1, gates_total:50,  lounges_count:6,  parkings_count:7,  services:'WiFi, salons VIP, train, duty-free, café et business centre', contact_phone:'+32 2 753 79 11',    contact_email:'info@brusselsairport.be', description:"Aéroport international belge desservant l'Europe et le monde." },
-        CDG: { id_aeroport:'CDG', nom:'Aéroport Charles de Gaulle',   ville:'Paris',     pays:'France',        decalage_utc:'+01:00', latitude:'49.0097', longitude:'2.5479',   terminals_count:3, gates_total:109, lounges_count:10, parkings_count:6,  services:'WiFi, salons VIP, train TGV, duty-free, navettes VIP',        contact_phone:'+33 1 70 36 39 50',  contact_email:'contact@adp.fr',          description:"Hub principal de Paris avec terminals 1, 2 et 3, services cargo et salons d'affaires." },
-        LHR: { id_aeroport:'LHR', nom:'London Heathrow',              ville:'Londres',   pays:'Royaume-Uni',   decalage_utc:'+01:00', latitude:'51.4700', longitude:'-0.4543',  terminals_count:4, gates_total:88,  lounges_count:12, parkings_count:8,  services:'WiFi, salons VIP, bus express, duty-free, restauration',      contact_phone:'+44 844 335 1801',   contact_email:'info@heathrow.com',       description:'Aéroport international majeur avec plusieurs terminaux et navettes rapides.' },
-        JFK: { id_aeroport:'JFK', nom:'John F. Kennedy International',ville:'New York',  pays:'États-Unis',    decalage_utc:'-04:00', latitude:'40.6413', longitude:'-73.7781', terminals_count:6, gates_total:128, lounges_count:14, parkings_count:10, services:'WiFi, salons VIP, transport urbain, duty-free, assistance internationale', contact_phone:'+1 718-244-4444', contact_email:'info@jfkairport.com', description:'Aéroport américain majeur avec terminaux internationaux et services haut de gamme.' },
-        AMS: { id_aeroport:'AMS', nom:'Amsterdam Schiphol',           ville:'Amsterdam', pays:'Pays-Bas',      decalage_utc:'+02:00', latitude:'52.3105', longitude:'4.7683',   terminals_count:1, gates_total:100, lounges_count:15, parkings_count:9,  services:'WiFi, salons VIP, train direct, duty-free, restaurants',      contact_phone:'+31 20 794 0800',    contact_email:'info@schiphol.nl',        description:'Plate-forme logistique et hub européen avec un vaste terminal unique.' },
-        FRA: { id_aeroport:'FRA', nom:'Frankfurt Airport',            ville:'Francfort', pays:'Allemagne',     decalage_utc:'+02:00', latitude:'50.0379', longitude:'8.5622',   terminals_count:2, gates_total:95,  lounges_count:11, parkings_count:7,  services:'WiFi, salons VIP, train ICE, duty-free, zones cargo',         contact_phone:'+49 69 690 00',      contact_email:'service@fraport.de',      description:'Grand hub européen avec terminaux interconnectés et services cargo.' },
-      };
-
-      const allCandidates = [
-        ...Object.values(airportCatalog),
-        ...airports.filter(a => a && a.id_aeroport)
-      ].reduce((acc, a) => {
-        const code = a.id_aeroport?.toUpperCase();
-        if (!code || acc.some(e => e.id_aeroport === code)) return acc;
-        acc.push({ id_aeroport:code, nom:a.nom||'', ville:a.ville||'', pays:a.pays||'',
-          decalage_utc:a.decalage_utc||'', latitude:a.latitude||'', longitude:a.longitude||'',
-          terminals_count:a.terminals_count||0, gates_total:a.gates_total||0,
-          lounges_count:a.lounges_count||0, parkings_count:a.parkings_count||0,
-          services:a.services||'', contact_phone:a.contact_phone||'',
-          contact_email:a.contact_email||'', description:a.description||'' });
-        return acc;
-      }, []);
-
-      const formFields = {
-        id_aeroport:     document.querySelector('input[name="id_aeroport"]'),
-        nom:             document.querySelector('input[name="nom"]'),
-        ville:           document.querySelector('input[name="ville"]'),
-        pays:            document.querySelector('input[name="pays"]'),
-        decalage_utc:    document.querySelector('input[name="decalage_utc"]'),
-        latitude:        document.querySelector('input[name="latitude"]'),
-        longitude:       document.querySelector('input[name="longitude"]'),
-        terminals_count: document.querySelector('input[name="terminals_count"]'),
-        gates_total:     document.querySelector('input[name="gates_total"]'),
-        lounges_count:   document.querySelector('input[name="lounges_count"]'),
-        parkings_count:  document.querySelector('input[name="parkings_count"]'),
-        services:        document.querySelector('input[name="services"]'),
-        contact_phone:   document.querySelector('input[name="contact_phone"]'),
-        contact_email:   document.querySelector('input[name="contact_email"]'),
-        description:     document.querySelector('textarea[name="description"]'),
-      };
-
-      const fillForm = (data) => {
-        if (!data) return;
         Object.entries(formFields).forEach(([key, input]) => {
           if (!input || data[key] == null) return;
           input.value = data[key];

@@ -136,7 +136,7 @@ def infrastructures():
                         "UPDATE aeroports SET id_aeroport = :new_id, nom = :nom, ville = :ville, pays = :pays, decalage_utc = :utc, "
                         "latitude = :latitude, longitude = :longitude, terminals_count = :terminals_count, gates_total = :gates_total, "
                         "lounges_count = :lounges_count, parkings_count = :parkings_count, services = :services, contact_phone = :contact_phone, "
-                        "contact_email = :contact_email, description = :description, model_3d_url = :model_3d_url "
+                        "contact_email = :contact_email, description = :description "
                         "WHERE id_aeroport = :orig"
                     ),
                     {
@@ -155,15 +155,14 @@ def infrastructures():
                         'contact_phone': form.contact_phone.data,
                         'contact_email': form.contact_email.data,
                         'description': form.description.data,
-                        'model_3d_url': form.model_3d_url.data,
                         'orig': original_id
                     }
                 )
             else:
                 db.session.execute(
                     text(
-                        "INSERT INTO aeroports (id_aeroport, nom, ville, pays, decalage_utc, latitude, longitude, terminals_count, gates_total, lounges_count, parkings_count, services, contact_phone, contact_email, description, model_3d_url) "
-                        "VALUES (:id_aeroport, :nom, :ville, :pays, :utc, :latitude, :longitude, :terminals_count, :gates_total, :lounges_count, :parkings_count, :services, :contact_phone, :contact_email, :description, :model_3d_url)"
+                        "INSERT INTO aeroports (id_aeroport, nom, ville, pays, decalage_utc, latitude, longitude, terminals_count, gates_total, lounges_count, parkings_count, services, contact_phone, contact_email, description) "
+                        "VALUES (:id_aeroport, :nom, :ville, :pays, :utc, :latitude, :longitude, :terminals_count, :gates_total, :lounges_count, :parkings_count, :services, :contact_phone, :contact_email, :description)"
                     ),
                     {
                         'id_aeroport': id_aeroport,
@@ -180,8 +179,7 @@ def infrastructures():
                         'services': form.services.data,
                         'contact_phone': form.contact_phone.data,
                         'contact_email': form.contact_email.data,
-                        'description': form.description.data,
-                        'model_3d_url': form.model_3d_url.data
+                        'description': form.description.data
                     }
                 )
             db.session.commit()
@@ -197,7 +195,7 @@ def infrastructures():
                 "SELECT a.id_aeroport, a.nom, a.ville, a.pays, a.decalage_utc, a.latitude, a.longitude, "
                 "COALESCE(a.terminals_count, 0) AS terminals_count, COALESCE(a.gates_total, 0) AS gates_total, "
                 "COALESCE(a.lounges_count, 0) AS lounges_count, COALESCE(a.parkings_count, 0) AS parkings_count, "
-                "a.services, a.contact_phone, a.contact_email, a.description, a.model_3d_url "
+                "a.services, a.contact_phone, a.contact_email, a.description "
                 "FROM aeroports a "
                 "WHERE a.id_aeroport = :code LIMIT 1"
             ),
@@ -221,7 +219,6 @@ def infrastructures():
                 form.contact_phone.data = selected_airport['contact_phone']
                 form.contact_email.data = selected_airport['contact_email']
                 form.description.data = selected_airport['description']
-                form.model_3d_url.data = selected_airport['model_3d_url']
                 form.original_id.data = selected_airport['id_aeroport']
         else:
             flash('Aéroport introuvable', 'danger')
