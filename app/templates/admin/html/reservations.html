@@ -23,13 +23,13 @@ O'Buffair{% endblock %} {% block content %}
             <td>{{ r.id_client }}</td>
             <td>{{ r.date_reservation }}</td>
             <td>
-              {% if r.statut == 'confirmee' %}
+              {% if r.statut == 'Confirmee' %}
               <span class="tag is-success">Confirmée</span>
-              {% elif r.statut == 'en cours' %}
+              {% elif r.statut == 'En cours' %}
               <span class="tag is-info">En cours</span>
-              {% elif r.statut == 'annule' %}
+              {% elif r.statut == 'Annulee' %}
               <span class="tag is-danger">Annulée</span>
-              {% elif r.statut == 'en modification' %}
+              {% elif r.statut == 'En modification' %}
               <span class="tag is-warning">En modification</span>
               {% else %}
               <span class="tag">{{ r.statut }}</span>
