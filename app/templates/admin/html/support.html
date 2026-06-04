@@ -102,9 +102,13 @@ O'Buffair{% endblock %} {% block content %}
             </td>
             <td>{{ ticket.date_creation }}</td>
             <td>
-              <button class="button is-small is-info" title="Voir le détail">
+              <a
+                href="{{ url_for('admin.support_detail', id_ticket=ticket.id_ticket) }}"
+                class="button is-small is-info"
+                title="Voir le détail"
+              >
                 <span class="icon is-small"><i class="fas fa-eye"></i></span>
-              </button>
+              </a>
             </td>
           </tr>
           {% endfor %} {% else %}

@@ -1,0 +1,159 @@
+{% extends 'components/base.html' %} {% block title %}Ticket #{{
+ticket.id_ticket }} - Support{% endblock %} {% block extra_css %}
+<style>
+  .ticket-summary {
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
+  }
+  .ticket-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .ticket-meta .box {
+    border-radius: 14px;
+  }
+  .reply-card {
+    border-radius: 18px;
+    background: #fbfcff;
+    border: 1px solid rgba(0, 42, 92, 0.08);
+  }
+  .ticket-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #003da5;
+  }
+</style>
+{% endblock %} {% block content %}
+<section class="section">
+  <div class="container" style="max-width: 1100px">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div
+      class="notification is-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} is-light"
+    >
+      <button class="delete"></button>
+      {{ message }}
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+
+    <div class="mb-5">
+      <a href="{{ url_for('admin.support') }}" class="button is-white">
+        <span class="icon"><i class="fas fa-arrow-left"></i></span>
+        <span>Retour à la liste des tickets</span>
+      </a>
+    </div>
+
+    <div class="box ticket-summary">
+      <div class="level is-mobile">
+        <div class="level-left">
+          <div>
+            <p class="heading">Ticket</p>
+            <p class="title is-3">#{{ ticket.id_ticket }}</p>
+            <p class="subtitle is-6">Ouvert le {{ ticket.date_creation }}</p>
+          </div>
+        </div>
+        <div class="level-right">
+          <div class="tags has-addons">
+            <span class="tag is-dark">Statut</span>
+            <span class="tag is-info">{{ ticket.statut | capitalize }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticket-meta mt-5">
+        <div class="box">
+          <p class="ticket-label">Catégorie</p>
+          <p class="has-text-weight-semibold">
+            {{ ticket.categorie | capitalize }}
+          </p>
+        </div>
+        <div class="box">
+          <p class="ticket-label">Priorité</p>
+          <p class="has-text-weight-semibold">
+            {{ ticket.priorite | capitalize }}
+          </p>
+        </div>
+        <div class="box">
+          <p class="ticket-label">Client</p>
+          <p class="has-text-weight-semibold">
+            {{ ticket.id_client if ticket.id_client else 'Invité' }}
+          </p>
+        </div>
+        <div class="box">
+          <p class="ticket-label">Dernière mise à jour</p>
+          <p class="has-text-weight-semibold">{{ ticket.date_modification }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="columns is-variable is-6">
+      <div class="column is-7">
+        <div class="box">
+          <h2 class="title is-5">Description du client</h2>
+          <p class="subtitle is-6">Contenu envoyé par l’utilisateur</p>
+          <div class="content">
+            <p>{{ ticket.description | e | replace('\n', '<br/>') | safe }}</p>
+          </div>
+        </div>
+
+        <div class="box reply-card">
+          <h2 class="title is-5">Répondre au client</h2>
+          <p class="subtitle is-6">Utilisez votre client mail pour répondre directement au client.</p>
+          <div class="field">
+            <label class="label">Email client</label>
+            <div class="control">
+              <p>{{ user_email if user_email else 'Non renseigné' }}</p>
+            </div>
+          </div>
+          {% if user_email %}
+          <div class="field mt-4">
+            <div class="control">
+              <a class="button is-primary" href="mailto:{{ user_email }}?subject=Re%3A%20Ticket%20%23{{ ticket.id_ticket }}&body=Bonjour%2C%0D%0A%0D%0AJe%20vous%20réponds%20au%20sujet%20de%20votre%20ticket%20%23{{ ticket.id_ticket }}.%0D%0A%0D%0A--%0D%0A">
+                <span class="icon"><i class="fas fa-reply"></i></span>
+                <span>Répondre par email</span>
+              </a>
+            </div>
+          </div>
+          {% endif %}
+      </div>
+
+      <div class="column is-5">
+        <aside class="box">
+          <h3 class="title is-6">Informations du ticket</h3>
+          <div class="content">
+            <ul>
+              <li>
+                <strong>ID client :</strong> {{ ticket.id_client if
+                ticket.id_client else 'Invité' }}
+              </li>
+              <li><strong>Création :</strong> {{ ticket.date_creation }}</li>
+              <li><strong>Modifié :</strong> {{ ticket.date_modification }}</li>
+              <li>
+                <strong>Statut :</strong> {{ ticket.statut | capitalize }}
+              </li>
+            </ul>
+          </div>
+
+          {% if ticket.notes_internes %}
+          <div class="notification is-light">
+            <p class="has-text-weight-semibold">Notes internes</p>
+            <p>{{ ticket.notes_internes | e | replace('\n', '<br/>') | safe }}</p>
+          </div>
+          {% endif %}
+
+          <div class="mt-5">
+            <p class="has-text-weight-semibold">Réponse rapide</p>
+            <p>
+              Utilisez ce formulaire pour ajouter une réponse interne et changer
+              le statut du ticket.
+            </p>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
