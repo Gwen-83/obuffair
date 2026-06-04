@@ -92,6 +92,9 @@ class Vols(db.Model):
 
     statut = db.Column(db.String(20), default="à l'heure", nullable=False)
 
+    # --- Relations ---
+    billets = db.relationship('Billet', back_populates='vol', lazy=True)
+
     def __repr__(self):
         return f'<Vol {self.id_vol}: {self.id_aeroport_depart} -> {self.id_aeroport_arrivee}>'
 
@@ -192,7 +195,7 @@ class Billet(db.Model):
 
     # --- Relations ---
     reservation = db.relationship('Reservation', back_populates='billets')
-    vol = db.relationship('Vol', back_populates='billets')
+    vol = db.relationship('Vols', back_populates='billets')
 
 """
 Modèles SQLAlchemy pour la base de données.
