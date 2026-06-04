@@ -1,29 +1,30 @@
+
 :root {
     /* Couleurs primaires inspirées d'Air France, KLM et Lufthansa */
-    --primary: #002A5C;           /* Bleu Air France foncé */
-    --primary-light: #004B9E;    /* Bleu moyen */
-    --primary-lighter: #0066CC;   /* Bleu KLM */
-    --secondary: #003DA5;         /* Bleu Lufthansa */
-    --accent: #FFC72C;            /* Jaune Lufthansa/Or */
-    --accent-light: #FFD700;      /* Or clair */
-    
+    --primary: #002a5c; /* Bleu Air France foncé */
+    --primary-light: #004b9e; /* Bleu moyen */
+    --primary-lighter: #0066cc; /* Bleu KLM */
+    --secondary: #003da5; /* Bleu Lufthansa */
+    --accent: #ffc72c; /* Jaune Lufthansa/Or */
+    --accent-light: #ffd700; /* Or clair */
+
     /* Couleurs sémantiques */
-    --success: #2E7D32;           /* Vert foncé */
-    --success-light: #4CAF50;
-    --warning: #F57C00;           /* Orange */
-    --warning-light: #FF9800;
-    --danger: #C62828;            /* Rouge foncé */
-    --danger-light: #E53935;
-    --info: #1565C0;              /* Bleu info */
-    --info-light: #1976D2;
-    
+    --success: #2e7d32; /* Vert foncé */
+    --success-light: #4caf50;
+    --warning: #f57c00; /* Orange */
+    --warning-light: #ff9800;
+    --danger: #c62828; /* Rouge foncé */
+    --danger-light: #e53935;
+    --info: #1565c0; /* Bleu info */
+    --info-light: #1976d2;
+
     /* Couleurs neutres */
-    --dark: #1A1A1A;
-    --dark-gray: #424242;
-    --medium-gray: #757575;
-    --light-gray: #EEEEEE;
-    --light: #F5F5F5;
-    --white: #FFFFFF;
+    --dark: #1a1a1a;
+    --dark-gray: #b7b7b7;
+    --medium-gray: #8d8c8c;
+    --light-gray: #eeeeee;
+    --light: #f5f5f5;
+    --white: #ffffff;
 }
 
 body {
@@ -44,25 +45,23 @@ main {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border-bottom: 3px solid var(--accent);
     padding: 0;
+    position: relative;
+    z-index: 1000;
 }
 
 .navbar-brand {
     font-weight: 800;
     font-size: 1.3rem;
-    color: var(--white) !important;
     letter-spacing: 0.5px;
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
 }
 
-.navbar-brand a {
+.navbar-brand > a:not(.navbar-burger) {
     color: var(--white) !important;
     text-decoration: none;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    padding: 0.75rem 1.5rem;
 }
 
 .navbar-brand span {
@@ -87,15 +86,23 @@ main {
 }
 
 .navbar-item > a {
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: var(--white) !important;
     transition: all 0.3s ease;
     position: relative;
     padding: 0.75rem 1rem !important;
     display: block !important;
 }
 
+/* Adjust spacing for dropdown arrows to prevent overlap */
+.navbar-link {
+    padding-right: 2.5em !important;
+}
+.navbar-link::after {
+    border-color: var(--accent) !important;
+}
+
 .navbar-item > a::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: 0;
     left: 1rem;
@@ -107,9 +114,11 @@ main {
     transition: transform 0.3s ease;
 }
 
-.navbar-item > a:hover {
-    color: var(--accent) !important;
-    background-color: rgba(255, 255, 255, 0.05);
+.navbar-item > a:hover,
+.navbar-item.has-dropdown:hover .navbar-link,
+.navbar-item.has-dropdown.is-active .navbar-link {
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .navbar-item > a:hover::after {
@@ -125,7 +134,7 @@ main {
 }
 
 .navbar-dropdown a {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: var(--white) !important;
     font-size: 0.9rem !important;
     padding: 0.75rem 1.5rem !important;
     transition: all 0.2s ease;
@@ -133,10 +142,9 @@ main {
 }
 
 .navbar-dropdown a:hover {
-    color: var(--accent) !important;
-    background-color: rgba(255, 199, 44, 0.05) !important;
+    color: var(--white) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
     border-left-color: var(--accent);
-    padding-left: 1.75rem !important;
 }
 
 .navbar-end {
@@ -145,7 +153,11 @@ main {
 
 /* Footer styling - Complet et professionnel */
 footer {
-    background: linear-gradient(135deg, var(--primary) 0%, #001a3e 100%) !important;
+    background: linear-gradient(
+        135deg,
+        var(--primary) 0%,
+        #001a3e 100%
+    ) !important;
     border-top: 3px solid var(--accent) !important;
     margin-top: auto !important;
     color: var(--white) !important;
@@ -168,8 +180,12 @@ footer .footer-section h4 {
 footer .footer-section p {
     font-size: 0.9rem;
     line-height: 1.6;
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: #ffffff !important;
     margin-bottom: 0.75rem;
+}
+
+footer .footer-section strong {
+    color: #ffffff !important;
 }
 
 footer .footer-section a {
@@ -196,13 +212,13 @@ footer .footer-section li {
 }
 
 footer .footer-section li::before {
-    content: '✈ ';
+    content: "✈ ";
     color: var(--accent);
     margin-right: 0.5rem;
 }
 
 footer .footer-section li a {
-    color: rgba(255, 255, 255, 0.85) !important;
+    color: #ffffff !important;
     font-size: 0.9rem;
 }
 
@@ -221,12 +237,12 @@ footer .footer-section li a:hover {
     padding-top: 1.5rem;
     border-top: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 0.85rem;
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: #ffffff !important;
 }
 
 .footer-bottom p {
     margin: 0.25rem 0;
-    color: rgba(255, 255, 255, 0.75) !important;
+    color: #ffffff !important;
 }
 
 .footer-bottom strong {
@@ -242,7 +258,7 @@ footer .footer-section li a:hover {
 }
 
 .footer-links a {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: #ffffff !important;
     text-decoration: none;
     font-size: 0.85rem;
     transition: color 0.3s ease;
@@ -325,17 +341,22 @@ footer .footer-section li a:hover {
 }
 
 /* Input fields styling */
-.input, .textarea, .select select {
+.input,
+.textarea,
+.select select {
     border-radius: 4px;
-    border: 1px solid #DBDBDB;
+    border: 1px solid #dbdbdb;
 }
 
-.input:focus, .textarea:focus, .select select:focus {
+.input:focus,
+.textarea:focus,
+.select select:focus {
     border-color: var(--primary);
     box-shadow: 0 0 0 0.125em rgba(0, 42, 92, 0.25);
 }
 
-.input.is-danger, .textarea.is-danger {
+.input.is-danger,
+.textarea.is-danger {
     border-color: var(--danger);
 }
 
