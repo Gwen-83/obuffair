@@ -12,7 +12,7 @@ from wtforms import StringField, PasswordField, SubmitField, DateField  # Types 
 from wtforms.validators import DataRequired, Email, EqualTo, ValidationError  # Validateurs prédéfinis
 from app import db
 from sqlalchemy import text
-from app.portail_auth.models_auth import User  # Model pour vérifier si l'email existe déjà
+from app.model import User  # Model pour vérifier si l'email existe déjà
 
 
 class StrongPasswordValidator:
