@@ -49,16 +49,17 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 def dashboard():
     """Tableau de bord administrateur"""
     nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols ")).fetchone()
-    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations ")).fetchone()
+    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee' ")).fetchone()
     # Récupérer vols + model avion + capacité tot et nbr de résa/vol
     vols_rows = db.session.execute(text("""
         SELECT v.*,
                a.modele,
                (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
-               COALESCE(COUNT(b.id_billet), 0) AS nb_reservations
+               COALESCE(SUM(CASE WHEN r.statut = 'Confirmee' THEN 1 ELSE 0 END), 0) AS nb_reservations
         FROM vols v
         LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
         LEFT JOIN billets b ON b.id_vol = v.id_vol
+        LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
         GROUP BY v.id_vol
     """)).mappings().all()
 
@@ -375,17 +376,17 @@ def reservations():
 
     return render_template('admin/html/reservations.html', reservations=reservations)
 
-
 @admin_bp.route('/tarification', methods=['GET'])
 @admin_required
 def tarification():
     """Afficher les vols avec prix base et prix suggéré par l'algorithme"""
     rows = db.session.execute(text("""
         SELECT v.id_vol, v.id_aeroport_depart, v.id_aeroport_arrivee, v.date_heure_dep_utc, v.prix_de_base,
-               a.nb_rangees, a.largeur_rangee, COALESCE(COUNT(b.id_billet),0) AS nb_reservations
+               a.nb_rangees, a.largeur_rangee, COALESCE(SUM(CASE WHEN r.statut = 'Confirmee' THEN 1 ELSE 0 END),0) AS nb_reservations
         FROM vols v
         LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
         LEFT JOIN billets b ON b.id_vol = v.id_vol
+        LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
         GROUP BY v.id_vol
         ORDER BY v.date_heure_dep_utc DESC
     """)).mappings().all()

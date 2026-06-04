@@ -34,7 +34,8 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ECHO'] = True
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'connect_args': {'connect_timeout': 5}
+        'connect_args': {'connect_timeout': 5},
+        'pool_pre_ping': True
     }
     
     # ========== CONFIGURATION EMAIL ==========
