@@ -96,7 +96,7 @@
                             <div class="select is-fullwidth">
                                 <select id="selectDepart">
                                     {% for aeroport in aeroports %}
-                                    <option value="{{ aeroport.id_aeroport }}" {% if aeroport.id_aeroport == 'CDG' %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
+                                    <option value="{{ aeroport.id_aeroport }}" {% if search_params.get('depart', 'CDG') == aeroport.id_aeroport %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -112,7 +112,7 @@
                             <div class="select is-fullwidth">
                                 <select id="selectArrivee">
                                     {% for aeroport in aeroports %}
-                                    <option value="{{ aeroport.id_aeroport }}" {% if aeroport.id_aeroport == 'FCO' %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
+                                    <option value="{{ aeroport.id_aeroport }}" {% if search_params.get('arrivee', 'FCO') == aeroport.id_aeroport %}selected{% endif %}>{{ aeroport.ville }} ({{ aeroport.id_aeroport }})</option>
                                     {% endfor %}
                                 </select>
                             </div>
@@ -127,8 +127,8 @@
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
                                 <select id="selectTypeVol">
-                                    <option value="AR" selected>Aller-retour</option>
-                                    <option value="AS">Aller simple</option>
+                                    <option value="AR" {% if search_params.get('type_vol', 'AR') == 'AR' %}selected{% endif %}>Aller-retour</option>
+                                    <option value="AS" {% if search_params.get('type_vol') == 'AS' %}selected{% endif %}>Aller simple</option>
                                 </select>
                             </div>
                             <span class="icon is-small is-left"><i id="typeVolIcon" class="fas fa-exchange-alt" style="color: var(--primary);"></i></span>
@@ -143,7 +143,7 @@
                             <div class="dropdown-trigger">
                                 <button type="button" class="button is-white" aria-haspopup="true" aria-controls="dropdown-menu" style="border: 1px solid #E5E5EA; border-radius: 12px; height: 2.8em; justify-content: flex-start; padding: 0 16px;">
                                     <span class="icon is-small"><i class="fas fa-user" style="color: var(--primary);"></i></span>
-                                    <span id="passengerCountText" style="font-weight: 600; color: var(--flighty-text); margin-left: 8px;">1</span>
+                                    <span id="passengerCountText" style="font-weight: 600; color: var(--flighty-text); margin-left: 8px;">{{ search_params.get('passagers', '1') }}</span>
                                 </button>
                             </div>
                         <div class="dropdown-menu" id="dropdown-menu" role="menu" style="min-width: auto; padding-top: 4px;">
@@ -151,7 +151,7 @@
                                 <div class="is-flex is-align-items-center is-justify-content-center">
                                         <div class="is-flex is-align-items-center">
                                             <button type="button" class="button is-small is-rounded is-light" id="btnMinusPassenger" style="width: 28px; height: 28px; padding: 0;">-</button>
-                                            <span id="passengerCountDisplay" style="margin: 0 12px; font-weight: bold; color: var(--flighty-text); width: 12px; text-align: center;">1</span>
+                                            <span id="passengerCountDisplay" style="margin: 0 12px; font-weight: bold; color: var(--flighty-text); width: 12px; text-align: center;">{{ search_params.get('passagers', '1') }}</span>
                                             <button type="button" class="button is-small is-rounded is-light" id="btnPlusPassenger" style="width: 28px; height: 28px; padding: 0;">+</button>
                                         </div>
                                     </div>
@@ -167,8 +167,8 @@
                         <div class="control">
                             <div class="select is-fullwidth">
                                 <select id="selectClasse">
-                                    <option value="Eco" selected>Éco</option>
-                                    <option value="Business">Business</option>
+                                    <option value="Eco" {% if search_params.get('classe', 'Eco') == 'Eco' %}selected{% endif %}>Éco</option>
+                                    <option value="Business" {% if search_params.get('classe') == 'Business' %}selected{% endif %}>Business</option>
                                 </select>
                             </div>
                         </div>
@@ -218,13 +218,13 @@
                     
                     <div style="margin-top: auto; padding-top: 1rem;">
                         <form action="{{ url_for('client.booking_flights') }}" method="POST" id="searchFlightForm">
-                            <input type="hidden" name="depart" id="formDepart" value="CDG">
-                            <input type="hidden" name="arrivee" id="formArrivee" value="FCO">
-                            <input type="hidden" name="classe" id="formClasse" value="Eco">
-                            <input type="hidden" name="type_vol" id="formTypeVol" value="AR">
-                            <input type="hidden" name="passagers" id="formPassagers" value="1">
-                            <input type="hidden" name="date_aller" id="formDateAller" value="">
-                            <input type="hidden" name="date_retour" id="formDateRetour" value="">
+                            <input type="hidden" name="depart" id="formDepart" value="{{ search_params.get('depart', 'CDG') }}">
+                            <input type="hidden" name="arrivee" id="formArrivee" value="{{ search_params.get('arrivee', 'FCO') }}">
+                            <input type="hidden" name="classe" id="formClasse" value="{{ search_params.get('classe', 'Eco') }}">
+                            <input type="hidden" name="type_vol" id="formTypeVol" value="{{ search_params.get('type_vol', 'AR') }}">
+                            <input type="hidden" name="passagers" id="formPassagers" value="{{ search_params.get('passagers', '1') }}">
+                            <input type="hidden" name="date_aller" id="formDateAller" value="{{ search_params.get('date_aller', '') }}">
+                            <input type="hidden" name="date_retour" id="formDateRetour" value="{{ search_params.get('date_retour', '') }}">
                             
                             <button type="submit" class="button is-accent is-fullwidth" id="btnContinue" disabled>
                                 Voir les vols <i class="fas fa-arrow-right ml-2"></i>
@@ -237,5 +237,8 @@
 
         </div>
 
+<script>
+    window.savedSearchParams = {{ search_params|tojson|safe if search_params else 'null' }};
+</script>
 <script src="{{ url_for('static', filename='js/reserver.js') }}"></script>
 {% endblock %}

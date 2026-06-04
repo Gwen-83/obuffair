@@ -37,9 +37,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // État du calendrier
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Réinitialise l'heure pour comparer uniquement les dates
-    let currentDate = new Date(today.getFullYear(), today.getMonth(), 1); 
     let startDate = null;
     let endDate = null;
+    
+    // Restauration des paramètres de session si existants
+    if (window.savedSearchParams) {
+        if (window.savedSearchParams.date_aller) startDate = new Date(window.savedSearchParams.date_aller + "T00:00:00");
+        if (window.savedSearchParams.date_retour) endDate = new Date(window.savedSearchParams.date_retour + "T00:00:00");
+        if (window.savedSearchParams.passagers) passengerCount = parseInt(window.savedSearchParams.passagers);
+    }
+
+    let currentDate = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1); 
 
     function renderCalendar() {
         const weekdays = `<div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div><div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>`;
@@ -231,5 +239,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- INITIALISATION AU CHARGEMENT DE LA PAGE ---
+    
+    // Actualisation des IATA/villes au premier rendu (si restauré depuis session)
+    const locDep = extractLocation(selectDepart);
+    if (locDep) {
+        cityDepart.innerText = locDep.city;
+        iataDepart.innerText = locDep.iata;
+    }
+    const locArr = extractLocation(selectArrivee);
+    if (locArr) {
+        cityArrivee.innerText = locArr.city;
+        iataArrivee.innerText = locArr.iata;
+    }
+
     renderCalendar();
 });

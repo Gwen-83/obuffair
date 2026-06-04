@@ -3,7 +3,8 @@ Routes client : recherche vols, détail vol, panier, checkout, historique réser
 Gère le profil, modifications de réservation et gestion de compte.
 """
 
-from flask import Blueprint, render_template, request, session, url_for, redirect
+from functools import wraps
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash
 from app import db
 from sqlalchemy import func, cast, Date, text
 from app.model import Aeroport, Vols
@@ -13,6 +14,14 @@ from datetime import datetime, timedelta, timezone
 # Blueprint
 client_bp = Blueprint('client', __name__, url_prefix='/client')
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash("Veuillez vous connecter pour accéder à la réservation.", "warning")
+            return redirect(url_for('auth.login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
 
 @client_bp.route('/')
 def accueil():
@@ -74,10 +83,12 @@ def profil():
     return render_template('client/profil.html')
 
 @client_bp.route('/booking')
+@login_required
 def booking():
     """Réservation"""
     aeroports = db.session.execute(text("SELECT * FROM aeroports ORDER BY ville ASC")).mappings().all()
-    return render_template('client/reserver.html', aeroports=aeroports)
+    search_params = session.get('search_params', {})
+    return render_template('client/reserver.html', aeroports=aeroports, search_params=search_params)
 
 def format_duration(td):
     """Formate un timedelta en chaîne (ex: 2h 05m)"""
@@ -225,6 +236,7 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
     return valid_itineraries
 
 @client_bp.route('/booking-flights', methods=['GET', 'POST'])
+@login_required
 def booking_flights():
     """Sélection vol"""
     if request.method == 'POST':
@@ -351,6 +363,7 @@ def booking_flights():
                            titre=titre)
 
 @client_bp.route('/booking-passengers', methods=['GET', 'POST'])
+@login_required
 def booking_passengers():
     """Information passager"""
     if request.method == 'POST':
@@ -370,11 +383,13 @@ def booking_passengers():
     return render_template('client/booking_passengers.html')
 
 @client_bp.route('/booking-options', methods=['GET', 'POST'])
+@login_required
 def booking_options():
     """Options"""
     return render_template('client/booking_options.html')
 
 @client_bp.route('/booking-payment', methods=['GET', 'POST'])
+@login_required
 def booking_payment():
     """Payement"""
     return render_template('client/booking_payment.html')
