@@ -11,12 +11,12 @@ Fonctionnement:
 import logging  # Pour afficher des logs
 import secrets  # Pour générer des tokens sécurisés
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from werkzeug.security import generate_password_hash, check_password_hash  # Hash et vérification password
 from app import db  # Accès à la base de données
 from app.model import User  # Modèle User
 from app.portail_auth.forms import RegisterForm, LoginForm, ForgotPasswordForm, ResetPasswordForm  # Formulaires
-from app.portail_auth.email_utils import send_reset_password_email  # Utilitaires pour envoyer les emails
+from app.portail_auth.email_utils import send_reset_password_email, send_verification_email  # Utilitaires pour envoyer les emails
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError  # Exception si email dupliqué en BD
 
@@ -53,6 +53,9 @@ def register():
                 method='pbkdf2:sha256'
             )
             
+            verification_token = secrets.token_urlsafe(64)
+            email_verification_expiration = datetime.utcnow() + timedelta(hours=24)
+            
             user = User(
                 email=email,
                 mot_de_passe=hashed_password,
@@ -60,15 +63,27 @@ def register():
                 nom=nom,
                 date_naissance=form.date_naissance.data if form.date_naissance.data else None,
                 points_fidelite=0,
-                is_admin=False
+                is_admin=False,
+                email_verified=False,
+                email_verification_token=verification_token,
+                email_verification_token_expiration=email_verification_expiration
             )
             
             db.session.add(user)
             db.session.commit()
             
             logger.info(f'Nouvel utilisateur créé: {email}')
-            flash('Inscription réussie! Vous pouvez vous connecter.', 'success')
-            return redirect(url_for('auth.login'))
+            
+            if send_verification_email(email, verification_token, current_app):
+                flash('Inscription réussie! Un email de vérification a été envoyé à votre adresse.', 'success')
+                return redirect(url_for('auth.login'))
+            else:
+                # Si l'envoi échoue, supprimer l'utilisateur créé pour éviter un compte bloqué sans email
+                db.session.delete(user)
+                db.session.commit()
+                logger.error(f'Erreur lors de l\'envoi de l\'email de vérification à: {email}')
+                flash('Erreur lors de l\'envoi de l\'email de vérification. Inscription annulée.', 'danger')
+                return render_template('auth/register.html', form=form)
         
         except IntegrityError:
             db.session.rollback()
@@ -103,6 +118,11 @@ def login():
             # cherche user par email
             user = db.session.execute(text("SELECT * FROM clients WHERE email = :email LIMIT 1"),{"email": email}).mappings().first()
             
+            if user and not user['email_verified']:
+                logger.warning(f'Tentative de connexion sans email vérifié: {email}')
+                flash('Veuillez vérifier votre email avant de vous connecter.', 'warning')
+                return render_template('auth/login.html', form=form)
+            
             # user exist + mdp correct avec hash dans bdd
             if user and check_password_hash(user['mot_de_passe'], password):
                 # Auth réussi
@@ -110,7 +130,7 @@ def login():
                 session['email'] = user['email']
                 session['prenom'] = user['prenom']
                 session['nom'] = user['nom']
-                session['is_admin'] = user['is_admin']
+                session['is_admin'] = bool(user['is_admin'])
                 
                 logger.info(f'Utilisateur connecté: {email}')
                 flash(f'Connexion réussie','success')
@@ -246,5 +266,35 @@ def reset_password(token):
             flash('Erreur du système','danger')
     
     return render_template('auth/reset_password.html', form=form)
+
+
+@auth_bp.route('/verify-email/<token>', methods=['GET'])
+def verify_email(token):
+    """
+    Route pour vérifier l'email avec un token.
+    Généré lors de l'inscription, permet de confirmer l'adresse email.
+    """
+    if 'user_id' in session:
+        return redirect(url_for('client.accueil'))
+
+    user = db.session.execute(
+        text("SELECT * FROM clients WHERE email_verification_token = :token LIMIT 1"),
+        {"token": token}
+    ).mappings().first()
+
+    if not user or user['email_verification_token_expiration'] < datetime.utcnow():
+        logger.warning(f'Token de vérification invalide ou expiré: {token}')
+        flash('Lien de vérification invalide ou expiré.', 'danger')
+        return redirect(url_for('auth.register'))
+
+    db.session.execute(
+        text("UPDATE clients SET email_verified = true, email_verification_token = NULL, email_verification_token_expiration = NULL WHERE id_client = :id"),
+        {"id": user['id_client']}
+    )
+    db.session.commit()
+
+    logger.info(f"Email vérifié pour: {user['email']}")
+    flash('Email vérifié avec succès! Vous pouvez vous connecter.', 'success')
+    return redirect(url_for('auth.login'))
 
 
