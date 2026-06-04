@@ -490,7 +490,7 @@ def booking_flights():
                 min_date = max(min_date, datetime.strptime(search_params.get('date_aller'), '%Y-%m-%d').date())
                 
             # On cherche à -1 jour et jusqu'à +7 jours (trié par proximité)
-            offsets = [-1] + [i for i in range(1, 15)]
+            offsets = [-1] + [i for i in range(1, 8)]
             offsets.sort(key=abs)
             
             for offset in offsets:
@@ -732,11 +732,18 @@ def booking_payment():
                     if s: sieges_retour.append(s)
                 
                 if p_class_aller == 'Eco': 
-                    total_aller_price += vol_aller.get('prix_eco', 0); total_retour_price += vol_retour.get('prix_eco', 0)
+                    total_aller_price += vol_aller.get('prix_eco', 0)
                 elif p_class_aller == 'Business': 
-                    total_aller_price += vol_aller.get('prix_biz', 0); total_retour_price += vol_retour.get('prix_biz', 0)
+                    total_aller_price += vol_aller.get('prix_biz', 0)
                 elif p_class_aller == 'First': 
-                    total_aller_price += vol_aller.get('prix_first', 0); total_retour_price += vol_retour.get('prix_first', 0)
+                    total_aller_price += vol_aller.get('prix_first', 0)
+                    
+                if p_class_retour == 'Eco':
+                    total_retour_price += vol_retour.get('prix_eco', 0)
+                elif p_class_retour == 'Business':
+                    total_retour_price += vol_retour.get('prix_biz', 0)
+                elif p_class_retour == 'First':
+                    total_retour_price += vol_retour.get('prix_first', 0)
                 
                 def rank(c): return {'Eco':1, 'Business':2, 'First':3}.get(c, 1)
                 max_rank = max(rank(p_class_aller), rank(p_class_retour) if vol_retour else 1)
