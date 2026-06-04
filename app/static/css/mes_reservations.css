@@ -1,0 +1,61 @@
+/* Harmonisation des variables globales (Flighty x O'Buffair) */
+:root {
+    --primary: #002A5C; 
+    --primary-light: #004B9E; 
+    --accent: #FFC72C; 
+    --bg-light: #F2F2F7; /* Gris Flighty iOS */
+    --flighty-text: #1C1C1E;
+    --flighty-gray: #8E8E93;
+    --flighty-green: #34C759;
+    --flighty-red: #FF3B30;
+    --flighty-orange: #FF9500;
+    --radius-lg: 16px;
+    --radius-xl: 24px;
+    --shadow-soft: 0 8px 24px rgba(0,0,0,0.04);
+}
+
+body { 
+    background-color: var(--bg-light); 
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; 
+    -webkit-font-smoothing: antialiased; 
+}
+
+/* --- FLIGHTY APP CARDS (Vols & Formulaires) --- */
+.flighty-card {
+    background: white; border-radius: var(--radius-xl);
+    padding: 24px; box-shadow: var(--shadow-soft);
+    margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02);
+}
+
+/* En-tête vol Flighty */
+.flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.flighty-airline { font-size: 14px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
+.flighty-status { padding: 4px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
+.status-ontime { background: #E5F8EB; color: #248A3D; }
+.status-delayed { background: #FFF4E5; color: #E67E22; }
+
+/* Itinéraire Flighty */
+.flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.flighty-iata { font-size: 40px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; }
+.flighty-time { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-bottom: 4px; }
+.flighty-time.delayed { color: var(--flighty-red); }
+.flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+
+.flighty-path {
+    flex-grow: 1; margin: 20px 24px 0 24px; height: 2px;
+    background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px);
+    display: flex; align-items: center; justify-content: center; position: relative;
+}
+.flighty-path i { color: var(--flighty-gray); font-size: 16px; background: white; padding: 0 10px; }
+.flighty-stop { position: absolute; background: white; color: var(--flighty-orange); font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--flighty-orange); top: -20px; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+
+/* Grille Infos (Porte, Siège) */
+.flighty-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-light); padding: 16px 20px; border-radius: var(--radius-lg); flex-wrap: wrap; gap: 16px;
+}
+.flighty-info-group { display: flex; flex-direction: column; }
+.flighty-label { font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;}
+.flighty-value { font-size: 18px; font-weight: 800; color: var(--flighty-text); }
+.flighty-gate { background: var(--accent); color: var(--primary); padding: 4px 12px; border-radius: 8px; font-size: 18px; font-weight: 800; }
+.flighty-subvalue { font-size: 12px; color: var(--flighty-gray); font-weight: 600; margin-top: 2px; }

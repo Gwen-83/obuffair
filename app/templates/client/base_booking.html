@@ -3,63 +3,7 @@
 {% block title %}Réservation Complète - O'Buffair{% endblock %}
 
 {% block extra_css %}
-    <style>
-        :root {
-            /* Couleurs O'Buffair (Conservées pour le reste de la page) */
-            --primary: #002A5C; --primary-light: #004B9E; --accent: #FFC72C;
-            --bg-light: #F2F2F7;
-            --flighty-text: #1C1C1E; --flighty-gray: #8E8E93;
-            --flighty-blue: #0A84FF; --flighty-green: #34C759;
-            
-            /* Nouvelles couleurs "Aéroport Flighty" pour le Stepper */
-            --airport-yellow: #FFCC00;
-            --airport-black: #1C1C1E;
-
-            --radius-xl: 20px; --shadow-soft: 0 4px 20px rgba(0,0,0,0.04);
-        }
-        
-        /* Air France Style Stepper avec thème Airport Flighty */
-        .booking-stepper {
-            background: white; border-bottom: 1px solid #E5E5EA; padding: 15px 0;
-            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
-        }
-        .stepper-container { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto; padding: 0 20px;}
-        
-        /* Texte des étapes (Airport Style : uppercase, bold) */
-        .step { display: flex; align-items: center; color: var(--flighty-gray); font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        /* Textes actifs et complétés en Noir */
-        .step.is-active { color: var(--airport-black); }
-        .step.is-completed { color: var(--airport-black); }
-        a.step:hover { opacity: 0.7; }
-        
-        /* Icônes 1/2/3 */
-        .step-icon { 
-            width: 24px; height: 24px; 
-            border-radius: 6px; /* Bords légèrement arrondis (façon panneau d'affichage) au lieu de 50% */
-            border: 2px solid currentColor; 
-            display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 12px; font-weight: 900;
-        }
-        
-        /* Étape Active : Fond Jaune Flighty, Texte Noir */
-        .step.is-active .step-icon { background: var(--airport-yellow); color: var(--airport-black); border-color: var(--airport-yellow); }
-        
-        /* Étape Complétée : Fond Noir, Texte Jaune Flighty */
-        .step.is-completed .step-icon { background: var(--airport-black); color: var(--airport-yellow); border-color: var(--airport-black); }
-        
-        /* Ligne de progression (Noire) */
-        .step-line { flex-grow: 1; height: 3px; background: #E5E5EA; margin: 0 15px; border-radius: 2px; }
-        .step-line.is-active { background: var(--airport-black); }
-
-        /* Total Price Corner (Adapté au thème noir) */
-        .cart-total { text-align: right; margin-left: 30px; border-left: 2px dashed #E5E5EA; padding-left: 20px; }
-        .cart-total-label { font-size: 11px; color: var(--flighty-gray); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px;}
-        .cart-total-price { font-size: 18px; font-weight: 900; color: var(--airport-black); }
-
-        /* Flighty Global Components */
-        .flighty-card { background: white; border-radius: var(--radius-xl); padding: 24px; box-shadow: var(--shadow-soft); margin-bottom: 24px; border: 1px solid rgba(0,0,0,0.02); }
-        .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border-radius: 12px; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base_booking.css') }}">
     {% block booking_css %}{% endblock %}
 {% endblock %}
 
@@ -76,9 +20,16 @@
             <div class="step-line {% if step >= 5 %}is-active{% endif %}"></div>
             <a href="{{ url_for('client.booking_payment') }}" class="step {% if step >= 5 %}is-active{% endif %}" style="text-decoration: none;"><div class="step-icon"><i class="fas fa-credit-card"></i></div> Paiement</a>
 
+            {% set search_params = session.get('search_params', {}) %}
+            {% set nb_passagers = search_params.get('passagers', 1) | int %}
+            {% set prix_aller = session.get('vol_aller', {}).get('prix', 0) | float %}
+            {% set prix_retour = session.get('vol_retour', {}).get('prix', 0) | float %}
+            {% set prix_options = session.get('options', {}).get('prix', 0) | float %}
+            {% set cart_total = ((prix_aller + prix_retour) + prix_options) * nb_passagers %}
+
             <div class="cart-total">
-                <div class="cart-total-label">Total ({{ session.get('nb_passagers', 1) }} passager)</div>
-                <div class="cart-total-price">{{ session.get('cart_total', '0,00') }} €</div>
+                <div class="cart-total-label">Total ({{ nb_passagers }} passager{% if nb_passagers > 1 %}s{% endif %})</div>
+                <div class="cart-total-price">{{ "%.2f"|format(cart_total) }} €</div>
             </div>
         </div>
     </div>

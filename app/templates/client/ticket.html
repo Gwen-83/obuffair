@@ -1,38 +1,6 @@
 {% extends "components/base.html" %} {% block title %}Support - O'Buffair{%
 endblock %} {% block extra_css %}
-<style>
-  .support-hero {
-    background: linear-gradient(135deg, #002a5c 0%, #004b9e 100%);
-    padding: 3rem 1.5rem;
-    color: white;
-    border-radius: 18px;
-    box-shadow: 0 20px 50px rgba(0, 42, 92, 0.18);
-    margin-bottom: 2rem;
-  }
-  .support-hero .title {
-    color: white;
-  }
-  .support-card {
-    border-radius: 18px;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.06);
-  }
-  .support-aside {
-    border-radius: 18px;
-    background: #f7f9ff;
-    border: 1px solid rgba(0, 42, 92, 0.08);
-  }
-  .highlight-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: rgba(255, 199, 44, 0.16);
-    color: #002a5c;
-    border-radius: 999px;
-    padding: 0.45rem 0.9rem;
-    font-weight: 700;
-    font-size: 0.9rem;
-  }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ticket.css') }}">
 {% endblock %} {% block content %}
 <section class="section">
   <div class="container" style="max-width: 1100px">

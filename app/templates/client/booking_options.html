@@ -2,30 +2,7 @@
 {% set step = 4 %}
 
 {% block booking_css %}
-<style>
-    /* AeroLOPA Style Cabin Map */
-    .aerolopa-container { 
-        background: #F8F9FA; 
-        padding: 40px 0; 
-        border-radius: var(--radius-xl); 
-        border: 1px solid #E5E5EA; 
-        display: flex; justify-content: center; overflow-x: auto; 
-        margin-bottom: 24px;
-    }
-    
-    /* Animation et interactivité CSS pour le SVG AeroLOPA */
-    .aerolopa-seat rect:first-child { transition: fill 0.2s, opacity 0.2s; }
-    .aerolopa-seat:hover:not(.taken) rect:first-child { opacity: 1; filter: brightness(1.2); }
-    
-    /* État Sélectionné */
-    .aerolopa-seat.selected rect:first-child { fill: var(--accent) !important; opacity: 1 !important; stroke: var(--primary); stroke-width: 2px;}
-    .aerolopa-seat.selected text { fill: var(--primary) !important; }
-    
-    /* État Occupé */
-    .aerolopa-seat.taken rect:first-child { fill: #F2F2F7 !important; }
-    .aerolopa-seat.taken text { fill: #D1D1D6 !important; text-decoration: line-through; }
-    .aerolopa-seat.taken rect:last-child { cursor: not-allowed !important; }
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/booking_options.css') }}">
 {% endblock %}
 
 {% block booking_content %}
