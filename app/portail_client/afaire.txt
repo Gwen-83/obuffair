@@ -1,0 +1,11 @@
+- Changement bouton DEST/AR pour que ce soit un texte à taper,
+- Modifier l'UI pour que le texte soit correctement montré sur la page recherche vol,
+- Faire fonctionner le bouton inversion depart/arrivée
+- Faire un script qui permet de montrer le vol aller et retour sur une seconde page si A/R sélectionné mais qui reste bien la même étape du booking process,
+- Modifier l'encart avec les infos A/R et date,
+- Modifier le total ainsi que nombre de passager dans l'en tete booking process en fonction des options choisies,
+- Infos passager doit être en cohérence en fonction du nombre de passager (un seul doit avoir un compte, les autres sont liés au booking process), et donc le principal doit avoir l'adresse mail popularisée depuis son compte
+- Options doivent mettre à jour le total du booking process ainsi que le nombre sélectable en fonction du nombre de passager ? 
+- Procéder au paiement > on doit faire un process qui se termine sans info bancaire, le total ainsi que A/R etc et options doit être mis à jour et l'encard doit aussi être revu en UI
+- Créer écran de confirmation après paiement
+
