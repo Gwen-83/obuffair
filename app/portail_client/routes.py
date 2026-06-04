@@ -9,6 +9,7 @@ from app import db
 from sqlalchemy import func, cast, Date, text
 from app.model import Aeroport, Vols, User, Support
 from datetime import datetime, timedelta, timezone
+import re
 
 
 # Blueprint
@@ -77,7 +78,7 @@ def accueil():
 
     return render_template('client/acceuil.html', loyalty_info=loyalty_info, next_flight=next_flight, destinations=destinations)
 
-@client_bp.route('/profil')
+@client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():
     """Profil"""
     user_id = session.get('user_id')
@@ -91,7 +92,50 @@ def profil():
     if not client_connecte:
         return redirect(url_for('client.accueil'))
         
-    return render_template('client/profil.html', client=client_connecte)
+    if request.method == 'POST':
+        client_connecte.prenom = request.form.get('prenom', client_connecte.prenom)
+        client_connecte.nom = request.form.get('nom', client_connecte.nom)
+        client_connecte.email = request.form.get('email', client_connecte.email)
+        
+        # Validation et sauvegarde du numéro de téléphone
+        num_tel = request.form.get('numero_telephone')
+        if num_tel and re.match(r'^\+33\d \d{2} \d{2} \d{2} \d{2}$', num_tel):
+            client_connecte.numero_telephone = num_tel
+        elif not num_tel: # Si le champ est vidé
+            client_connecte.numero_telephone = None
+            
+        db.session.commit()
+        session['prenom'] = client_connecte.prenom
+        session['nom'] = client_connecte.nom
+        flash('Vos informations ont été mises à jour avec succès.', 'success')
+        return redirect(url_for('client.profil'))
+        
+    prochains_billets = client_connecte.get_prochains_vols()
+    prochains_vols_data = []
+    
+    if prochains_billets:
+        mois_fr = {1: 'Jan', 2: 'Fév', 3: 'Mars', 4: 'Avr', 5: 'Mai', 6: 'Juin', 
+                   7: 'Juil', 8: 'Août', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Déc'}
+        for billet in prochains_billets:
+            vol = billet.vol
+            date_vol = f"{vol.date_heure_dep_utc.day} {mois_fr[vol.date_heure_dep_utc.month]} {vol.date_heure_dep_utc.year}"
+            
+            status_text = "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize()
+            status_class = "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed"
+            
+            prochains_vols_data.append({
+                'flight_number': f"OB{vol.id_vol}",
+                'date': date_vol,
+                'status_text': status_text,
+                'status_class': status_class,
+                'dep_iata': vol.id_aeroport_depart,
+                'arr_iata': vol.id_aeroport_arrivee,
+                'dep_time': vol.date_heure_dep_utc.strftime('%H:%M'),
+                'arr_time': vol.date_heure_arr_utc.strftime('%H:%M'),
+                'pnr': f"X{billet.id_reservation}B9Q{billet.id_billet}"
+            })
+            
+    return render_template('client/profil.html', client=client_connecte, prochains_vols=prochains_vols_data)
 
 @client_bp.route('/support', methods=['GET', 'POST'])
 def support():
@@ -168,7 +212,7 @@ def calculate_yield_prices(legs, type_vol):
     Logique de Yield Management (Pricing dynamique).
     Prend en compte : l'heure locale, les correspondances et le type de trajet.
     """
-    base_price = sum(leg['prix_de_base'] for leg in legs)
+    base_price = sum(float(leg['prix_de_base']) for leg in legs)
     
     # 1. Discount de correspondance (Réseau Hub-and-Spoke)
     # Vol avec escale = inconfort = prix réduit pour rester compétitif
@@ -306,8 +350,26 @@ def search_itineraries(origin, destination, target_date_str, max_stops=2):
 def booking_flights():
     """Sélection vol"""
     if request.method == 'POST':
+        # Changement rapide de date depuis le bouton "Aucun vol trouvé"
+        if 'update_date_only' in request.form:
+            if 'search_params' in session:
+                new_aller = request.form.get('date_aller')
+                new_retour = request.form.get('date_retour')
+                
+                # Failsafe: Empêcher l'inversion si la suggestion pousse l'aller après le retour
+                if new_aller and new_retour:
+                    try:
+                        if datetime.strptime(new_retour, '%Y-%m-%d').date() < datetime.strptime(new_aller, '%Y-%m-%d').date():
+                            new_retour = new_aller
+                    except ValueError:
+                        pass
+                        
+                session['search_params']['date_aller'] = new_aller
+                session['search_params']['date_retour'] = new_retour
+                session.modified = True
+                
         # S'il clique sur "Changer le vol aller"
-        if 'reset_aller' in request.form:
+        elif 'reset_aller' in request.form:
             session.pop('vol_aller', None)
             
         # Nouvelle recherche depuis reserver.html
@@ -320,7 +382,8 @@ def booking_flights():
         elif 'id_vol_aller_temp' in request.form:
             session['vol_aller'] = {
                 'id_vol': request.form.get('id_vol_aller_temp'),
-                'classe': request.form.get('classe')
+                'classe': request.form.get('classe'),
+                'prix': float(request.form.get('prix', 0))
             }
             
     search_params = session.get('search_params', {})
@@ -402,6 +465,36 @@ def booking_flights():
     # Trier par heure de départ
     itineraries_data.sort(key=lambda x: x['dep_time'])
     
+    # --- Recherche de la prochaine date disponible si aucun vol ---
+    next_available_date_str = None
+    next_available_date_formatted = None
+    
+    if not itineraries_data and date_vol_raw:
+        try:
+            base_date = datetime.strptime(date_vol_raw, '%Y-%m-%d').date()
+            
+            # Si on est sur le vol retour, on ne peut pas proposer une date AVANT le vol aller
+            min_date = datetime.now().date()
+            if is_retour_step and search_params.get('date_aller'):
+                min_date = max(min_date, datetime.strptime(search_params.get('date_aller'), '%Y-%m-%d').date())
+                
+            # On cherche à -1 jour et jusqu'à +14 jours (trié par proximité)
+            offsets = [-1] + [i for i in range(1, 15)]
+            offsets.sort(key=abs)
+            
+            for offset in offsets:
+                check_date = base_date + timedelta(days=offset)
+                if check_date < min_date:
+                    continue
+                    
+                check_date_str = check_date.strftime('%Y-%m-%d')
+                if search_itineraries(iata_dep, iata_arr, check_date_str):
+                    next_available_date_str = check_date_str
+                    next_available_date_formatted = check_date.strftime('%d/%m/%Y')
+                    break
+        except Exception:
+            pass
+    
     # --- Logique de Pagination (10 vols max par page) ---
     page = request.args.get('page', 1, type=int)
     per_page = 10
@@ -424,6 +517,8 @@ def booking_flights():
                            ville_arr=ville_arr,
                            date_vol=date_vol,
                            itineraries=paginated_itineraries,
+                           next_available_date_str=next_available_date_str,
+                           next_available_date_formatted=next_available_date_formatted,
                            current_page=page,
                            total_pages=total_pages,
                            titre=titre)
@@ -437,7 +532,8 @@ def booking_passengers():
         if 'id_vol_final' in request.form:
             vol_final = {
                 'id_vol': request.form.get('id_vol_final'),
-                'classe': request.form.get('classe')
+                'classe': request.form.get('classe'),
+                'prix': float(request.form.get('prix', 0))
             }
             search_params = session.get('search_params', {})
             
@@ -446,18 +542,28 @@ def booking_passengers():
             else:
                 session['vol_aller'] = vol_final
                 
+    # Garde-fou : s'il n'y a pas de vol_aller sélectionné, retour au début
+    if 'vol_aller' not in session:
+        return redirect(url_for('client.booking'))
+        
     return render_template('client/booking_passengers.html')
 
 @client_bp.route('/booking-options', methods=['GET', 'POST'])
 @login_required
 def booking_options():
     """Options"""
+    if 'vol_aller' not in session:
+        return redirect(url_for('client.booking'))
+        
     return render_template('client/booking_options.html')
 
 @client_bp.route('/booking-payment', methods=['GET', 'POST'])
 @login_required
 def booking_payment():
     """Payement"""
+    if 'vol_aller' not in session:
+        return redirect(url_for('client.booking'))
+        
     return render_template('client/booking_payment.html')
 
 @client_bp.route('/mes-reservations', methods=['GET', 'POST'])
