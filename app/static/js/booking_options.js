@@ -1,3 +1,10 @@
+// --- FIX CACHE NAVIGATEUR (Bouton Retour) ---
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
     const flightDataElement = document.getElementById('bookingFlightsData');
     if (!flightDataElement) return;
@@ -96,6 +103,22 @@ let passengers = [];
 let basePricesAller = {};
 let basePricesRetour = {};
 
+/**
+ * Met à jour l'affichage du modèle de l'avion pour le segment de vol sélectionné.
+ * @param {string} type - 'aller' ou 'retour'
+ * @param {number} idx - L'index du segment de vol
+ */
+function updateAircraftModelDisplay(type, idx) {
+    const mapContainer = document.getElementById(`map-${type}-${idx}`);
+    const aircraftModelDisplay = document.getElementById('aircraft-model-display');
+    if (aircraftModelDisplay && mapContainer && mapContainer.dataset.avion) {
+        const avion = JSON.parse(mapContainer.dataset.avion);
+        aircraftModelDisplay.innerHTML = `<span class="has-text-weight-normal">${avion.modele}</span> - `;
+    } else if (aircraftModelDisplay) {
+        aircraftModelDisplay.innerHTML = ''; // Vide le champ si aucune donnée
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const dataEl = document.getElementById('bookingOptionsData');
     if (!dataEl) return;
@@ -128,6 +151,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.selectPassenger(1);
     window.updatePassengerBadges();
     window.checkAllSeatsAssigned();
+
+    // Appel initial pour afficher le modèle du premier avion
+    updateAircraftModelDisplay(currentLegType, 0);
 });
 
 window.updateAllPassengerCards = function() {
@@ -186,6 +212,8 @@ window.switchLeg = function(type, idx, element) {
     document.querySelectorAll('.seat-map-container').forEach(c => c.style.display = 'none');
     document.getElementById('map-' + type + '-' + idx).style.display = 'block';
     
+    // Met à jour l'affichage du modèle d'avion lors du changement de segment
+    updateAircraftModelDisplay(type, idx);
     window.updateAllPassengerCards();
     window.updatePassengerBadges();
     
@@ -504,7 +532,7 @@ window.calculateGrandTotal = function() {
     if (displayEl) displayEl.innerText = totalStr;
     
     // Synchroniser dynamiquement avec l'en-tête de réservation (Booking Header)
-    document.querySelectorAll('.header-total-price, #headerTotalPrice, .panier-total').forEach(el => {
+    document.querySelectorAll('.header-total-price, #headerTotalPrice, .panier-total, .booking-base-total, #bookingBaseTotal, #total-panier').forEach(el => {
         el.innerText = totalStr;
     });
 }

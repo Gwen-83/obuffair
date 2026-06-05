@@ -1,0 +1,143 @@
+{% extends "components/base.html" %}
+
+{% block title %}Confirmation de votre réservation - O'Buffair{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/booking_confirmation.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="section confirmation-section">
+    <div class="container">
+
+        {% if error %}
+        <div class="confirmation-header">
+            <div class="checkmark-circle" style="background-color: #FF3B30; animation: none; transform: scale(1); opacity: 1;">
+                <i class="fas fa-times"></i>
+            </div>
+            <h1 class="title is-2">Échec de la réservation</h1>
+            <p class="subtitle is-5">Une erreur est survenue lors de l'enregistrement en base de données.</p>
+        </div>
+        
+        <div class="notification is-danger mt-5" style="max-width: 600px; margin: 0 auto; border-radius: 12px; box-shadow: var(--shadow-soft);">
+            <h4 class="title is-6 has-text-white mb-2"><i class="fas fa-database mr-2"></i>Détails de l'erreur SQL / Serveur :</h4>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; font-family: monospace; word-break: break-word; font-size: 0.9rem;">
+                {{ error }}
+            </div>
+        </div>
+
+        <div class="actions-container">
+            <a href="{{ url_for('client.booking_payment') }}" class="button is-primary is-medium">
+                <span class="icon"><i class="fas fa-redo"></i></span>
+                <span>Réessayer le paiement</span>
+            </a>
+        </div>
+        {% else %}
+        <div class="confirmation-header">
+            <div class="checkmark-circle">
+                <i class="fas fa-check"></i>
+            </div>
+            <h1 class="title is-2">Réservation Confirmée</h1>
+            <p class="subtitle is-5">Votre voyage est réservé ! Vous recevrez un e-mail de confirmation avec tous les détails.</p>
+        </div>
+
+        {% if reservation and reservation.billets %}
+        {% set billet = reservation.billets[0] %}
+        {% set vol = billet.vol %}
+        {% set passager = billet.passager %}
+
+        <div class="ticket-card">
+            <div class="ticket-header">
+                <div class="airline-logo">
+                    <i class="fas fa-plane-departure"></i> O'Buffair
+                </div>
+                <div class="pnr-code">
+                    <span class="pnr-label">PNR</span>
+                    <span class="pnr-value">{{ reservation.pnr }}</span>
+                </div>
+            </div>
+
+            <div class="ticket-route">
+                <div class="route-col">
+                    <div class="iata-code">{{ vol.id_aeroport_depart }}</div>
+                    <div class="city-name">{{ vol.aeroport_depart.ville }}</div>
+                </div>
+                <div class="route-path">
+                    <div class="path-line"></div>
+                    <i class="fas fa-plane plane-icon"></i>
+                </div>
+                <div class="route-col is-right">
+                    <div class="iata-code">{{ vol.id_aeroport_arrivee }}</div>
+                    <div class="city-name">{{ vol.aeroport_arrivee.ville }}</div>
+                </div>
+            </div>
+
+            <div class="ticket-details">
+                <div class="detail-item">
+                    <span class="detail-label">Passager</span>
+                    <span class="detail-value">{{ passager.prenom }} {{ passager.nom | upper }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Date</span>
+                    <span class="detail-value">{{ vol.date_heure_dep_utc.strftime('%d %b %Y') }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Départ</span>
+                    <span class="detail-value">{{ vol.date_heure_dep_utc.strftime('%H:%M') }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Siège</span>
+                    <span class="detail-value">{{ billet.siege or 'Non assigné' }}</span>
+                </div>
+                 <div class="detail-item">
+                    <span class="detail-label">Classe</span>
+                    <span class="detail-value">{{ billet.classe }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Vol</span>
+                    <span class="detail-value">OB{{ vol.id_vol }}</span>
+                </div>
+            </div>
+
+            <div class="ticket-footer">
+                <div class="barcode">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PNR:{{reservation.pnr}}-VOL:{{vol.id_vol}}-PASS:{{passager.id_passager}}" alt="QR Code">
+                </div>
+                <div class="footer-text">
+                    Présentez ce billet à l'embarquement. Bon voyage !
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="notification is-danger mt-5">Erreur technique : Aucun billet généré pour cette réservation.</div>
+        {% endif %}
+
+        <div class="actions-container">
+            <a href="{{ url_for('client.download_ticket', reservation_id=reservation.id_reservation) }}" class="button is-primary is-medium">
+                <span class="icon"><i class="fas fa-download"></i></span>
+                <span>Télécharger le billet</span>
+            </a>
+            <a href="{{ url_for('client.mes_reservations') }}" class="button is-light is-medium">
+                <span class="icon"><i class="fas fa-history"></i></span>
+                <span>Voir mes réservations</span>
+            </a>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{% if not error %}
+<script>
+    // Effet confetti pour célébrer la réservation
+    if (typeof confetti === 'function') {
+        setTimeout(() => {
+            confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
+        }, 300);
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+{% endif %}
+{% endblock %}

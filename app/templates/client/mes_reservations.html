@@ -17,70 +17,69 @@
             </a>
         </div>
         
-        {% for flight in reservations %}
-        <div class="flighty-card">
-            <div class="flighty-header">
-                <div class="flighty-airline">
-                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair {{ flight.flight_number }} • {{ flight.date }}
+        {% for resa in reservations %}
+        <div class="resa-booking-card">
+            <div class="resa-header-top">
+                <div>
+                    <h3 class="title is-5 m-0" style="color: var(--primary);">Réservation <span style="font-family: monospace;">{{ resa.pnr }}</span></h3>
+                    <p class="is-size-7 has-text-grey mt-1">Effectuée le {{ resa.date_resa }} • Statut: <strong style="color: {% if resa.statut == 'Confirmee' %}var(--flighty-green){% else %}var(--flighty-orange){% endif %};">{{ resa.statut }}</strong></p>
                 </div>
-                <div class="flighty-status {{ flight.status_class }}">{{ flight.status_text }}</div>
+                <a href="{{ url_for('client.gerer_reservation', pnr=resa.pnr) }}" class="button is-primary is-outlined is-rounded font-weight-bold">
+                    Gérer la réservation
+                </a>
             </div>
 
-            <div class="flighty-route">
+            {% for vol in resa.vols %}
+            <div class="flighty-route mb-4" style="background: #F8FAFC; padding: 1rem; border-radius: 12px;">
                 <div style="width: 100px;">
-                    <div class="flighty-time {% if flight.is_delayed %}delayed{% endif %}">
-                        {{ flight.dep_time }}
-                        {% if flight.is_delayed %}
-                        <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">{{ flight.original_dep_time }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="flighty-iata">{{ flight.dep_iata }}</div>
-                    <div class="flighty-city">{{ flight.dep_city }}</div>
+                    <div class="flighty-time">{{ vol.dep_time }}</div>
+                    <div class="flighty-iata">{{ vol.dep_iata }}</div>
+                    <div class="flighty-city">{{ vol.dep_city }}</div>
                 </div>
                 <div class="flighty-path">
-                    {% if not flight.is_direct %}
-                    <div class="flighty-stop">{{ flight.stopover }}</div>
-                    {% endif %}
+                    <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="text-align: center;">{{ vol.flight_number }} • {{ vol.date }}</div>
                     <i class="fas fa-plane"></i>
                 </div>
                 <div style="width: 100px; text-align: right;">
-                    <div class="flighty-time {% if flight.is_delayed %}delayed{% endif %}">
-                        {{ flight.arr_time }}
-                        {% if flight.is_delayed %}
-                        <span class="is-size-7 has-text-grey" style="text-decoration: line-through;">{{ flight.original_arr_time }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="flighty-iata">{{ flight.arr_iata }}</div>
-                    <div class="flighty-city">{{ flight.arr_city }}</div>
+                    <div class="flighty-time">{{ vol.arr_time }}</div>
+                    <div class="flighty-iata">{{ vol.arr_iata }}</div>
+                    <div class="flighty-city">{{ vol.arr_city }}</div>
                 </div>
+            </div>
+            {% endfor %}
+
+            <div class="has-text-centered mt-4">
+                <button class="button is-ghost toggle-details-btn" data-target="details-{{ resa.id_reservation }}" style="color: var(--flighty-gray); font-weight: 600;">
+                    Voir les cartes d'embarquement <i class="fas fa-chevron-down ml-2"></i>
+                </button>
             </div>
 
-            <div class="flighty-footer">
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Terminal</span>
-                    <span class="flighty-value">{{ flight.terminal }}</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Siège</span>
-                    <span class="flighty-value">{{ flight.seat }}</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Repas à bord</span>
-                    <span class="flighty-value"><i class="fas {{ flight.meal_icon }} is-size-6 mr-1" style="color: {{ flight.meal_color }};"></i> {{ flight.meal }}</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">Bagages</span>
-                    <span class="flighty-value"><i class="fas {{ flight.baggage_icon }} is-size-6 mr-1" style="color: {{ flight.baggage_color }};"></i> {{ flight.baggage }}</span>
-                </div>
-                <div class="flighty-info-group">
-                    <span class="flighty-label">PNR (Billet)</span>
-                    <span class="flighty-value" style="font-family: monospace;">{{ flight.pnr }}</span>
-                </div>
-            </div>
-            <div class="mt-4 has-text-right">
-                <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
-                    Gérer ma réservation <i class="fas fa-chevron-right ml-2 is-size-7"></i>
-                </a>
+            <div class="boarding-passes-wrapper" id="details-{{ resa.id_reservation }}">
+                {% for vol in resa.vols %}
+                    <h4 class="title is-6 mt-4 mb-3" style="color: var(--primary);">Vol {{ vol.flight_number }}</h4>
+                    {% for passager in vol.passagers %}
+                    <div class="mini-boarding-pass">
+                        <div class="bp-header">
+                            <span>{{ passager.prenom }} {{ passager.nom }}</span>
+                            <span class="tag is-dark is-rounded is-small">{{ passager.classe }}</span>
+                        </div>
+                        <div class="bp-body">
+                            <div class="bp-field">
+                                <div class="bp-label">Siège</div>
+                                <div class="bp-value">{{ passager.seat }}</div>
+                            </div>
+                            <div class="bp-field">
+                                <div class="bp-label">Repas</div>
+                                <div class="bp-value">{{ passager.meal }}</div>
+                            </div>
+                            <div class="bp-field">
+                                <div class="bp-label">Bagages</div>
+                                <div class="bp-value">{{ passager.baggage }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% endfor %}
             </div>
         </div>
         {% else %}
@@ -93,4 +92,8 @@
 
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+    <script src="{{ url_for('static', filename='js/mes_reservations.js') }}"></script>
 {% endblock %}

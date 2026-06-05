@@ -11,7 +11,9 @@
         
         <div class="column is-6" style="display: flex; flex-direction: column;">
             <div class="mb-4">
-                <h3 class="title is-4 mb-2" style="color: var(--primary);">Choix des sièges</h3>
+                <h3 class="title is-4 mb-2" style="color: var(--primary);">
+                    <span id="aircraft-model-display"></span>Choix des sièges
+                </h3>
                 <p class="is-size-6 has-text-grey mb-3" style="font-weight: 500;" id="remaining-seats-display">
                     Vous avez <strong style="color: var(--primary);">{{ nb_passagers * (aller_legs|length + retour_legs|length) }} sièges</strong> à assigner au total.
                 </p>

@@ -171,7 +171,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="button is-accent is-medium is-fullwidth mt-5" style="border-radius: 12px; font-weight: 700; letter-spacing: -0.2px;" {% if not status.all_assigned %}disabled{% endif %}>
+                    <button id="payButton" type="submit" class="button is-accent is-medium is-fullwidth mt-5" style="border-radius: 12px; font-weight: 700; letter-spacing: -0.2px;" {% if not status.all_assigned %}disabled{% endif %}>
                         {% if status.all_assigned %}
                             <i class="fas fa-lock mr-2"></i> Payer {{ "%.2f"|format(cart_total) }} €
                         {% else %}
@@ -189,4 +189,35 @@
         
     </div>
 </div>
+
+<!-- Overlay de chargement pour le paiement -->
+<div id="payment-overlay" class="payment-overlay">
+    <div class="payment-spinner"></div>
+    <h3 class="title is-4 has-text-white mt-5">Confirmation en cours...</h3>
+    <p class="has-text-light">Veuillez ne pas fermer cette page.</p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form[action="{{ url_for('client.booking_payment') }}"]');
+    const overlay = document.getElementById('payment-overlay');
+    const payButton = document.getElementById('payButton');
+    
+    if (form && overlay) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            overlay.classList.add('is-active');
+            
+            // Double protection : désactiver le bouton pour éviter les clics multiples
+            if (payButton) {
+                payButton.disabled = true;
+                payButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Traitement...';
+            }
+            
+            // Simule un délai de traitement de paiement pour l'UX
+            setTimeout(() => { form.submit(); }, 2500);
+        });
+    }
+});
+</script>
 {% endblock %}

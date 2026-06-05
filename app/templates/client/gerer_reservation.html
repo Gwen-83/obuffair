@@ -13,46 +13,73 @@
         <div class="is-flex is-justify-content-space-between is-align-items-center mb-5" style="flex-wrap: wrap; gap: 1rem;">
             <div>
                 <h2 class="title is-3 m-0" style="color: var(--primary); font-weight: 800;">Gérer ma réservation</h2>
-                <p class="subtitle is-6 has-text-grey">Vol O'Buffair {{ reservation.flight_number }} pour {{ reservation.arr_city }} ({{ reservation.arr_iata }}) - PNR: <strong style="font-family: monospace; color: var(--flighty-text);">{{ reservation.pnr }}</strong></p>
+                <p class="subtitle is-6 has-text-grey">
+                    PNR: <strong style="font-family: monospace; color: var(--flighty-text); font-size: 1.1em;">{{ reservation.pnr }}</strong> 
+                    • Statut : <span class="tag is-light {% if reservation.statut == 'Confirmee' %}is-success{% else %}is-warning{% endif %}">{{ reservation.statut }}</span>
+                </p>
             </div>
             <a href="{{ url_for('client.mes_reservations') }}" class="button is-light is-rounded font-weight-bold">
                 <i class="fas fa-arrow-left mr-2"></i> Retour aux réservations
             </a>
         </div>
         
-        <!-- Options de la réservation -->
-        <div class="flighty-card">
-            <h3 class="option-title"><i class="fas fa-chair mr-2"></i> Siège</h3>
-            <div class="option-box">
-                <div>
-                    <p class="has-text-grey mb-1">Sélection actuelle</p>
-                    <p class="current-selection">Siège <span class="tag {{ reservation.seat_class }} is-light">{{ reservation.seat }}</span> ({{ reservation.seat_details }})</p>
+        {% for vol in reservation.vols %}
+        <div class="mb-6">
+            <div class="is-flex is-align-items-center mb-4">
+                <div class="icon is-medium has-background-primary has-text-white is-rounded mr-3" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-plane"></i>
                 </div>
-                <button class="button is-primary is-light font-weight-bold">Changer de siège</button>
+                <div>
+                    <h3 class="title is-4 m-0" style="color: var(--primary);">Vol {{ vol.flight_number }}</h3>
+                    <p class="is-size-6 has-text-grey font-weight-bold">{{ vol.dep_iata }} <i class="fas fa-arrow-right mx-2"></i> {{ vol.arr_city }} ({{ vol.arr_iata }}) • {{ vol.date }}</p>
+                </div>
             </div>
-        </div>
 
-        <div class="flighty-card">
-            <h3 class="option-title"><i class="fas fa-utensils mr-2"></i> Repas à bord</h3>
-            <div class="option-box">
-                <div>
-                    <p class="has-text-grey mb-1">Sélection actuelle</p>
-                    <p class="current-selection">Menu <span class="tag {{ reservation.meal_class }} is-light">{{ reservation.meal }}</span></p>
+            {% for passager in vol.passagers %}
+            <div class="flighty-card mb-4" style="border-left: 4px solid var(--primary);">
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-3 pb-3" style="border-bottom: 1px solid #E5E5EA;">
+                    <h4 class="title is-5 m-0"><i class="fas fa-user-circle mr-2" style="color: var(--flighty-gray);"></i> {{ passager.prenom }} {{ passager.nom }}</h4>
+                    <span class="tag is-dark">{{ passager.classe }}</span>
                 </div>
-                <button class="button is-primary is-light font-weight-bold">Modifier le repas</button>
-            </div>
-        </div>
-
-        <div class="flighty-card">
-            <h3 class="option-title"><i class="fas fa-suitcase-rolling mr-2"></i> Bagages</h3>
-            <div class="option-box">
-                <div>
-                    <p class="has-text-grey mb-1">Franchise incluse</p>
-                    <p class="current-selection">{{ reservation.baggage }}</p>
+                
+                <div class="columns is-multiline">
+                    <!-- Siège -->
+                    <div class="column is-4">
+                        <div class="option-box" style="height: 100%; margin-bottom: 0;">
+                            <div style="flex: 1;">
+                                <p class="has-text-grey mb-1 is-size-7 is-uppercase font-weight-bold"><i class="fas fa-chair mr-2"></i> Siège</p>
+                                <p class="current-selection is-size-5">{{ passager.seat }}</p>
+                            </div>
+                            <button class="button is-small is-light is-rounded font-weight-bold" disabled>Modifier</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Repas -->
+                    <div class="column is-4">
+                        <div class="option-box" style="height: 100%; margin-bottom: 0;">
+                            <div style="flex: 1;">
+                                <p class="has-text-grey mb-1 is-size-7 is-uppercase font-weight-bold"><i class="fas fa-utensils mr-2"></i> Repas</p>
+                                <p class="current-selection is-size-5">{{ passager.meal }}</p>
+                            </div>
+                            <button class="button is-small is-light is-rounded font-weight-bold" disabled>Modifier</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Bagages -->
+                    <div class="column is-4">
+                        <div class="option-box" style="height: 100%; margin-bottom: 0;">
+                            <div style="flex: 1;">
+                                <p class="has-text-grey mb-1 is-size-7 is-uppercase font-weight-bold"><i class="fas fa-suitcase-rolling mr-2"></i> Bagages</p>
+                                <p class="current-selection is-size-5">{{ passager.baggage }}</p>
+                            </div>
+                            <button class="button is-small is-light is-rounded font-weight-bold" disabled>Modifier</button>
+                        </div>
+                    </div>
                 </div>
-                <button class="button is-primary is-light font-weight-bold">Ajouter un bagage</button>
             </div>
+            {% endfor %}
         </div>
+        {% endfor %}
 
         <!-- Zone de danger -->
         <div class="flighty-card danger-zone mt-6">

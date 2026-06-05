@@ -78,11 +78,11 @@ class Vols(db.Model):
     
     id_vol = db.Column(db.Integer, primary_key = True)
 
-    immatriculation_avion = db.Column(db.String(10), nullable=False, index=True)
+    immatriculation_avion = db.Column(db.String(10), db.ForeignKey('avions.immatriculation'), nullable=False, index=True)
 
-    id_aeroport_depart = db.Column(db.String(3), nullable=False, index=True)
+    id_aeroport_depart = db.Column(db.String(3), db.ForeignKey('aeroports.id_aeroport'), nullable=False, index=True)
 
-    id_aeroport_arrivee = db.Column(db.String(3), nullable=False, index=True)
+    id_aeroport_arrivee = db.Column(db.String(3), db.ForeignKey('aeroports.id_aeroport'), nullable=False, index=True)
 
     date_heure_dep_utc = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -94,6 +94,9 @@ class Vols(db.Model):
 
     # --- Relations ---
     billets = db.relationship('Billet', back_populates='vol', lazy=True)
+    avion = db.relationship('Avion', backref=db.backref('vols', lazy=True))
+    aeroport_depart = db.relationship('Aeroport', foreign_keys=[id_aeroport_depart])
+    aeroport_arrivee = db.relationship('Aeroport', foreign_keys=[id_aeroport_arrivee])
 
     def __repr__(self):
         return f'<Vol {self.id_vol}: {self.id_aeroport_depart} -> {self.id_aeroport_arrivee}>'
@@ -144,7 +147,7 @@ class Aeroport(db.Model):
     __tablename__ = 'aeroports'
     __table_args__ = {'extend_existing': True}
 
-    id_aeroport = db.Column(db.String(4), primary_key=True, nullable=False)
+    id_aeroport = db.Column(db.String(3), primary_key=True, nullable=False)
     nom = db.Column(db.String(120), nullable=False)
     ville = db.Column(db.String(100), nullable=False)
     pays = db.Column(db.String(100), nullable=False)
@@ -179,6 +182,7 @@ class Reservation(db.Model):
     id_client = db.Column(db.Integer, db.ForeignKey('clients.id_client'), nullable=False)
     date_reservation = db.Column(db.DateTime, default=datetime.utcnow)
     statut = db.Column(db.Enum('Confirmee', 'Annulee', 'En cours', 'En modification', 'Erreur'), default='Confirmee')
+    pnr = db.Column(db.String(10), unique=True, nullable=True)
 
     # --- Relations ---
     client = db.relationship('User', backref=db.backref('reservations', lazy='dynamic'))

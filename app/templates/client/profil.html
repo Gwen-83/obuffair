@@ -75,27 +75,29 @@
                         <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light" style="border-radius: 20px; font-weight: 600;">Toutes mes réservations</a>
                     </div>
                     
-                    <a href="{{ url_for('client.mes_reservations') }}" style="text-decoration: none; display: block;">
+                    {% if prochains_vols %}
+                    <a href="{{ url_for('client.gerer_reservation', pnr=prochains_vols[0].pnr) }}" style="text-decoration: none; display: block;">
                         <div class="flighty-card" style="transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-premium)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-soft)';">
                             <div class="flighty-header mb-3">
                                 <div class="flighty-airline">
-                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
+                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> {{ prochains_vols[0].flight_number }} • {{ prochains_vols[0].date }}
+                                    <span class="tag is-info is-light ml-2">{{ prochains_vols[0].nb_passagers }} passager(s)</span>
                                 </div>
-                                <div class="flighty-status status-ontime">À l'heure</div>
+                                <div class="flighty-status {{ prochains_vols[0].status_class }}">{{ prochains_vols[0].status_text }}</div>
                             </div>
                             
                             <div class="is-flex is-align-items-center is-justify-content-space-between">
                                 <div>
-                                    <span class="flighty-iata" style="font-size: 28px;">CDG</span>
+                                    <span class="flighty-iata" style="font-size: 28px;">{{ prochains_vols[0].dep_iata }}</span>
                                     <i class="fas fa-arrow-right mx-3" style="color: var(--flighty-gray);"></i>
-                                    <span class="flighty-iata" style="font-size: 28px;">FCO</span>
+                                    <span class="flighty-iata" style="font-size: 28px;">{{ prochains_vols[0].arr_iata }}</span>
                                 </div>
                                 <div class="has-text-right">
-                                    <div class="flighty-time" style="font-size: 18px; margin-bottom: 0;">10:30 - 12:35</div>
+                                    <div class="flighty-time" style="font-size: 18px; margin-bottom: 0;">{{ prochains_vols[0].dep_time }} - {{ prochains_vols[0].arr_time }}</div>
                                 </div>
                                 <div class="has-text-right">
                                     <span class="flighty-label">PNR</span>
-                                    <span class="flighty-value is-size-6" style="font-family: monospace;">X8B9Q2</span>
+                                    <span class="flighty-value is-size-6" style="font-family: monospace;">{{ prochains_vols[0].pnr }}</span>
                                 </div>
                                 <div>
                                     <i class="fas fa-chevron-right" style="color: var(--flighty-gray);"></i>
@@ -103,6 +105,11 @@
                             </div>
                         </div>
                     </a>
+                    {% else %}
+                    <div class="notification is-light has-text-centered" style="border-radius: 12px;">
+                        Aucun vol à venir.
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div id="tab-profil" class="content-tab is-hidden">
