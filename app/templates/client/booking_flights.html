@@ -108,26 +108,34 @@
                 <span class="badge {% if itin.stops == 0 %}direct{% else %}stop{% endif %}">{{ itin.stops_text }}</span>
             </div>
             
-            <div class="flight-route" style="background: #F8FAFC; padding: 1rem; border-radius: 12px; margin-bottom: 1rem;">
+            <div class="flight-route" style="background: #F8FAFC; padding: 1.5rem; border-radius: 12px; margin-bottom: 0;">
                 <div style="width: 75px;">
                     <div class="flighty-time">{{ itin.dep_time }}</div>
                     <div class="flighty-iata">{{ iata_dep }}</div>
                     <div class="flighty-city">{{ ville_dep }}</div>
                 </div>
                 
-                <div class="flight-path-wrapper">
-                    <div class="flight-path-line">
-                        <div class="flight-duration">{{ itin.duration }}</div>
+                <div class="flight-path-wrapper" style="flex-grow: 1; padding: 0 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
+                    <div class="flight-duration" style="font-size: 0.85rem; font-weight: 600; color: var(--flighty-gray); margin-bottom: 12px; white-space: nowrap;">
+                        {{ itin.duration }}
+                    </div>
+                    
+                    <div style="width: 100%; height: 2px; background: #D1D1D6; position: relative; margin: 4px 0;">
                         {% if itin.stops > 0 %}
                             {% for i in range(itin.stops) %}
-                                <div class="flight-stop-dot" style="left: {{ (i + 1) * (100 / (itin.stops + 1)) }}%;">
-                                    <span class="flight-stop-iata">{{ itin.segments[i].arr_iata }}</span>
+                                <div style="position: absolute; left: {{ (i + 1) * (100 / (itin.stops + 1)) }}%; top: 50%; transform: translate(-50%, -50%); background: #F8FAFC; padding: 0 8px; font-weight: 800; color: var(--flighty-text); font-size: 16px; letter-spacing: -0.5px; z-index: 2;">
+                                    {{ itin.segments[i].arr_iata }}
                                 </div>
                             {% endfor %}
+                        {% else %}
+                            <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #F8FAFC; padding: 0 8px; z-index: 2;">
+                                <i class="fas fa-plane" style="color: #D1D1D6; font-size: 1rem;"></i>
+                            </div>
                         {% endif %}
                     </div>
-                    <div class="flight-stop-info">
-                        {% if itin.stops == 0 %}Sans escale{% endif %}
+                    
+                    <div class="flight-stop-info" style="font-size: 0.8rem; font-weight: 700; margin-top: 12px; color: {% if itin.stops == 0 %}#34C759{% else %}#FF9500{% endif %}; text-align: center; white-space: nowrap;">
+                        {% if itin.stops == 0 %}Direct{% else %}{% for i in range(itin.stops) %}{{ itin.segments[i].layover }}{% if itin.segments[i].is_short_layover %} <i class="fas fa-exclamation-circle"></i>{% endif %}{% if not loop.last %} • {% endif %}{% endfor %}{% endif %}
                     </div>
                 </div>
                 
@@ -137,22 +145,6 @@
                     <div class="flighty-city">{{ ville_arr }}</div>
                 </div>
             </div>
-
-            {% if itin.stops > 0 %}
-            <div class="flight-amenities" style="flex-direction: column; gap: 4px;">
-                {% for seg in itin.segments %}
-                    {% if not loop.last %}
-                        <span><i class="fas fa-clock" style="color: var(--flighty-gray);"></i> Escale de {{ seg.layover }} à {{ seg.arr_city }} ({{ seg.arr_iata }})
-                        {% if seg.is_short_layover %}<strong style="color: #FF9500; margin-left: 6px;"><i class="fas fa-exclamation-circle"></i> Escale courte</strong>{% endif %}</span>
-                    {% endif %}
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="flight-amenities">
-                <span><i class="fas fa-wifi"></i> Wi-Fi</span>
-                <span><i class="fas fa-plug"></i> Prise USB</span>
-            </div>
-            {% endif %}
         </div>
         
         {% if nb_passagers > 1 %}

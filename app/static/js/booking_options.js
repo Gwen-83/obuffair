@@ -123,19 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataEl = document.getElementById('bookingOptionsData');
     if (!dataEl) return;
 
-    // Injection de style pour les boutons Aller/Retour (Noir et Jaune)
-    const style = document.createElement('style');
-    style.innerHTML = `
-        .segment-item.is-active {
-            background-color: #1C1C1E !important;
-            color: #FFC72C !important;
-            border-color: #FFC72C !important;
-        }
-        .segment-item.is-active i {
-            color: #FFC72C !important;
-        }
-    `;
-    document.head.appendChild(style);
 
     passengers = JSON.parse(dataEl.dataset.passengers || '[]');
     passengers.forEach(p => {
@@ -446,9 +433,8 @@ window.updatePassengerOptions = function(pIndex) {
     const tarifs = JSON.parse(document.getElementById('optionsForm').dataset.tarifs || '{}');
     
     if (highestClass === 'First' || highestClass === 'Business') {
-        bagLabel.innerHTML = `<i class="fas fa-suitcase-rolling mr-2 option-icon"></i> 2 Bagages ${highestClass === 'First' ? '32kg' : '23kg'} (Inclus)`;
-        bagControls.style.setProperty('display', 'none', 'important');
-        document.getElementById(`input_bagages_${pNum}`).value = "0";
+        bagLabel.innerHTML = `<i class="fas fa-suitcase-rolling mr-2 option-icon"></i> Sup. (+${tarifs.bagages_eco['1'] || 45}€/bag) <br><small class="has-text-grey" style="font-weight: 500;">(Déjà 2x${highestClass === 'First' ? '32kg' : '23kg'} Inclus)</small>`;
+        bagControls.style.setProperty('display', 'flex', 'important');
         repasSelect.innerHTML = `<option value="${highestClass === 'First' ? 'gastronomique' : 'premium'}">Menu ${highestClass === 'First' ? 'Gastronomique' : 'Premium'} (Inclus)</option><option value="vegetarien">Menu Végétarien (Inclus)</option>`;
     } else {
         bagLabel.innerHTML = `<i class="fas fa-suitcase-rolling mr-2 option-icon"></i> Bagage 23kg (+${tarifs.bagages_eco['1'] || 45}€)`;
@@ -464,19 +450,23 @@ window.updatePassengerOptions = function(pIndex) {
 
 window.updatePassengerBadges = function() {
     passengers.forEach(p => {
-        let selectedCount = 0;
-        // Utilisation d'un sélecteur robuste basé sur l'ID (ex: siege_aller_0_1)
-        const inputs = document.querySelectorAll(`input[id^="siege_${currentLegType}_"][id$="_${p.num}"]`);
-        inputs.forEach(inp => { if(inp.value) selectedCount++; });
+        const inputCurrentLeg = document.getElementById(`siege_${currentLegType}_${currentLegIdx}_${p.num}`);
         
         const badge = document.getElementById(`pass-seat-badge-${p.index}`);
         const cls = currentLegType === 'aller' ? p.classe_aller : p.classe_retour;
-        if(selectedCount === inputs.length && inputs.length > 0) {
+        if(inputCurrentLeg && inputCurrentLeg.value) {
             badge.className = "tag is-taxiway is-medium font-weight-bold";
-            badge.innerHTML = `<i class="fas fa-check mr-2"></i> ${cls}`;
+            badge.innerHTML = `<i class="fas fa-check mr-2"></i> ${cls} (${inputCurrentLeg.value})`;
         } else {
             badge.className = "tag is-light is-medium font-weight-bold";
             badge.innerHTML = `${cls} • À assigner`;
+        }
+        
+        // Met à jour la classe du thème de la carte selon le segment actif
+        const card = document.getElementById(`pass-card-${p.index}`);
+        if (card) {
+            card.classList.remove('theme-Eco', 'theme-Business', 'theme-First');
+            card.classList.add(`theme-${cls}`);
         }
     });
 }
@@ -486,6 +476,15 @@ window.checkAllSeatsAssigned = function() {
     let missing = 0;
     // Sélectionner dynamiquement tous les champs de sièges via leur préfixe d'ID
     document.querySelectorAll('input[id^="siege_"]').forEach(inp => { if(!inp.value) { allAssigned = false; missing++; }});
+    
+    const remainingDisplay = document.getElementById('remaining-seats-display');
+    if (remainingDisplay) {
+        if (missing === 0) {
+            remainingDisplay.innerHTML = `<strong style="color: #34C759;"><i class="fas fa-check-circle mr-1"></i> Tous les sièges sont assignés</strong>`;
+        } else {
+            remainingDisplay.innerHTML = `Il vous reste <strong style="color: var(--primary);">${missing} siège${missing > 1 ? 's' : ''}</strong> à assigner.`;
+        }
+    }
     
     const btn = document.getElementById('btnSubmitPayment');
     if(btn) {
@@ -516,9 +515,10 @@ window.calculateGrandTotal = function() {
         }
         
         const highest = getHighestClass(p);
+        const bags = document.getElementById('input_bagages_' + p.num).value || '0';
+        total += tarifs.bagages_eco[bags] || 0;
+        
         if (highest === 'Eco') {
-            const bags = document.getElementById('input_bagages_' + p.num).value || '0';
-            total += tarifs.bagages_eco[bags] || 0;
             const repSelect = document.getElementById(`repas_select_${p.num}`);
             if (repSelect) {
                 const rep = repSelect.value;
@@ -532,7 +532,7 @@ window.calculateGrandTotal = function() {
     if (displayEl) displayEl.innerText = totalStr;
     
     // Synchroniser dynamiquement avec l'en-tête de réservation (Booking Header)
-    document.querySelectorAll('.header-total-price, #headerTotalPrice, .panier-total, .booking-base-total, #bookingBaseTotal, #total-panier').forEach(el => {
+    document.querySelectorAll('.header-total-price, #headerTotalPrice, .panier-total, .booking-base-total, #bookingBaseTotal, #total-panier, .cart-total-price').forEach(el => {
         el.innerText = totalStr;
     });
 }

@@ -33,9 +33,27 @@
                 <div class="is-flex is-justify-content-space-between is-align-items-center pb-3" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
                     <div>
                         <span class="tag is-primary is-light font-weight-bold mb-2">Vol Aller</span>
-                        <p class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">
-                            {{ search_params.get('depart') }} <i class="fas fa-arrow-right mx-2 has-text-grey-light is-size-5"></i> {{ search_params.get('arrivee') }}
-                        </p>
+                        <div class="is-flex is-align-items-center mb-1">
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('depart') }}</span>
+                            
+                            {% if aller_legs and aller_legs|length > 1 %}
+                                <div class="is-flex is-align-items-center is-flex-direction-column mx-4" style="width: 80px;">
+                                    <span style="font-size: 0.6rem; color: #FF9500; font-weight: 800; text-transform: uppercase;">{{ aller_legs|length - 1 }} Escale{% if aller_legs|length > 2 %}s{% endif %}</span>
+                                    <div style="width: 100%; height: 2px; background: #D1D1D6; margin: 4px 0; position: relative; display: flex; justify-content: center;">
+                                        {% for i in range(aller_legs|length - 1) %}
+                                            <div style="width: 6px; height: 6px; border-radius: 50%; background: white; border: 2px solid #FF9500; position: absolute; left: {{ (i + 1) * (100 / aller_legs|length) }}%; top: 50%; transform: translate(-50%, -50%);"></div>
+                                        {% endfor %}
+                                    </div>
+                                    <span style="font-size: 0.6rem; color: var(--flighty-gray); font-weight: 700;">
+                                        {% for i in range(aller_legs|length - 1) %}{{ aller_legs[i].arr }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <i class="fas fa-arrow-right mx-4 has-text-grey-light is-size-6"></i>
+                            {% endif %}
+                            
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('arrivee') }}</span>
+                        </div>
                         <p class="is-size-7 has-text-grey mt-1">Date : <span class="font-weight-bold">{{ search_params.get('date_aller') }}</span></p>
                     </div>
                     <div class="has-text-right">
@@ -49,9 +67,27 @@
                 <div class="is-flex is-justify-content-space-between is-align-items-center pt-4">
                     <div>
                         <span class="tag is-info is-light font-weight-bold mb-2">Vol Retour</span>
-                        <p class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">
-                            {{ search_params.get('arrivee') }} <i class="fas fa-arrow-right mx-2 has-text-grey-light is-size-5"></i> {{ search_params.get('depart') }}
-                        </p>
+                        <div class="is-flex is-align-items-center mb-1">
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('arrivee') }}</span>
+                            
+                            {% if retour_legs and retour_legs|length > 1 %}
+                                <div class="is-flex is-align-items-center is-flex-direction-column mx-4" style="width: 80px;">
+                                    <span style="font-size: 0.6rem; color: #FF9500; font-weight: 800; text-transform: uppercase;">{{ retour_legs|length - 1 }} Escale{% if retour_legs|length > 2 %}s{% endif %}</span>
+                                    <div style="width: 100%; height: 2px; background: #D1D1D6; margin: 4px 0; position: relative; display: flex; justify-content: center;">
+                                        {% for i in range(retour_legs|length - 1) %}
+                                            <div style="width: 6px; height: 6px; border-radius: 50%; background: white; border: 2px solid #FF9500; position: absolute; left: {{ (i + 1) * (100 / retour_legs|length) }}%; top: 50%; transform: translate(-50%, -50%);"></div>
+                                        {% endfor %}
+                                    </div>
+                                    <span style="font-size: 0.6rem; color: var(--flighty-gray); font-weight: 700;">
+                                        {% for i in range(retour_legs|length - 1) %}{{ retour_legs[i].arr }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <i class="fas fa-arrow-right mx-4 has-text-grey-light is-size-6"></i>
+                            {% endif %}
+                            
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('depart') }}</span>
+                        </div>
                         <p class="is-size-7 has-text-grey mt-1">Date : <span class="font-weight-bold">{{ search_params.get('date_retour') }}</span></p>
                     </div>
                     <div class="has-text-right">
@@ -100,11 +136,9 @@
                         <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;"><i class="fas fa-plane mr-2" style="color: var(--primary);"></i> Aller: {{ p_opt.get('classe_aller', 'Eco') }} {% if search_params.get('type_vol') == 'AR' %} | Retour: {{ p_opt.get('classe_retour', 'Eco') }}{% endif %}</span>
                         <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;">
                             <i class="fas fa-suitcase-rolling mr-2" style="color: var(--primary);"></i>
-                            {% if p_opt.get('bagages', '0') == '0' %}1 Cabine
-                            {% elif p_opt.get('bagages') == '1' %}1 Soute
-                            {% elif p_opt.get('bagages') == '2' %}2 Soute
-                            {% elif '2_' in p_opt.get('bagages', '') %}2 Soute
-                            {% endif %}
+                            {% set bag_str = p_opt.get('bagages', '0') | string %}
+                            {% set bag_count = bag_str.split('_')[0] | int %}
+                            {{ bag_count }} Soute
                         </span>
                         <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;"><i class="fas fa-utensils mr-2" style="color: var(--primary);"></i> {{ p_opt.get('repas', 'Standard') | capitalize }}</span>
                     </div>

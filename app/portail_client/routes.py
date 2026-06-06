@@ -753,10 +753,14 @@ def booking_payment():
                     prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
                     prix_options += TARIFS_OPTIONS['repas_eco'].get(rep, 0)
                 elif highest_class == 'Business':
-                    bag = '2_23kg'
+                    prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
+                    bag_qty = int(bag) if str(bag).isdigit() else 0
+                    bag = f"{bag_qty + 2}_23kg"
                     if rep not in ['premium', 'vegetarien']: rep = 'premium'
                 elif highest_class == 'First':
-                    bag = '2_32kg'
+                    prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
+                    bag_qty = int(bag) if str(bag).isdigit() else 0
+                    bag = f"{bag_qty + 2}_32kg"
                     if rep not in ['gastronomique', 'vegetarien']: rep = 'gastronomique'
                 
                 options_per_passager.append({'bagages': bag, 'repas': rep, 'classe_aller': p_class_aller, 'classe_retour': p_class_retour, 'sieges_aller': sieges_aller, 'sieges_retour': sieges_retour})
@@ -788,12 +792,27 @@ def booking_payment():
                 for key in ['search_params', 'vol_aller', 'vol_retour', 'options', 'passagers_data', 'total_panier']:
                     session.pop(key, None)
                 
-                return redirect(url_for('client.accueil'))
+                return redirect(url_for('client.booking_confirmation', reservation_id=reservation_id))
             else:
                 session['booking_error'] = error_msg
                 return redirect(url_for('client.booking_confirmation', reservation_id='error'))
         
-    return render_template('client/booking_payment.html')
+    # --- RÉCUPÉRATION DES DÉTAILS D'ESCALES POUR L'AFFICHAGE ---
+    def get_leg_info(id_vol_str):
+        if not id_vol_str: return []
+        legs = str(id_vol_str).split('_')
+        leg_data = []
+        for leg_id in legs:
+            if not leg_id: continue
+            vol_info = db.session.execute(text("SELECT id_aeroport_depart, id_aeroport_arrivee FROM vols WHERE id_vol = :id_vol"), {'id_vol': leg_id}).mappings().first()
+            if vol_info:
+                leg_data.append({'dep': vol_info['id_aeroport_depart'], 'arr': vol_info['id_aeroport_arrivee']})
+        return leg_data
+
+    aller_legs = get_leg_info(vol_aller.get('id_vol'))
+    retour_legs = get_leg_info(vol_retour.get('id_vol'))
+
+    return render_template('client/booking_payment.html', aller_legs=aller_legs, retour_legs=retour_legs)
 
 def create_reservation_in_db(session_data):
     """

@@ -42,69 +42,115 @@
         </div>
 
         {% if reservation and reservation.billets %}
-        {% set billet = reservation.billets[0] %}
-        {% set vol = billet.vol %}
-        {% set passager = billet.passager %}
+        {% set passagers_names = [] %}
+        {% set vols_list = [] %}
+        {% set bagages_total = namespace(count=0) %}
+        {% set repas_list = [] %}
+        {% set classes = [] %}
+        
+        {% for b in reservation.billets %}
+            {% set p_name = b.passager.prenom ~ ' ' ~ b.passager.nom | upper %}
+            {% if p_name not in passagers_names %}{% set _ = passagers_names.append(p_name) %}{% endif %}
+            {% if b.vol not in vols_list %}{% set _ = vols_list.append(b.vol) %}{% endif %}
+            {% if b.classe not in classes %}{% set _ = classes.append(b.classe) %}{% endif %}
+            
+            {% set bagages_total.count = bagages_total.count + b.bagages_sup %}
+            
+            {% set repas_name = 'Standard' %}
+            {% if b.options_repas == 1 %}{% set repas_name = 'Premium' %}{% endif %}
+            {% if b.options_repas == 2 %}{% set repas_name = 'Végétarien' %}{% endif %}
+            {% if b.options_repas == 3 %}{% set repas_name = 'Gastronomique' %}{% endif %}
+            {% if repas_name not in repas_list %}{% set _ = repas_list.append(repas_name) %}{% endif %}
+        {% endfor %}
+        
+        {% set vols_sorted = vols_list | sort(attribute='date_heure_dep_utc') %}
+        {% set nb_pass = passagers_names | length %}
+        {% set main_passenger = passagers_names[0] if nb_pass > 0 else 'Passager' %}
+        
+        {% set dest = namespace(iata=vols_sorted[-1].id_aeroport_arrivee, city=vols_sorted[-1].aeroport_arrivee.ville) %}
+        {% set is_ar = false %}
+        {% if vols_sorted|length > 1 and vols_sorted[-1].id_aeroport_arrivee == vols_sorted[0].id_aeroport_depart %}
+            {% set is_ar = true %}
+            {% for v in vols_sorted %}
+                {% if v.id_aeroport_arrivee != vols_sorted[0].id_aeroport_depart %}
+                    {% set dest.iata = v.id_aeroport_arrivee %}
+                    {% set dest.city = v.aeroport_arrivee.ville %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 
-        <div class="ticket-card">
-            <div class="ticket-header">
-                <div class="airline-logo">
-                    <i class="fas fa-plane-departure"></i> O'Buffair
-                </div>
-                <div class="pnr-code">
-                    <span class="pnr-label">PNR</span>
-                    <span class="pnr-value">{{ reservation.pnr }}</span>
-                </div>
-            </div>
+        <div class="bp-wrapper {% if nb_pass > 1 %}stacked{% endif %} mb-6">
+            <div class="boarding-pass-container">
+                <div class="bp-main">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-5">
+                        <div class="has-text-primary has-text-weight-bold is-size-5"><i class="fas fa-plane-departure mr-2"></i> O'Buffair</div>
+                        <div class="tag is-success is-light font-weight-bold is-medium"><i class="fas fa-check-circle mr-2"></i> Confirmé</div>
+                    </div>
 
-            <div class="ticket-route">
-                <div class="route-col">
-                    <div class="iata-code">{{ vol.id_aeroport_depart }}</div>
-                    <div class="city-name">{{ vol.aeroport_depart.ville }}</div>
-                </div>
-                <div class="route-path">
-                    <div class="path-line"></div>
-                    <i class="fas fa-plane plane-icon"></i>
-                </div>
-                <div class="route-col is-right">
-                    <div class="iata-code">{{ vol.id_aeroport_arrivee }}</div>
-                    <div class="city-name">{{ vol.aeroport_arrivee.ville }}</div>
-                </div>
-            </div>
+                    <div class="mb-5">
+                        <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">PASSAGER(S)</div>
+                        <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">
+                            {{ main_passenger }}
+                            {% if nb_pass > 1 %}
+                            <span class="tag is-dark ml-2">+ {{ nb_pass - 1 }} autre(s)</span>
+                            {% endif %}
+                        </div>
+                    </div>
 
-            <div class="ticket-details">
-                <div class="detail-item">
-                    <span class="detail-label">Passager</span>
-                    <span class="detail-value">{{ passager.prenom }} {{ passager.nom | upper }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Date</span>
-                    <span class="detail-value">{{ vol.date_heure_dep_utc.strftime('%d %b %Y') }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Départ</span>
-                    <span class="detail-value">{{ vol.date_heure_dep_utc.strftime('%H:%M') }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Siège</span>
-                    <span class="detail-value">{{ billet.siege or 'Non assigné' }}</span>
-                </div>
-                 <div class="detail-item">
-                    <span class="detail-label">Classe</span>
-                    <span class="detail-value">{{ billet.classe }}</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Vol</span>
-                    <span class="detail-value">OB{{ vol.id_vol }}</span>
-                </div>
-            </div>
+                    <div class="is-flex is-align-items-center mb-5" style="background: #F8FAFC; padding: 20px; border-radius: 12px;">
+                        <div style="flex: 1;">
+                            <div class="is-size-2 has-text-weight-bold" style="line-height: 1;">{{ vols_sorted[0].id_aeroport_depart }}</div>
+                            <div class="is-size-6 has-text-grey font-weight-bold mt-1">{{ vols_sorted[0].aeroport_depart.ville }}</div>
+                        </div>
+                        <div style="flex: 2; padding: 0 20px; text-align: center; position: relative;">
+                            <div class="is-size-7 has-text-primary font-weight-bold mb-2" style="letter-spacing: 1px;">
+                                {% if is_ar %}ALLER-RETOUR{% elif vols_sorted|length == 1 %}VOL DIRECT{% else %}{{ vols_sorted|length - 1 }} ESCALE(S){% endif %}
+                            </div>
+                            <div style="height: 2px; background: #D1D1D6; position: relative; width: 100%;">
+                                <i class="fas {% if is_ar %}fa-exchange-alt{% else %}fa-plane{% endif %}" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #F8FAFC; padding: 0 10px; color: var(--flighty-gray); font-size: 1.1rem;"></i>
+                            </div>
+                        </div>
+                        <div style="flex: 1; text-align: right;">
+                            <div class="is-size-2 has-text-weight-bold" style="line-height: 1;">{{ dest.iata }}</div>
+                            <div class="is-size-6 has-text-grey font-weight-bold mt-1">{{ dest.city }}</div>
+                        </div>
+                    </div>
 
-            <div class="ticket-footer">
-                <div class="barcode">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=PNR:{{reservation.pnr}}-VOL:{{vol.id_vol}}-PASS:{{passager.id_passager}}" alt="QR Code">
+                    <div class="columns is-mobile is-multiline m-0">
+                        <div class="column is-3 p-0">
+                            <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">DATE DÉPART</div>
+                            <div class="is-size-6 has-text-weight-bold">{{ vols_sorted[0].date_heure_dep_utc.strftime('%d %b %Y') }}</div>
+                        </div>
+                        <div class="column is-3 p-0">
+                            <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">HEURE</div>
+                            <div class="is-size-6 has-text-weight-bold">{{ vols_sorted[0].date_heure_dep_utc.strftime('%H:%M') }}</div>
+                        </div>
+                        <div class="column is-3 p-0">
+                            <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">CLASSE</div>
+                            <div class="is-size-6 has-text-weight-bold">{{ classes | join(', ') }}</div>
+                        </div>
+                        <div class="column is-3 p-0">
+                            <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">OPTIONS</div>
+                            <div class="is-size-7 has-text-weight-bold">
+                                <i class="fas fa-suitcase-rolling mr-1"></i> {{ bagages_total.count }}<br>
+                                <i class="fas fa-utensils mr-1"></i> {{ repas_list[0] if repas_list else 'Standard' }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="footer-text">
-                    Présentez ce billet à l'embarquement. Bon voyage !
+                
+                <div class="bp-stub">
+                    <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">PNR</div>
+                    <div class="is-size-3 has-text-weight-bold mb-4" style="color: var(--primary); font-family: monospace; line-height: 1;">{{ reservation.pnr }}</div>
+                    
+                    <div class="mb-4" style="background: white; padding: 10px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=PNR:{{reservation.pnr}}-VOLS:{{ vols_sorted|length }}-PASS:{{ nb_pass }}" alt="QR Code" style="display: block;">
+                    </div>
+                    
+                    <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="letter-spacing: 1px;">VOL(S)</div>
+                    <div class="is-size-6 has-text-weight-bold">
+                        {% for v in vols_sorted %}OB{{ v.id_vol }}{% if not loop.last %}, {% endif %}{% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
