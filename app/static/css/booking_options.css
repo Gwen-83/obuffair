@@ -1,230 +1,200 @@
-/* --- STYLES DE LA CARTE DE CABINE --- */
-.aerolopa-container {
-    background-color: #ffffff;
-    border-radius: 50px 50px 20px 20px;
-    padding: 40px 20px;
-    border: 8px solid #E5E5EA;
-    margin: 0 auto;
-    max-width: 450px;
-    box-shadow: inset 0 4px 15px rgba(0,0,0,0.05);
+.theme-Eco { border-left-color: #34C759 !important; }
+.theme-Business { border-left-color: #004B9E !important; }
+.theme-First { border-left-color: #FFC72C !important; }
+
+.segment-item.is-active {
+    background-color: #1C1C1E !important;
+    color: #FFC72C !important;
+    border-color: #FFC72C !important;
+}
+.segment-item.is-active i {
+    color: #FFC72C !important;
+}
+
+.segment-item {
+    cursor: pointer;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #E5E5EA;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.segment-item:hover {
+    background-color: #F8FAFC;
+}
+
+.flighty-segmented-control {
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 560px;
-    max-height: 680px;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
 }
 
-.cabin-scroll-area {
-    min-height: 480px;
-    height: 100%;
-    overflow-y: auto;
-    scroll-behavior: smooth;
-    padding-right: 10px;
-    margin-right: -10px; /* Compense le padding pour la scrollbar */
-}
-.cabin-scroll-area::-webkit-scrollbar { width: 6px; }
-.cabin-scroll-area::-webkit-scrollbar-track { background: transparent; }
-.cabin-scroll-area::-webkit-scrollbar-thumb { 
-    background-color: #D1D1D6; 
-    border-radius: 10px; 
-}
-
-.scrollable-passengers {
-    max-height: 480px; /* Hauteur stricte pour ne pas déborder */
-    overflow-y: auto;
-    padding-right: 10px;
-    margin-right: -10px;
-}
-.scrollable-passengers::-webkit-scrollbar { width: 6px; }
-.scrollable-passengers::-webkit-scrollbar-track { background: transparent; }
-.scrollable-passengers::-webkit-scrollbar-thumb { 
-    background-color: #D1D1D6; 
-    border-radius: 10px; 
+/* Aerolopa Seat Map Styles */
+.aerolopa-container {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E5E5EA;
+    padding: 2rem 1rem;
+    overflow-x: auto;
 }
 
 .seat-grid {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    align-items: center;
+    gap: 12px;
+    margin: 0 auto;
+    width: max-content;
 }
 
 .seat-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-.seat-aisle {
-    width: 36px;
-}
-
-.class-divider {
-    height: 24px;
-    border-bottom: 2px dashed #E5E5EA;
-    margin: 16px 0 28px 0;
-    position: relative;
-    display: flex;
-    justify-content: center;
-}
-.class-divider span {
-    position: absolute;
-    top: 14px;
-    background: white;
-    padding: 0 16px;
-    color: var(--flighty-gray);
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
+    gap: 8px;
 }
 
 .seat-cell {
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
+    width: 42px;
+    height: 42px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 13px;
+    border-radius: 8px;
     font-weight: 700;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    user-select: none;
+    transition: all 0.2s ease;
 }
 
-.seat-cell:not(.taken):hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    filter: brightness(1.1);
+.seat-aisle {
+    width: 24px;
+}
+
+.seat-Eco {
+    background-color: #F0F8FF;
+    border: 1px solid #D6E8F9;
+    color: #004B9E;
+}
+.seat-Eco:hover:not(.taken) {
+    background-color: #D6E8F9;
+}
+
+.seat-Business {
+    background-color: var(--primary);
+    border: 1px solid var(--primary-light);
+    color: white;
+}
+.seat-Business:hover:not(.taken) {
+    background-color: var(--primary-light);
+}
+
+.seat-First {
+    background-color: #1C1C1E;
+    border: 1px solid #3A3A3C;
+    color: #FFC72C;
+}
+.seat-First:hover:not(.taken) {
+    background-color: #3A3A3C;
 }
 
 .seat-cell.taken {
-    background-color: #F2F2F7 !important;
-    color: #A1A1A6 !important;
+    background-color: #F2F2F7;
+    border: 1px solid #E5E5EA;
+    color: #8E8E93;
     cursor: not-allowed;
-    border: 1px solid #E5E5EA !important;
-    background-image: none !important;
-    box-shadow: none !important;
 }
 
 .seat-cell.selected {
-    background-color: var(--success) !important;
+    background-color: #34C759 !important;
+    border-color: #248A3D !important;
     color: white !important;
-    border-color: var(--success) !important;
-    box-shadow: 0 0 0 4px rgba(46, 125, 50, 0.2);
-    transform: scale(1.1);
-    z-index: 2;
-    background-image: none !important;
 }
 
-/* Couleurs des sièges sur le plan */
-.seat-Eco { background-color: #EBF2FB; color: #2B81D6; border: 1px solid #BADDFF; }
-.seat-Business { background-color: var(--primary); color: white; border: 1px solid var(--primary); width: 44px; height: 44px; border-radius: 10px; }
-.seat-First { background: linear-gradient(135deg, #1C1C1E, #3A3A3C); color: #FFC72C; border: 1px solid #1C1C1E; width: 50px; height: 50px; border-radius: 12px; }
-
-/* --- ANIMATIONS ET THÈMES DES PASSAGERS --- */
-@keyframes pulse-primary {
-    0% { box-shadow: 0 0 0 0 rgba(0, 42, 92, 0.4); }
-    70% { box-shadow: 0 0 0 6px rgba(0, 42, 92, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(0, 42, 92, 0); }
-}
-@keyframes pulse-first {
-    0% { box-shadow: 0 0 0 0 rgba(255, 199, 44, 0.6); }
-    70% { box-shadow: 0 0 0 6px rgba(255, 199, 44, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 199, 44, 0); }
-}
-@keyframes pulse-white {
-    0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.6); }
-    70% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-}
-.instruction-banner {
-    background: linear-gradient(to right, rgba(0, 42, 92, 0.05), transparent);
-}
-.option-icon { color: var(--primary); }
-
-/* Thèmes dynamiques pour les passagers */
-.theme-first-active {
-    background-color: #1C1C1E !important; color: #FFF !important;
-    border-color: #FFC72C !important; border-left: 6px solid #FFC72C !important;
-}
-.theme-first-active .title { color: #FFF !important; }
-.theme-first-active .has-text-grey { color: #A1A1A6 !important; }
-.theme-first-active .passenger-options { border-top-color: rgba(255, 255, 255, 0.1) !important; }
-.theme-first-active .select select { background-color: #2C2C2E; color: #FFF; border-color: #3A3A3C; }
-.theme-first-active .button.is-white { background-color: #2C2C2E !important; color: #FFF !important; border-color: #3A3A3C !important; }
-.theme-first-active .option-icon { color: #FFC72C !important; }
-.theme-first-active .pulse-badge { animation: pulse-first 1.5s infinite; }
-
-.theme-business-active {
-    background-color: #002A5C !important; color: #FFF !important;
-    border-color: #FFF !important; border-left: 6px solid #FFF !important;
-}
-.theme-business-active .title, .theme-business-active .option-icon { color: #FFF !important; }
-.theme-business-active .has-text-grey { color: #D6E8F9 !important; }
-.theme-business-active .passenger-options { border-top-color: rgba(255, 255, 255, 0.1) !important; }
-.theme-business-active .select select { background-color: #004B9E; color: #FFF; border-color: #003DA5; }
-.theme-business-active .button.is-white { background-color: #004B9E !important; color: #FFF !important; border-color: #003DA5 !important; }
-.theme-business-active .pulse-badge { animation: pulse-white 1.5s infinite; }
-
-.theme-eco-active {
-    background-color: #2B81D6 !important; color: #FFF !important;
-    border-color: #FFF !important; border-left: 6px solid #FFF !important;
-}
-.theme-eco-active .title, .theme-eco-active .option-icon { color: #FFF !important; }
-.theme-eco-active .has-text-grey { color: #EBF2FB !important; }
-.theme-eco-active .passenger-options { border-top-color: rgba(255, 255, 255, 0.2) !important; }
-.theme-eco-active .select select { background-color: #1A63AD; color: #FFF; border-color: #155291; }
-.theme-eco-active .button.is-white { background-color: #1A63AD !important; color: #FFF !important; border-color: #155291 !important; }
-.theme-eco-active .pulse-badge { animation: pulse-white 1.5s infinite; }
-
-/* --- EFFETS DE SURBRILLANCE (GLOW) --- */
-@keyframes seat-pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); transform: scale(1.1); }
-    50% { box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); transform: scale(1.2); }
-    100% { box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); transform: scale(1.1); }
-}
-.seat-cell.selected.glowing {
-    animation: seat-pulse-glow 1.5s infinite;
-    z-index: 10;
-}
-@keyframes btn-pulse-glow {
-    0% { box-shadow: 0 0 0 0 rgba(255, 199, 44, 0.8); }
-    70% { box-shadow: 0 0 0 15px rgba(255, 199, 44, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 199, 44, 0); }
-}
-.btn-glow {
-    animation: btn-pulse-glow 2s infinite !important;
+.seat-cell.glowing {
+    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.4), 0 0 12px rgba(52, 199, 89, 0.8) !important;
+    border-color: #248A3D !important;
 }
 
-/* --- STYLES FLIGHTY MODERN UI --- */
-.flighty-segmented-control {
-    display: flex; background-color: #F2F2F7; padding: 4px; border-radius: 50px; gap: 4px;
+.class-divider {
+    width: 100%;
+    border-top: 2px dashed #E5E5EA;
+    margin: 1.5rem 0;
+    position: relative;
+    text-align: center;
 }
-.segment-item {
-    flex: 1; text-align: center; padding: 10px 12px; border-radius: 50px;
-    font-weight: 600; font-size: 0.9rem; cursor: pointer; color: #8E8E93; transition: all 0.3s ease;
+.class-divider span {
+    background: white;
+    padding: 0 12px;
+    color: #8E8E93;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    top: -10px;
 }
-.segment-item.is-active {
-    background-color: #FFFFFF; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+
+.cabin-scroll-area {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 10px;
 }
-.tag.is-taxiway {
-    background-color: #FFCC00 !important;
-    color: #1C1C1E !important;
-    border: none !important;
+.cabin-scroll-area::-webkit-scrollbar {
+    width: 6px;
 }
+.cabin-scroll-area::-webkit-scrollbar-thumb {
+    background: #D1D1D6;
+    border-radius: 10px;
+}
+
+/* Passenger Cards */
+.passenger-cards-container {
+    display: flex;
+    flex-direction: column;
+}
+.scrollable-passengers {
+    max-height: 700px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.scrollable-passengers::-webkit-scrollbar {
+    width: 6px;
+}
+.scrollable-passengers::-webkit-scrollbar-thumb {
+    background: #D1D1D6;
+    border-radius: 10px;
+}
+
 .passenger-option-card {
-    cursor: pointer; border: 2px solid transparent; border-left: 6px solid transparent; 
-    transition: all 0.3s; border-radius: var(--radius-xl); background-color: #FFFFFF;
+    border-left: 4px solid #E5E5EA;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: white;
+}
+.passenger-option-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.04);
 }
 .passenger-option-card.is-active {
-    border-color: var(--primary); border-left-color: var(--primary); 
-    background-color: #F5FAFF; box-shadow: var(--shadow-premium);
+    border-left-width: 6px;
+    box-shadow: 0 16px 40px rgba(0, 42, 92, 0.15);
+    transform: translateX(4px);
 }
-.seat-cell { transition: all 0.2s; }
-.seat-cell.glowing {
-    animation: pulseSeat 1.5s infinite; border-color: var(--primary); z-index: 2;
+.option-icon {
+    width: 20px;
+    text-align: center;
 }
-@keyframes pulseSeat { 0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4); } 70% { box-shadow: 0 0 0 8px rgba(0, 122, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); } }
-@keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(0, 122, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 122, 255, 0); } }
+
+.is-glowing {
+    box-shadow: 0 0 10px rgba(52, 199, 89, 0.6) !important;
+}
+
+.btn-glow {
+    animation: pulse-glow 2s infinite !important;
+}
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 10px rgba(52, 199, 89, 0.4); }
+    50% { box-shadow: 0 0 25px rgba(52, 199, 89, 0.8); }
+    100% { box-shadow: 0 0 10px rgba(52, 199, 89, 0.4); }
+}
