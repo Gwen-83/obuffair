@@ -812,7 +812,7 @@ def booking_payment():
                 for key in ['search_params', 'vol_aller', 'vol_retour', 'options', 'passagers_data', 'total_panier']:
                     session.pop(key, None)
                 
-                return redirect(url_for('client.booking_confirmation', reservation_id=reservation_id))
+                return redirect(url_for('client.accueil'))
             else:
                 session['booking_error'] = error_msg
                 return redirect(url_for('client.booking_confirmation', reservation_id='error'))
