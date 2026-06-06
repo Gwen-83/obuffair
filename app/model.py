@@ -256,8 +256,17 @@ class User(db.Model):
     # Numéro de téléphone (format +33X XX XX XX XX)
     numero_telephone = db.Column(db.String(20), nullable=True)
     
-    # Points de fidélité
+    # Chemin du document d'identité uploadé
+    document_identite = db.Column(db.String(255), nullable=True)
+
+    # Chemin du 2ème document d'identité uploadé
+    document_identite_2 = db.Column(db.String(255), nullable=True)
+
+    # Points de fidélité (solde disponible)
     points_fidelite = db.Column(db.Integer, default=0)
+    
+    # Points de fidélité totaux (historique complet pour le calcul du statut)
+    points_fidelite_accumules = db.Column(db.Integer, default=0)
     
     # Token pour réinitialiser le mot de passe
     reset_token = db.Column(db.String(255), unique=True, nullable=True)
@@ -287,3 +296,32 @@ class User(db.Model):
             .filter(Vols.date_heure_dep_utc >= datetime.utcnow())\
             .order_by(Vols.date_heure_dep_utc.asc())\
             .all()
+
+    @property
+    def infos_fidelite(self):
+        """Retourne les informations de fidélité du client calculées à partir de ses points totaux accumulés."""
+        total = self.points_fidelite_accumules or 0
+        if total < 50000:
+            return {
+                'actuel': 'Silver',
+                'suivant': 'Gold',
+                'points_max': 50000,
+                'restant': 50000 - total,
+                'accumules': total
+            }
+        elif total < 150000:
+            return {
+                'actuel': 'Gold',
+                'suivant': 'Platinum',
+                'points_max': 150000,
+                'restant': 150000 - total,
+                'accumules': total
+            }
+        else:
+            return {
+                'actuel': 'Platinum',
+                'suivant': 'Maximum atteint',
+                'points_max': total if total > 0 else 1,
+                'restant': 0,
+                'accumules': total
+            }

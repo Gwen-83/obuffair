@@ -4,7 +4,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 """
 
 from functools import wraps
-from flask import Blueprint, render_template, request, session, url_for, redirect, flash
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app
 from app import db
 from sqlalchemy import func, text
 from sqlalchemy.orm import joinedload
@@ -14,6 +14,8 @@ from app.algos.search import search_itineraries
 from app.algos.yield_management import calculer_prix
 import string, random
 import re
+import os
+from werkzeug.utils import secure_filename
 
 
 # Blueprint
@@ -128,6 +130,42 @@ def profil():
         elif not num_tel: # Si le champ est vidé
             client_connecte.numero_telephone = None
             
+        # Suppression des documents si demandée
+        if request.form.get('delete_doc_1') == '1':
+            client_connecte.document_identite = None
+        if request.form.get('delete_doc_2') == '1':
+            client_connecte.document_identite_2 = None
+
+        # Traitement du fichier uploadé
+        if 'document_file' in request.files:
+            file = request.files['document_file']
+            if file and file.filename != '':
+                # Sécurisation du nom de fichier et ajout d'un préfixe unique avec l'ID du client
+                filename = secure_filename(file.filename)
+                unique_filename = f"user_{client_connecte.id_client}_{filename}"
+                
+                # Créer le dossier s'il n'existe pas
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                filepath = os.path.join(upload_folder, unique_filename)
+                file.save(filepath)
+                client_connecte.document_identite = unique_filename
+                
+        # Traitement du 2ème fichier uploadé
+        if 'document_file_2' in request.files:
+            file2 = request.files['document_file_2']
+            if file2 and file2.filename != '':
+                filename2 = secure_filename(file2.filename)
+                unique_filename2 = f"user_{client_connecte.id_client}_2_{filename2}"
+                
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                filepath = os.path.join(upload_folder, unique_filename2)
+                file2.save(filepath)
+                client_connecte.document_identite_2 = unique_filename2
+
         db.session.commit()
         session['prenom'] = client_connecte.prenom
         session['nom'] = client_connecte.nom
