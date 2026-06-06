@@ -17,7 +17,7 @@ import re
 
 
 # Blueprint
-client_bp = Blueprint('client', __name__, url_prefix='/client')
+client_bp = Blueprint('client', __name__)
 
 TARIFS_OPTIONS = {
     'bagages_eco': {
@@ -75,30 +75,6 @@ def disable_booking_cache(response):
 @client_bp.route('/')
 def accueil():
     """Accueil"""
-    # Données simples simulées : prêtes à être remplacées par une requête SQLAlchemy
-    loyalty_info = {
-        'status': 'Gold Member',
-        'points': '12 450',
-        'flights_year': 8,
-        'progress_percent': 75,
-        'points_to_next': '2 550',
-        'next_tier': 'Platinum'
-    }
-
-    next_flight = {
-        'flight_number': 'AF712',
-        'date': '14 Juin 2026',
-        'status': 'Confirmé',
-        'dep_time': '10:30',
-        'dep_iata': 'CDG',
-        'dep_city': 'Paris',
-        'arr_time': '12:35',
-        'arr_iata': 'FCO',
-        'arr_city': 'Rome',
-        'seat': 'Non assigné',
-        'meal': 'Standard',
-        'baggage': '1 bagage cabine + 1 bagage soute.'
-    }
     
     # --- Requête pour les destinations du carrousel ---
     try:
@@ -124,7 +100,7 @@ def accueil():
             {'ville': 'Berlin', 'prix': 110}
         ]
 
-    return render_template('client/acceuil.html', loyalty_info=loyalty_info, next_flight=next_flight, destinations=destinations)
+    return render_template('client/acceuil.html', destinations=destinations)
 
 @client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():

@@ -166,7 +166,7 @@
                     </div>
                     
                     <div class="has-text-right mb-4 pb-4" style="border-bottom: 1px solid #E5E5EA;">
-                        <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
+                        <a href="{{ url_for('client.gerer_reservation', pnr=next_flight.pnr) }}" class="button is-small is-light is-rounded font-weight-bold">
                             <i class="fas fa-download mr-2"></i> Mon Billet PDF
                         </a>
                     </div>
