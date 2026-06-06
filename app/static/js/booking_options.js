@@ -455,7 +455,7 @@ window.updatePassengerBadges = function() {
         const badge = document.getElementById(`pass-seat-badge-${p.index}`);
         const cls = currentLegType === 'aller' ? p.classe_aller : p.classe_retour;
         if(inputCurrentLeg && inputCurrentLeg.value) {
-            badge.className = "tag is-taxiway is-medium font-weight-bold";
+            badge.className = "tag is-success is-glowing is-medium font-weight-bold";
             badge.innerHTML = `<i class="fas fa-check mr-2"></i> ${cls} (${inputCurrentLeg.value})`;
         } else {
             badge.className = "tag is-light is-medium font-weight-bold";

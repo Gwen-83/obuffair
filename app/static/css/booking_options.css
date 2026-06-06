@@ -10,3 +10,191 @@
 .segment-item.is-active i {
     color: #FFC72C !important;
 }
+
+.segment-item {
+    cursor: pointer;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #E5E5EA;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+.segment-item:hover {
+    background-color: #F8FAFC;
+}
+
+.flighty-segmented-control {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 5px;
+}
+
+/* Aerolopa Seat Map Styles */
+.aerolopa-container {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #E5E5EA;
+    padding: 2rem 1rem;
+    overflow-x: auto;
+}
+
+.seat-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin: 0 auto;
+    width: max-content;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.seat-cell {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.seat-aisle {
+    width: 24px;
+}
+
+.seat-Eco {
+    background-color: #F0F8FF;
+    border: 1px solid #D6E8F9;
+    color: #004B9E;
+}
+.seat-Eco:hover:not(.taken) {
+    background-color: #D6E8F9;
+}
+
+.seat-Business {
+    background-color: var(--primary);
+    border: 1px solid var(--primary-light);
+    color: white;
+}
+.seat-Business:hover:not(.taken) {
+    background-color: var(--primary-light);
+}
+
+.seat-First {
+    background-color: #1C1C1E;
+    border: 1px solid #3A3A3C;
+    color: #FFC72C;
+}
+.seat-First:hover:not(.taken) {
+    background-color: #3A3A3C;
+}
+
+.seat-cell.taken {
+    background-color: #F2F2F7;
+    border: 1px solid #E5E5EA;
+    color: #8E8E93;
+    cursor: not-allowed;
+}
+
+.seat-cell.selected {
+    background-color: #34C759 !important;
+    border-color: #248A3D !important;
+    color: white !important;
+}
+
+.seat-cell.glowing {
+    box-shadow: 0 0 0 4px rgba(52, 199, 89, 0.4), 0 0 12px rgba(52, 199, 89, 0.8) !important;
+    border-color: #248A3D !important;
+}
+
+.class-divider {
+    width: 100%;
+    border-top: 2px dashed #E5E5EA;
+    margin: 1.5rem 0;
+    position: relative;
+    text-align: center;
+}
+.class-divider span {
+    background: white;
+    padding: 0 12px;
+    color: #8E8E93;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    top: -10px;
+}
+
+.cabin-scroll-area {
+    max-height: 600px;
+    overflow-y: auto;
+    overflow-x: auto;
+    padding: 10px;
+}
+.cabin-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+.cabin-scroll-area::-webkit-scrollbar-thumb {
+    background: #D1D1D6;
+    border-radius: 10px;
+}
+
+/* Passenger Cards */
+.passenger-cards-container {
+    display: flex;
+    flex-direction: column;
+}
+.scrollable-passengers {
+    max-height: 700px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.scrollable-passengers::-webkit-scrollbar {
+    width: 6px;
+}
+.scrollable-passengers::-webkit-scrollbar-thumb {
+    background: #D1D1D6;
+    border-radius: 10px;
+}
+
+.passenger-option-card {
+    border-left: 4px solid #E5E5EA;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background: white;
+}
+.passenger-option-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+}
+.passenger-option-card.is-active {
+    border-left-width: 6px;
+    box-shadow: 0 16px 40px rgba(0, 42, 92, 0.15);
+    transform: translateX(4px);
+}
+.option-icon {
+    width: 20px;
+    text-align: center;
+}
+
+.is-glowing {
+    box-shadow: 0 0 10px rgba(52, 199, 89, 0.6) !important;
+}
+
+.btn-glow {
+    animation: pulse-glow 2s infinite !important;
+}
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 10px rgba(52, 199, 89, 0.4); }
+    50% { box-shadow: 0 0 25px rgba(52, 199, 89, 0.8); }
+    100% { box-shadow: 0 0 10px rgba(52, 199, 89, 0.4); }
+}

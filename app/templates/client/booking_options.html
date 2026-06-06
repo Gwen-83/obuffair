@@ -30,12 +30,12 @@
             <div class="flighty-segmented-control mb-4" id="legTabs">
                 {% for leg in aller_legs %}
                 <div class="segment-item {% if loop.index0 == 0 %}is-active{% endif %}" onclick="switchLeg('aller', {{ loop.index0 }}, this)">
-                    <i class="fas fa-plane-departure mr-2"></i> Aller ({{ leg.dep }} - {{ leg.arr }})
+                    <i class="fas fa-plane-departure mr-2"></i> {% if aller_legs|length > 1 %}Aller - Vol {{ loop.index }}{% else %}Aller{% endif %} ({{ leg.dep }} - {{ leg.arr }})
                 </div>
                 {% endfor %}
                 {% for leg in retour_legs %}
                 <div class="segment-item {% if not aller_legs and loop.index0 == 0 %}is-active{% endif %}" onclick="switchLeg('retour', {{ loop.index0 }}, this)">
-                    <i class="fas fa-plane-arrival mr-2"></i> Retour ({{ leg.dep }} - {{ leg.arr }})
+                    <i class="fas fa-plane-arrival mr-2"></i> {% if retour_legs|length > 1 %}Retour - Vol {{ loop.index }}{% else %}Retour{% endif %} ({{ leg.dep }} - {{ leg.arr }})
                 </div>
                 {% endfor %}
             </div>
