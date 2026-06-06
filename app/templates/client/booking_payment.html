@@ -133,7 +133,7 @@
                 </div>
             </div>
 
-            <form action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card p-5" style="border-radius: var(--radius-xl);">
+            <form id="paymentForm" action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card p-5" style="border-radius: var(--radius-xl);">
                 <h3 class="title is-5 mb-4" style="letter-spacing: -0.5px;"><i class="fas fa-lock mr-2" style="color: var(--success);"></i> Paiement Sécurisé</h3>
                     
                     <div class="field mb-4">
@@ -197,27 +197,5 @@
     <p class="has-text-light">Veuillez ne pas fermer cette page.</p>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form[action="{{ url_for('client.booking_payment') }}"]');
-    const overlay = document.getElementById('payment-overlay');
-    const payButton = document.getElementById('payButton');
-    
-    if (form && overlay) {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
-            overlay.classList.add('is-active');
-            
-            // Double protection : désactiver le bouton pour éviter les clics multiples
-            if (payButton) {
-                payButton.disabled = true;
-                payButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Traitement...';
-            }
-            
-            // Simule un délai de traitement de paiement pour l'UX
-            setTimeout(() => { form.submit(); }, 2500);
-        });
-    }
-});
-</script>
+<script src="{{ url_for('static', filename='js/booking_payment.js') }}"></script>
 {% endblock %}

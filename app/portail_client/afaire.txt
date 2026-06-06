@@ -1,7 +1,0 @@
-
-- Modifier le total ainsi que nombre de passager dans l'en tete booking process en fonction des options choisies,
-- Infos passager doit être en cohérence en fonction du nombre de passager (un seul doit avoir un compte, les autres sont liés au booking process), et donc le principal doit avoir l'adresse mail popularisée depuis son compte
-- Options doivent mettre à jour le total du booking process ainsi que le nombre sélectable en fonction du nombre de passager ? 
-- Procéder au paiement > on doit faire un process qui se termine sans info bancaire, le total ainsi que A/R etc et options doit être mis à jour et l'encard doit aussi être revu en UI
-- Créer écran de confirmation après paiement
-
