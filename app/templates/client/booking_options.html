@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block booking_content %}
-<form action="{{ url_for('client.booking_payment') }}" method="POST" id="optionsForm" data-tarifs='{{ TARIFS_OPTIONS | tojson | safe }}'>
+<form action="{{ url_for('client.booking_payment') }}" method="POST" id="optionsForm" data-tarifs="{{ TARIFS_OPTIONS | tojson | forceescape }}">
     <div class="columns is-variable is-6">
         
         <div class="column is-6" style="display: flex; flex-direction: column;">
@@ -44,14 +44,14 @@
                 {% for leg in aller_legs %}
                 <div class="cabin-scroll-area seat-map-container" id="map-aller-{{ loop.index0 }}" style="display: {% if loop.index0 == 0 %}block{% else %}none{% endif %};" 
                      data-type="aller" data-idx="{{ loop.index0 }}" 
-                     data-avion='{{ leg.avion | tojson | safe }}' 
-                     data-taken='{{ leg.taken_seats | tojson | safe }}'></div>
+                     data-avion="{{ leg.avion | tojson | forceescape }}" 
+                     data-taken="{{ leg.taken_seats | tojson | forceescape }}"></div>
                 {% endfor %}
                 {% for leg in retour_legs %}
                 <div class="cabin-scroll-area seat-map-container" id="map-retour-{{ loop.index0 }}" style="display: {% if not aller_legs and loop.index0 == 0 %}block{% else %}none{% endif %};" 
                      data-type="retour" data-idx="{{ loop.index0 }}" 
-                     data-avion='{{ leg.avion | tojson | safe }}' 
-                     data-taken='{{ leg.taken_seats | tojson | safe }}'></div>
+                     data-avion="{{ leg.avion | tojson | forceescape }}" 
+                     data-taken="{{ leg.taken_seats | tojson | forceescape }}"></div>
                 {% endfor %}
             </div>
             
@@ -119,7 +119,7 @@
             </div>
             
             <div class="has-text-right mt-2">
-                <button type="submit" id="btnSubmitPayment" class="button is-accent is-medium is-fullwidth" style="border-radius: 14px; font-weight: 700; letter-spacing: -0.2px;" disabled>Assignez les sièges</button>
+                <button type="submit" id="btnSubmitPayment" class="button is-accent is-medium is-fullwidth" onclick="this.classList.add('is-loading')" style="border-radius: 14px; font-weight: 700; letter-spacing: -0.2px;" disabled>Assignez les sièges</button>
             </div>
         </div>
 
@@ -162,9 +162,9 @@
 </div>
 
 <div id="bookingOptionsData"
-     data-passengers='{{ passengers | tojson | safe }}'
-     data-base-prices-aller='{"Eco": {{ session.get("vol_aller", {}).get("prix_eco", 0) }}, "Business": {{ session.get("vol_aller", {}).get("prix_biz", 0) }}, "First": {{ session.get("vol_aller", {}).get("prix_first", 0) }}}'
-     data-base-prices-retour='{"Eco": {{ session.get("vol_retour", {}).get("prix_eco", 0) }}, "Business": {{ session.get("vol_retour", {}).get("prix_biz", 0) }}, "First": {{ session.get("vol_retour", {}).get("prix_first", 0) }}}'
+     data-passengers="{{ passengers | tojson | forceescape }}"
+     data-base-prices-aller="{{ {'Eco': session.get('vol_aller', {}).get('prix_eco', 0), 'Business': session.get('vol_aller', {}).get('prix_biz', 0), 'First': session.get('vol_aller', {}).get('prix_first', 0)} | tojson | forceescape }}"
+     data-base-prices-retour="{{ {'Eco': session.get('vol_retour', {}).get('prix_eco', 0), 'Business': session.get('vol_retour', {}).get('prix_biz', 0), 'First': session.get('vol_retour', {}).get('prix_first', 0)} | tojson | forceescape }}"
      data-current-leg-type='{% if aller_legs %}aller{% else %}retour{% endif %}'>
 </div>
 

@@ -82,7 +82,7 @@
                             <input type="hidden" name="date_retour" value="{{ search_params.get('date_retour', '') }}">
                         {% endif %}
                         
-                        <button type="submit" class="flighty-btn-select">
+                        <button type="submit" class="flighty-btn-select" onclick="this.classList.add('is-loading')">
                             Choisir ce vol
                         </button>
                     </form>
@@ -223,7 +223,7 @@
                 <div class="has-text-grey">
                     <span class="has-text-weight-bold" style="color: var(--flighty-text);"><span id="total-count-{{ itin.id }}">0</span>/{{ nb_passagers }}</span> passagers assignés
                 </div>
-                <button type="submit" class="button is-primary is-small is-rounded px-4 font-weight-bold" id="btn-submit-{{ itin.id }}" disabled>
+                <button type="submit" class="button is-primary is-small is-rounded px-4 font-weight-bold" id="btn-submit-{{ itin.id }}" onclick="this.classList.add('is-loading')" disabled>
                     Valider (<span id="total-price-{{ itin.id }}">0.00</span> €)
                 </button>
             </div>
@@ -238,7 +238,7 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Eco' %}border: 2px solid var(--primary); background-color: #F8FAFC;{% endif %}">
+                    <button type="submit" class="tariff-btn eco" {% if itin.avail_eco < 1 %}disabled{% endif %} onclick="this.classList.add('is-loading')" style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Eco' %}border: 2px solid var(--primary); background-color: #F8FAFC;{% endif %}">
                         <div class="t-class eco" style="font-size: 0.8rem; margin-bottom: 2px;">Economy</div>
                         <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_eco }} €</div>
                         {% if itin.avail_eco < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
@@ -256,7 +256,7 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Business' %}border: 2px solid var(--primary); background-color: #F0F4F8;{% endif %}">
+                    <button type="submit" class="tariff-btn biz" {% if itin.avail_biz < 1 %}disabled{% endif %} onclick="this.classList.add('is-loading')" style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'Business' %}border: 2px solid var(--primary); background-color: #F0F4F8;{% endif %}">
                         <div class="t-class biz" style="font-size: 0.8rem; margin-bottom: 2px;">Business</div>
                         <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_biz }} €</div>
                         {% if itin.avail_biz < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
@@ -274,7 +274,7 @@
                     <input type="hidden" name="prix_eco" value="{{ itin.price_eco }}">
                     <input type="hidden" name="prix_biz" value="{{ itin.price_biz }}">
                     <input type="hidden" name="prix_first" value="{{ itin.price_first }}">
-                    <button type="submit" class="tariff-btn first" {% if itin.avail_first < 1 %}disabled{% endif %} style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'First' %}border: 2px solid var(--primary); background-color: #F4F4F5;{% endif %}">
+                    <button type="submit" class="tariff-btn first" {% if itin.avail_first < 1 %}disabled{% endif %} onclick="this.classList.add('is-loading')" style="flex: 1; width: 100%; padding: 12px; min-height: unset; display: flex; flex-direction: column; {% if is_selected_flight and selected_class == 'First' %}border: 2px solid var(--primary); background-color: #F4F4F5;{% endif %}">
                         <div class="t-class first" style="font-size: 0.8rem; margin-bottom: 2px;">First</div>
                         <div class="t-price" style="font-size: 1.1rem;">{{ itin.price_first }} €</div>
                         {% if itin.avail_first < 1 %}<div class="seats-left-badge" style="background:#E5E5EA; color:#8E8E93; font-size: 0.65rem; padding: 2px 6px;">Complet</div>
