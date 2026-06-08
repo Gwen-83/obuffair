@@ -112,25 +112,30 @@ def accueil():
         }
         
         destinations = []
-        last_was_troll = False
         troll_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4u61wav4I9SolemD3pFQHW0iKL8X1ReekEg&s"
         
+        current_time = datetime.utcnow().timestamp()
+        last_troll_time = session.get('last_troll_time', 0)
+        show_troll = False
+        
+        # Apparition limitée : au hasard toutes les 3 à 5 minutes (180 à 300 sec)
+        if (current_time - last_troll_time) > random.randint(180, 300):
+            show_troll = True
+            session['last_troll_time'] = current_time
+            
         for row in lowest_prices:
             base_url = city_images_map.get(row.ville, f"https://loremflickr.com/600/800/{row.ville.replace(' ', '')},cityview/all")
-            
-            # Apparition aléatoire de l'image troll/spécifique (~15% du temps) mais jamais 2 fois de suite
-            if not last_was_troll and random.random() < 0.15:
-                final_url = troll_url
-                last_was_troll = True
-            else:
-                final_url = base_url
-                last_was_troll = False
                 
             destinations.append({
                 'ville': row.ville, 
                 'prix': int(row.min_prix) if row.min_prix is not None else 0,
-                'image_url': final_url
+                'image_url': base_url
             })
+            
+        # Si les conditions de temps sont réunies, on remplace UNE image au hasard par le troll
+        if show_troll and destinations:
+            random_idx = random.randint(0, len(destinations) - 1)
+            destinations[random_idx]['image_url'] = troll_url
     except Exception as e:
         print(f"Erreur SQL Carrousel Destinations: {e}")
         destinations = []

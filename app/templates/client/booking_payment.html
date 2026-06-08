@@ -3,7 +3,90 @@
 
 {% block booking_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/booking_payment.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/planes_loader.css') }}">
+<style>
+    .obuffair-payment-loader {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: radial-gradient(circle at center, #0B1E40, #000a18);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+    .loader-content {
+        text-align: center;
+        width: 80%;
+        max-width: 700px;
+        position: relative;
+        z-index: 2;
+    }
+    .loader-icon-wrapper {
+        font-size: 6rem;
+        color: var(--accent);
+        margin-bottom: 2rem;
+        animation: bounceIcon 1.5s infinite alternate cubic-bezier(0.68, -0.55, 0.26, 1.55);
+    }
+    @keyframes bounceIcon {
+        0% { transform: translateY(0); text-shadow: 0 5px 15px rgba(255,199,44,0.3); }
+        100% { transform: translateY(-25px); text-shadow: 0 25px 25px rgba(255,199,44,0.1); }
+    }
+    .runway-progress {
+        position: relative;
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin-top: 3rem;
+        overflow: visible;
+    }
+    .progress-bar-fill {
+        position: absolute;
+        top: 0; left: 0; height: 100%;
+        background: linear-gradient(90deg, var(--primary-light), var(--accent));
+        width: 0%;
+        border-radius: 4px;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .plane-progress {
+        position: absolute;
+        top: -24px;
+        left: 0;
+        color: var(--accent);
+        font-size: 2rem;
+        transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateX(-50%);
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    }
+    .loader-title {
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        transition: opacity 0.3s ease;
+    }
+    .floating-bg {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .float-el {
+        position: absolute;
+        color: rgba(255, 199, 44, 0.05); /* Filigrane jaune léger */
+        animation: floatAnim linear infinite;
+    }
+    @keyframes floatAnim {
+        0% { transform: translateY(110vh) rotate(0deg) scale(0.8); }
+        100% { transform: translateY(-20vh) rotate(360deg) scale(1.5); }
+    }
+    .fe-1 { font-size: 4rem; left: 10%; animation-duration: 10s; animation-delay: 0s; }
+    .fe-2 { font-size: 6rem; left: 30%; animation-duration: 14s; animation-delay: 2s; }
+    .fe-3 { font-size: 3rem; left: 55%; animation-duration: 8s; animation-delay: 1s; }
+    .fe-4 { font-size: 5rem; left: 75%; animation-duration: 12s; animation-delay: 3s; }
+    .fe-5 { font-size: 4.5rem; left: 85%; animation-duration: 11s; animation-delay: 0.5s; }
+</style>
 {% endblock %}
 
 {% block booking_content %}
@@ -226,19 +309,35 @@
 </div>
 
 <!-- Overlay de chargement pour le paiement -->
-<div id="payment-overlay" class="payment-overlay planes-overlay" style="display: none;" aria-hidden="true">
-    <div class="planes-scene">
-        <i class="fas fa-cloud funny-cloud fc-1"></i>
-        <i class="fas fa-cloud funny-cloud fc-2"></i>
-        <i class="fas fa-cloud funny-cloud fc-3"></i>
-        <div class="funny-plane-wrapper">
-            <i class="fas fa-plane funny-plane-body"></i>
-            <!-- L'astérisque de FontAwesome simule parfaitement une hélice qui tourne ! -->
-            <i class="fas fa-asterisk funny-propeller"></i>
-        </div>
+<div id="payment-overlay" class="obuffair-payment-loader" style="display: none;" aria-hidden="true">
+    <div class="floating-bg">
+        <i class="fas fa-hamburger float-el fe-1"></i>
+        <i class="fas fa-plane float-el fe-2"></i>
+        <i class="fas fa-credit-card float-el fe-3"></i>
+        <i class="fas fa-passport float-el fe-4"></i>
+        <i class="fas fa-pizza-slice float-el fe-5"></i>
     </div>
-    <h3 class="title is-4 mt-4" id="planes-loading-text" style="color: #002A5C; font-weight: 800; text-shadow: 0px 2px 4px rgba(255,255,255,0.8);">Dusty démarre le moteur...</h3>
-    <p class="font-weight-bold mt-2" style="background: rgba(255,255,255,0.6); color: #002A5C; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem;">Veuillez patienter, on évite les turbulences bancaires ! ✈️</p>
+    <div class="loader-content">
+        <div class="animation-container">
+            <div class="loader-icon-wrapper">
+                <div id="loader-icon-container">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+            </div>
+            <div class="runway-progress">
+                <div class="plane-progress" id="plane-progress-indicator">
+                    <i class="fas fa-plane"></i>
+                </div>
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+        </div>
+        <h3 class="title is-3 has-text-white mt-6 loader-title" id="planes-loading-text">
+            Embarquement de votre paiement...
+        </h3>
+        <p class="subtitle is-6 mt-3 loader-subtitle" style="color: rgba(255,255,255,0.8);">
+            Veuillez attacher votre ceinture et préparer vos papilles 🍔✈️
+        </p>
+    </div>
 </div>
 
 <script src="{{ url_for('static', filename='js/booking_payment.js') }}"></script>
