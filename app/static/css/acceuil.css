@@ -137,3 +137,27 @@ body {
 .destination-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem; color: white; }
 .destination-city { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; line-height: 1.2;}
 .destination-price { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+
+.map-routes-section .flighty-card {
+    border-radius: var(--radius-xl);
+}
+
+/* --- STYLES DE LA CARTE --- */
+.airport-glow-point {
+    filter: drop-shadow(0 0 5px rgba(0, 42, 92, 0.7));
+}
+
+.airport-iata-label div {
+    background: rgba(255, 255, 255, 0.9); /* Blanc Translucide */
+    color: #002A5C; /* Bleu Marine */
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 42, 92, 0.2);
+    display: inline-block;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    pointer-events: none; /* Laisse passer le clic pour le drag and drop */
+}

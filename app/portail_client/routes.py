@@ -85,22 +85,64 @@ def accueil():
     
     # --- Liste des aéroports pour l'animation de recherche ---
     try:
-        aeroports_db = db.session.execute(text("SELECT id_aeroport, ville FROM aeroports")).mappings().all()
-        airports_data = [{'iata': a['id_aeroport'], 'city': a['ville']} for a in aeroports_db]
+        aeroports_db = db.session.execute(text("SELECT id_aeroport, ville, latitude, longitude FROM aeroports")).mappings().all()
+        airports_data = []
+        for a in aeroports_db:
+            airports_data.append({
+                'iata': a['id_aeroport'],
+                'city': a['ville'],
+                'lat': float(a['latitude']) if a['latitude'] is not None else None,
+                'lng': float(a['longitude']) if a['longitude'] is not None else None
+            })
     except Exception as e:
         print(f"Erreur SQL Aéroports: {e}")
         airports_data = []
 
+    # --- Requête pour toutes les routes (Carte Réseau) ---
+    try:
+        routes_db = db.session.execute(text("""
+            SELECT DISTINCT 
+                ad.id_aeroport as dep_iata, ad.latitude as dep_lat, ad.longitude as dep_lng,
+                aa.id_aeroport as arr_iata, aa.latitude as arr_lat, aa.longitude as arr_lng
+            FROM vols v
+            JOIN aeroports ad ON v.id_aeroport_depart = ad.id_aeroport
+            JOIN aeroports aa ON v.id_aeroport_arrivee = aa.id_aeroport
+            WHERE ad.latitude IS NOT NULL AND ad.longitude IS NOT NULL
+              AND aa.latitude IS NOT NULL AND aa.longitude IS NOT NULL
+        """)).mappings().all()
+        
+        map_routes = [{
+            'dep_iata': r['dep_iata'], 'dep_lat': float(r['dep_lat']), 'dep_lng': float(r['dep_lng']), 
+            'arr_iata': r['arr_iata'], 'arr_lat': float(r['arr_lat']), 'arr_lng': float(r['arr_lng'])
+        } for r in routes_db]
+    except Exception as e:
+        print(f"Erreur SQL Carte Routes: {e}")
+        map_routes = []
+
     # --- Requête pour les destinations du carrousel ---
     try:
-        lowest_prices = db.session.query(
+        lowest_prices_query = db.session.query(
+            Aeroport.id_aeroport,
             Aeroport.ville,
+            Aeroport.latitude,
+            Aeroport.longitude,
             func.min(Vols.prix_de_base).label('min_prix')
         ).join(Vols, Vols.id_aeroport_arrivee == Aeroport.id_aeroport)\
          .filter(Vols.date_heure_dep_utc > datetime.utcnow())\
-         .group_by(Aeroport.ville)\
+         .group_by(Aeroport.id_aeroport, Aeroport.ville, Aeroport.latitude, Aeroport.longitude)\
          .order_by(func.min(Vols.prix_de_base)).all()
          
+        map_destinations = []
+        for row in lowest_prices_query:
+            if row.latitude is not None and row.longitude is not None:
+                map_destinations.append({
+                    'iata': row.id_aeroport,
+                    'ville': row.ville,
+                    'lat': float(row.latitude),
+                    'lng': float(row.longitude),
+                    'prix': int(row.min_prix) if row.min_prix is not None else 0
+                })
+
         # Utilisation de belles photos fixes pour les grandes villes, fallback générique pour le reste
         city_images_map = {
             'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
@@ -149,7 +191,7 @@ def accueil():
             {'ville': 'Berlin', 'prix': 110, 'image_url': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop'}
         ]
 
-    return render_template('client/acceuil.html', destinations=destinations, airports_data=airports_data)
+    return render_template('client/acceuil.html', destinations=destinations, airports_data=airports_data, map_routes=map_routes)
 
 @client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():
@@ -383,7 +425,7 @@ def booking_flights():
             session['vol_aller'] = {
                 'id_vol': request.form.get('id_vol_aller_temp'),
                 'classe': request.form.get('classe'),
-                'classes': request.form.getlist('classes[]'),
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
                 'prix': float(request.form.get('prix', 0)),
                 'prix_eco': float(request.form.get('prix_eco', 0)),
                 'prix_biz': float(request.form.get('prix_biz', 0)),
@@ -690,7 +732,7 @@ def booking_passengers():
             vol_final = {
                 'id_vol': request.form.get('id_vol_final'),
                 'classe': request.form.get('classe'),
-                'classes': request.form.getlist('classes[]'),
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
                 'prix': float(request.form.get('prix', 0)),
                 'prix_eco': float(request.form.get('prix_eco', 0)),
                 'prix_biz': float(request.form.get('prix_biz', 0)),
@@ -758,8 +800,14 @@ def booking_options():
     nb_passagers = int(search_params.get('passagers', 1))
     
     passagers_data = session.get('passagers_data', {})
-    classes_aller = vol_aller.get('classes', [vol_aller.get('classe', 'Eco')] * nb_passagers)
-    classes_retour = vol_retour.get('classes', [vol_retour.get('classe', 'Eco')] * nb_passagers) if vol_retour else []
+    
+    classes_aller = vol_aller.get('classes')
+    if not classes_aller:
+        classes_aller = [vol_aller.get('classe', 'Eco')] * nb_passagers
+        
+    classes_retour = vol_retour.get('classes') if vol_retour else []
+    if vol_retour and not classes_retour:
+        classes_retour = [vol_retour.get('classe', 'Eco')] * nb_passagers
         
     passengers = []
     for i in range(1, nb_passagers + 1):

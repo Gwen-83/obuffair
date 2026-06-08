@@ -68,4 +68,76 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 3500); // Rotation toutes les 3.5 secondes
         }
     }
+
+    // --- Carte Globale des Routes (Non-Interactive) ---
+    const mapRoutesDataEl = document.getElementById('mapRoutesData');
+    if (mapRoutesDataEl && document.getElementById('network-map')) {
+        const mapRoutes = JSON.parse(mapRoutesDataEl.dataset.routes || '[]');
+        
+        if (mapRoutes.length > 0) {
+            // Initialisation de la carte AVEC interaction (sauf scroll molette)
+            const map = L.map('network-map', {
+                scrollWheelZoom: false,
+                attributionControl: false
+            });
+            
+            // Fond de carte clair et épuré (CartoDB Positron)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20
+            }).addTo(map);
+
+            const bounds = [];
+            const addedPoints = new Set();
+
+            mapRoutes.forEach(route => {
+                const startLatLng = [route.dep_lat, route.dep_lng];
+                const endLatLng = [route.arr_lat, route.arr_lng];
+                
+                bounds.push(startLatLng, endLatLng);
+
+                // Générer une ligne géodésique (courbure de la terre) avec Arc.js
+                const generator = new arc.GreatCircle(
+                    { x: route.dep_lng, y: route.dep_lat },
+                    { x: route.arr_lng, y: route.arr_lat }
+                );
+                const line = generator.Arc(100, { offset: 10 });
+                const leafLatLngs = line.geometries[0].coords.map(c => [c[1], c[0]]);
+
+                // Tracer la ligne de vol incurvée (Bleu O'Buffair)
+                L.polyline(leafLatLngs, {
+                    color: '#002A5C',
+                    weight: 2,
+                    opacity: 0.4,
+                    smoothFactor: 1
+                }).addTo(map);
+
+                // Ajouter les aéroports et leurs labels IATA
+                [ 
+                    { lat: route.dep_lat, lng: route.dep_lng, iata: route.dep_iata },
+                    { lat: route.arr_lat, lng: route.arr_lng, iata: route.arr_iata }
+                ].forEach(pt => {
+                    const key = `${pt.lat},${pt.lng}`;
+                    if (!addedPoints.has(key)) {
+                        // Point de l'aéroport (Bleu plein avec effet glow)
+                        L.circleMarker([pt.lat, pt.lng], { radius: 4, fillColor: '#002A5C', color: '#002A5C', weight: 1, fillOpacity: 1, className: 'airport-glow-point' }).addTo(map);
+                        
+                        // Étiquette IATA 3D style
+                        const icon = L.divIcon({
+                            className: 'airport-iata-label',
+                            html: `<div>${pt.iata}</div>`,
+                            iconSize: [40, 20],
+                            iconAnchor: [-8, 10] // Décalé légèrement sur la droite
+                        });
+                        L.marker([pt.lat, pt.lng], { icon: icon }).addTo(map);
+
+                        addedPoints.add(key);
+                    }
+                });
+            });
+
+            if (bounds.length > 0) {
+                setTimeout(() => map.fitBounds(bounds, { padding: [50, 50] }), 100);
+            }
+        }
+    }
 });

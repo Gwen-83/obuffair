@@ -227,6 +227,7 @@ Stockage sécurisé des utilisateurs avec:
 
 from app import db  # Instance SQLAlchemy pour accéder à la BD
 from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
+from sqlalchemy.orm import joinedload
 
 class User(db.Model):
     """
@@ -289,6 +290,7 @@ class User(db.Model):
     def get_prochains_vols(self):
         """Retourne les prochains billets (vols) confirmés pour cet utilisateur"""
         return db.session.query(Billet)\
+            .options(joinedload(Billet.vol), joinedload(Billet.reservation))\
             .join(Reservation)\
             .join(Vols)\
             .filter(Reservation.id_client == self.id_client)\

@@ -4,6 +4,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/acceuil.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 {% endblock %}
 
 {% block content %}
@@ -192,9 +193,19 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Carte globale des routes (Type Volotea) -->
+        <div class="map-routes-section mt-6 mb-6">
+            <h3 class="title is-3 mb-5 has-text-centered" style="color: var(--primary); font-weight: 800;">Notre Réseau</h3>
+            <div id="network-map" class="flighty-card" style="height: 450px; padding: 0; overflow: hidden; position: relative; z-index: 1;"></div>
+            <div id="mapRoutesData" data-routes="{{ map_routes|tojson|forceescape }}" style="display: none;"></div>
+        </div>
+
     </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://api.mapbox.com/mapbox.js/plugins/arc.js/v0.1.0/arc.js"></script>
 <script src="{{ url_for('static', filename='js/acceuil.js') }}"></script>
 {% endblock %}
