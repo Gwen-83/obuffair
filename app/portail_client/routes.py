@@ -1014,10 +1014,14 @@ def booking_options():
                     taken_seats_rows = db.session.execute(text("""
                         SELECT b.siege FROM billets b 
                         JOIN reservations r ON b.id_reservation = r.id_reservation 
-                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.pnr != :pnr
+                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.pnr != :pnr AND r.statut != 'Annulee'
                     """), {'id_vol': leg_id, 'pnr': modifying_pnr}).fetchall()
                 else:
-                    taken_seats_rows = db.session.execute(text("SELECT siege FROM billets WHERE id_vol = :id_vol AND siege IS NOT NULL"), {'id_vol': leg_id}).fetchall()
+                    taken_seats_rows = db.session.execute(text("""
+                        SELECT b.siege FROM billets b 
+                        JOIN reservations r ON b.id_reservation = r.id_reservation 
+                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.statut != 'Annulee'
+                    """), {'id_vol': leg_id}).fetchall()
                 taken_seats = [r[0] for r in taken_seats_rows if r[0]]
             except Exception:
                 db.session.rollback()
@@ -1034,6 +1038,7 @@ def booking_options():
     nb_passagers = int(search_params.get('passagers', 1))
     
     passagers_data = session.get('passagers_data', {})
+    options_data = session.get('options', {}).get('passagers', [])
     
     classes_aller = vol_aller.get('classes')
     if not classes_aller:
@@ -1047,11 +1052,16 @@ def booking_options():
     for i in range(1, nb_passagers + 1):
         c_aller = classes_aller[i-1] if (i-1) < len(classes_aller) else 'Eco'
         c_retour = classes_retour[i-1] if classes_retour and (i-1) < len(classes_retour) else c_aller
+        p_opt = options_data[i-1] if i-1 < len(options_data) else {}
         passengers.append({
             'index': i - 1, 'num': i,
             'prenom': passagers_data.get(f'prenom_{i}', f'Passager {i}'), 'nom': passagers_data.get(f'nom_{i}', ''),
             'classe_aller': c_aller,
-            'classe_retour': c_retour
+            'classe_retour': c_retour,
+            'sieges_aller': p_opt.get('sieges_aller', []),
+            'sieges_retour': p_opt.get('sieges_retour', []),
+            'repas': p_opt.get('repas', 'standard'),
+            'bagages': p_opt.get('bagages', '0')
         })
 
     return render_template('client/booking_options.html', aller_legs=aller_legs, retour_legs=retour_legs, nb_passagers=nb_passagers, passengers=passengers, highlight_option=session.pop('highlight_option', None))
@@ -1436,25 +1446,33 @@ def init_modification(pnr):
         # Respect strict de l'ordre chronologique des vols
         p_billets_aller = []
         for v in aller_vols:
+            found = False
             for b in p_billets:
                 if b.id_vol == v.id_vol:
                     p_billets_aller.append(b)
+                    found = True
                     break
+            if not found:
+                p_billets_aller.append(None)
                     
         p_billets_retour = []
         for v in retour_vols:
+            found = False
             for b in p_billets:
                 if b.id_vol == v.id_vol:
                     p_billets_retour.append(b)
+                    found = True
                     break
+            if not found:
+                p_billets_retour.append(None)
         
-        c_aller = p_billets_aller[0].classe if p_billets_aller else 'Eco'
-        c_retour = p_billets_retour[0].classe if p_billets_retour else 'Eco'
+        c_aller = p_billets_aller[0].classe if p_billets_aller and p_billets_aller[0] else 'Eco'
+        c_retour = p_billets_retour[0].classe if p_billets_retour and p_billets_retour[0] else 'Eco'
         classes_aller.append(c_aller)
         classes_retour.append(c_retour)
         
-        bag_val = p_billets_aller[0].bagages_sup if p_billets_aller else 0
-        rep_idx = p_billets_aller[0].options_repas if p_billets_aller else 0
+        bag_val = p_billets_aller[0].bagages_sup if p_billets_aller and p_billets_aller[0] else 0
+        rep_idx = p_billets_aller[0].options_repas if p_billets_aller and p_billets_aller[0] else 0
         rep_str = repas_map_rev.get(rep_idx, 'standard')
 
         rank_aller = {'Eco':1, 'Business':2, 'First':3}.get(c_aller, 1)
@@ -1471,8 +1489,8 @@ def init_modification(pnr):
             'bagages': f"{bag_val}_23kg" if p_billets_aller else "0",
             'repas': rep_str,
             'classe_aller': c_aller, 'classe_retour': c_retour,
-            'sieges_aller': [b.siege or '' for b in p_billets_aller],
-            'sieges_retour': [b.siege or '' for b in p_billets_retour]
+            'sieges_aller': [(b.siege if b and b.siege else '') for b in p_billets_aller],
+            'sieges_retour': [(b.siege if b and b.siege else '') for b in p_billets_retour]
         })
 
     def get_flight_pricing(vols_subset):
