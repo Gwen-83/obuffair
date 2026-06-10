@@ -189,6 +189,22 @@ body {
 .airport-glow-point {
     filter: drop-shadow(0 0 5px rgba(0, 42, 92, 0.7));
 }
+.airport-glow-point.active-hub {
+    filter: drop-shadow(0 0 8px rgba(255, 199, 44, 0.8));
+}
+.airport-glow-point.clickable {
+    cursor: pointer;
+    transition: fill 0.2s, stroke 0.2s, stroke-width 0.2s;
+}
+.airport-glow-point.clickable:hover {
+    fill: var(--accent) !important;
+    stroke: var(--accent) !important;
+}
+.hub-tooltip {
+    background: rgba(0, 42, 92, 0.9); color: white;
+    border: none; border-radius: 6px; font-weight: 700;
+    font-size: 11px; box-shadow: var(--shadow-soft);
+}
 
 .airport-iata-label div {
     background: rgba(255, 255, 255, 0.9); /* Blanc Translucide */
@@ -202,7 +218,15 @@ body {
     white-space: nowrap;
     backdrop-filter: blur(4px);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    pointer-events: none; /* Laisse passer le clic pour le drag and drop */
+    transition: all 0.2s ease;
+}
+.airport-iata-label.clickable div {
+    cursor: pointer;
+}
+.airport-iata-label.clickable div:hover {
+    border-color: var(--accent);
+    background: white;
+    transform: scale(1.1);
 }
 
 /* --- NOUVELLES CLASSES EXTRAITES DE L'HTML --- */
