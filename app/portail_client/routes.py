@@ -1014,10 +1014,14 @@ def booking_options():
                     taken_seats_rows = db.session.execute(text("""
                         SELECT b.siege FROM billets b 
                         JOIN reservations r ON b.id_reservation = r.id_reservation 
-                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.pnr != :pnr
+                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.pnr != :pnr AND r.statut != 'Annulee'
                     """), {'id_vol': leg_id, 'pnr': modifying_pnr}).fetchall()
                 else:
-                    taken_seats_rows = db.session.execute(text("SELECT siege FROM billets WHERE id_vol = :id_vol AND siege IS NOT NULL"), {'id_vol': leg_id}).fetchall()
+                    taken_seats_rows = db.session.execute(text("""
+                        SELECT b.siege FROM billets b 
+                        JOIN reservations r ON b.id_reservation = r.id_reservation 
+                        WHERE b.id_vol = :id_vol AND b.siege IS NOT NULL AND r.statut != 'Annulee'
+                    """), {'id_vol': leg_id}).fetchall()
                 taken_seats = [r[0] for r in taken_seats_rows if r[0]]
             except Exception:
                 db.session.rollback()
@@ -1034,6 +1038,7 @@ def booking_options():
     nb_passagers = int(search_params.get('passagers', 1))
     
     passagers_data = session.get('passagers_data', {})
+    options_data = session.get('options', {}).get('passagers', [])
     
     classes_aller = vol_aller.get('classes')
     if not classes_aller:
@@ -1047,11 +1052,16 @@ def booking_options():
     for i in range(1, nb_passagers + 1):
         c_aller = classes_aller[i-1] if (i-1) < len(classes_aller) else 'Eco'
         c_retour = classes_retour[i-1] if classes_retour and (i-1) < len(classes_retour) else c_aller
+        p_opt = options_data[i-1] if i-1 < len(options_data) else {}
         passengers.append({
             'index': i - 1, 'num': i,
             'prenom': passagers_data.get(f'prenom_{i}', f'Passager {i}'), 'nom': passagers_data.get(f'nom_{i}', ''),
             'classe_aller': c_aller,
-            'classe_retour': c_retour
+            'classe_retour': c_retour,
+            'sieges_aller': p_opt.get('sieges_aller', []),
+            'sieges_retour': p_opt.get('sieges_retour', []),
+            'repas': p_opt.get('repas', 'standard'),
+            'bagages': p_opt.get('bagages', '0')
         })
 
     return render_template('client/booking_options.html', aller_legs=aller_legs, retour_legs=retour_legs, nb_passagers=nb_passagers, passengers=passengers, highlight_option=session.pop('highlight_option', None))
