@@ -15,6 +15,8 @@ from app.algos.yield_management import calculer_prix
 import string, random
 import re
 import os
+import requests
+import json
 from werkzeug.utils import secure_filename
 try:
     from weasyprint import HTML
@@ -185,7 +187,7 @@ def accueil():
         ).join(Vols, Vols.id_aeroport_arrivee == Aeroport.id_aeroport)\
          .filter(Vols.date_heure_dep_utc > datetime.utcnow())\
          .group_by(Aeroport.id_aeroport, Aeroport.ville, Aeroport.latitude, Aeroport.longitude)\
-         .order_by(func.min(Vols.prix_de_base)).all()
+         .order_by(func.min(Vols.prix_de_base)).limit(10).all()
          
         map_destinations = []
         for row in lowest_prices_query:
@@ -198,15 +200,6 @@ def accueil():
                     'prix': int(row.min_prix) if row.min_prix is not None else 0
                 })
 
-        # Utilisation de belles photos fixes pour les grandes villes, fallback générique pour le reste
-        city_images_map = {
-            'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
-            'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
-            'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
-            'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
-            'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
-            'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
-        }
         
         destinations = []
         troll_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4u61wav4I9SolemD3pFQHW0iKL8X1ReekEg&s"
@@ -219,9 +212,61 @@ def accueil():
         if (current_time - last_troll_time) > random.randint(180, 300):
             show_troll = True
             session['last_troll_time'] = current_time
+
+        # --- GESTION DU CACHE D'IMAGES UNSPLASH (PERSISTANT) ---
+        cache_file_path = os.path.join(current_app.instance_path, 'unsplash_cache.json')
+        
+        # Initialisation du cache en mémoire s'il n'existe pas
+        if 'UNSPLASH_CACHE' not in current_app.config:
+            try:
+                # 1. Essayer de charger depuis le fichier
+                with open(cache_file_path, 'r') as f:
+                    current_app.config['UNSPLASH_CACHE'] = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError):
+                # 2. Si le fichier n'existe pas ou est corrompu, on crée le cache de base
+                current_app.config['UNSPLASH_CACHE'] = {
+                    'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
+                    'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
+                    'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
+                    'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
+                    'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
+                    'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
+                }
+                # Et on le sauvegarde pour la prochaine fois
+                try:
+                    os.makedirs(current_app.instance_path, exist_ok=True)
+                    with open(cache_file_path, 'w') as f:
+                        json.dump(current_app.config['UNSPLASH_CACHE'], f, indent=4)
+                except IOError as e:
+                    print(f"Erreur lors de la sauvegarde du cache initial : {e}")
             
-        for row in lowest_prices:
-            base_url = city_images_map.get(row.ville, f"https://loremflickr.com/600/800/{row.ville.replace(' ', '')},cityview/all")
+        for row in lowest_prices_query:
+            # 1. Vérifie si l'image de la ville est déjà dans le cache
+            if row.ville in current_app.config['UNSPLASH_CACHE']:
+                base_url = current_app.config['UNSPLASH_CACHE'][row.ville]
+            else:
+                base_url = None
+                # 2. Si non, appel à l'API Unsplash
+                unsplash_key = os.getenv('UNSPLASH_ACCESS_KEY')
+                if unsplash_key:
+                    try:
+                        params = {'query': f"{row.ville} city landmark", 'client_id': unsplash_key, 'per_page': 1, 'orientation': 'portrait'}
+                        resp = requests.get("https://api.unsplash.com/search/photos", params=params, timeout=2)
+                        if resp.status_code == 200 and resp.json().get('results'):
+                            base_url = resp.json()['results'][0]['urls']['small']
+                    except Exception as e:
+                        print(f"Erreur API Unsplash pour {row.ville}: {e}")
+                # 3. Fallback en cas d'erreur
+                if not base_url:
+                    base_url = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=600&auto=format&fit=crop'
+                
+                # 4. Sauvegarde la nouvelle image dans le cache (mémoire ET fichier)
+                current_app.config['UNSPLASH_CACHE'][row.ville] = base_url
+                try:
+                    with open(cache_file_path, 'w') as f:
+                        json.dump(current_app.config['UNSPLASH_CACHE'], f, indent=4)
+                except IOError as e:
+                    print(f"Erreur lors de la mise à jour du fichier cache : {e}")
                 
             destinations.append({
                 'ville': row.ville, 
