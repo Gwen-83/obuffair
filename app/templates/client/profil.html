@@ -85,33 +85,40 @@
                     </div>
 
                     <div class="is-flex is-justify-content-space-between is-align-items-center mt-6 mb-4">
-                        <h3 class="title is-4 m-0 profil-title">Mon Prochain Vol</h3>
+                        <h3 class="title is-4 m-0 profil-title">Mes prochains vols</h3>
                         <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light profil-all-reservations">Toutes mes réservations</a>
                     </div>
                     
                     {% if prochains_vols %}
-                    <a href="{{ url_for('client.gerer_reservation', pnr=prochains_vols[0].pnr) }}" class="next-flight-link">
+                    {% for vol in prochains_vols %}
+                    <a href="{{ url_for('client.mes_reservations') }}#details-{{ vol.id_reservation }}" class="next-flight-link is-block mb-4">
                         <div class="flighty-card next-flight-card">
                             <div class="flighty-header mb-3">
                                 <div class="flighty-airline">
-                                    <i class="fas fa-plane-departure primary-icon"></i> {{ prochains_vols[0].flight_number }} • {{ prochains_vols[0].date }}
-                                    <span class="tag is-info is-light ml-2">{{ prochains_vols[0].nb_passagers }} passager(s)</span>
+                                    <i class="fas fa-plane-departure primary-icon"></i> {{ vol.flight_number }} • {{ vol.date }}
+                                    <span class="tag is-info is-light ml-2">{{ vol.nb_passagers }} passager(s)</span>
                                 </div>
-                                <div class="flighty-status {{ prochains_vols[0].status_class }}">{{ prochains_vols[0].status_text }}</div>
+                                <div class="flighty-status {{ vol.status_class }}">{{ vol.status_text }}</div>
                             </div>
                             
                             <div class="is-flex is-align-items-center is-justify-content-space-between">
-                                <div>
-                                    <span class="flighty-iata flighty-iata-large">{{ prochains_vols[0].dep_iata }}</span>
-                                    <i class="fas fa-arrow-right mx-3 flighty-gray-icon"></i>
-                                    <span class="flighty-iata flighty-iata-large">{{ prochains_vols[0].arr_iata }}</span>
+                                <div class="is-flex is-align-items-center">
+                                    <div class="has-text-centered">
+                                        <span class="flighty-iata flighty-iata-large">{{ vol.dep_iata }}</span>
+                                        <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.dep_city }}</div>
+                                    </div>
+                                    <i class="fas fa-arrow-right mx-4 flighty-gray-icon"></i>
+                                    <div class="has-text-centered">
+                                        <span class="flighty-iata flighty-iata-large">{{ vol.arr_iata }}</span>
+                                        <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.arr_city }}</div>
+                                    </div>
                                 </div>
                                 <div class="has-text-right">
-                                    <div class="flighty-time flighty-time-large">{{ prochains_vols[0].dep_time }} - {{ prochains_vols[0].arr_time }}</div>
+                                    <div class="flighty-time flighty-time-large">{{ vol.dep_time }} - {{ vol.arr_time }}</div>
                                 </div>
                                 <div class="has-text-right">
                                     <span class="flighty-label">PNR</span>
-                                    <span class="flighty-value is-size-6 pnr-value">{{ prochains_vols[0].pnr }}</span>
+                                    <span class="flighty-value is-size-6 pnr-value">{{ vol.pnr }}</span>
                                 </div>
                                 <div>
                                     <i class="fas fa-chevron-right flighty-gray-icon"></i>
@@ -119,6 +126,7 @@
                             </div>
                         </div>
                     </a>
+                    {% endfor %}
                     {% else %}
                     <div class="notification is-light has-text-centered profil-empty-vol">
                         Aucun vol à venir.
@@ -163,7 +171,7 @@
                             
                             <h4 class="title is-5 mb-3 form-section-title"><i class="fas fa-passport mr-2 primary-light-icon"></i> Documents de voyage</h4>
                             
-                            <div class="columns is-multiline mb-1" id="document-row-1" {% if not client.document_identite %}style="display: none;"{% else %}style="display: flex;"{% endif %}>
+                            <div class="columns is-multiline mb-1" id="document-row-1" style="display: {% if not client.document_identite %}none{% else %}flex{% endif %};">
                                 <div class="column is-6 is-flex">
                                     <div class="field is-flex is-flex-direction-column doc-field-wrapper">
                                         <label class="form-label">Type de document</label>
@@ -215,14 +223,14 @@
                                 </div>
                             </div>
                         
-                            <div class="mb-2 mt-1" id="btnAddDocumentWrapper" {% if client.document_identite and client.document_identite_2 %}style="display: none;"{% endif %}>
+                            <div class="mb-2 mt-1" id="btnAddDocumentWrapper" style="{% if client.document_identite and client.document_identite_2 %}display: none;{% endif %}">
                                 <button type="button" class="button is-small is-ghost doc-add-btn" id="btnAddDocument">
                                     <i class="fas fa-plus mr-2"></i> Ajouter un document de voyage
                                 </button>
                             </div>
 
                             <!-- Ligne Document 2 (Masquée par défaut) -->
-                            <div class="columns is-multiline mb-1" id="document-row-2" {% if not client.document_identite_2 %}style="display: none;"{% else %}style="display: flex;"{% endif %}>
+                            <div class="columns is-multiline mb-1" id="document-row-2" style="display: {% if not client.document_identite_2 %}none{% else %}flex{% endif %};">
                                 <div class="column is-6 is-flex">
                                     <div class="field is-flex is-flex-direction-column doc-field-wrapper">
                                         <div class="control mt-auto">

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (targetWrapper.classList.contains('is-active')) {
                 targetWrapper.classList.remove('is-active');
-                btn.innerHTML = 'Voir les cartes d\'embarquement <i class="fas fa-chevron-down ml-2"></i>';
+                btn.innerHTML = 'Voir les détails <i class="fas fa-chevron-down ml-2"></i>';
                 btn.classList.remove('is-active');
                 btn.setAttribute('aria-expanded', 'false');
             } else {
@@ -24,4 +24,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    // Ouverture automatique de l'onglet si un hash est présent dans l'URL (ex: #details-1)
+    if (window.location.hash && window.location.hash.startsWith('#details-')) {
+        const targetId = window.location.hash.substring(1);
+        const targetBtn = document.querySelector(`.toggle-details-btn[data-target="${targetId}"]`);
+        
+        if (targetBtn) {
+            targetBtn.click(); // Simule un clic pour ouvrir l'onglet
+            setTimeout(() => {
+                targetBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300); // Léger délai pour laisser l'onglet s'ouvrir avant de scroller
+        }
+    }
 });

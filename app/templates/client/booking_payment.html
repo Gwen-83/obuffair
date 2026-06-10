@@ -165,6 +165,37 @@
                     <span class="is-size-5 font-weight-bold">Total TTC</span>
                     <span class="title is-2 m-0" style="color: var(--accent); letter-spacing: -1px;">{{ "%.2f"|format(cart_total) }} €</span>
                 </div>
+
+                {% set is_modification = session.get('modifying_pnr') is not none %}
+                {% if is_modification %}
+                {% set original_total = session.get('original_total', 0) | float %}
+                {% set difference = cart_total - original_total %}
+                <div class="mt-4 pt-3" style="border-top: 1px solid rgba(255,255,255,0.2);">
+                    <div class="is-flex is-justify-content-space-between is-size-6 mb-2">
+                        <span style="color: rgba(255,255,255,0.8);">Montant original</span>
+                        <span class="font-weight-bold">{{ "%.2f"|format(original_total) }} €</span>
+                    </div>
+                    {% if difference > 0 %}
+                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                        <span class="is-size-5 font-weight-bold">Reste à payer</span>
+                        <span class="title is-3 m-0" style="color: #34C759; letter-spacing: -1px;">+ {{ "%.2f"|format(difference) }} €</span>
+                    </div>
+                    {% elif difference < 0 %}
+                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                        <span class="is-size-5 font-weight-bold">Reste à payer</span>
+                        <span class="title is-3 m-0" style="color: var(--accent); letter-spacing: -1px;">0.00 €</span>
+                    </div>
+                    <div class="notification is-warning is-light mt-3 is-size-7 p-3" style="border-radius: 8px;">
+                        <i class="fas fa-info-circle mr-1"></i> O'Buffair n'effectue pas de remboursement sur les options moins chères modifiées après l'achat initial.
+                    </div>
+                    {% else %}
+                    <div class="is-flex is-justify-content-space-between is-align-items-center">
+                        <span class="is-size-5 font-weight-bold">Reste à payer</span>
+                        <span class="title is-3 m-0" style="color: var(--accent); letter-spacing: -1px;">0.00 €</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             </div>
 
             <form id="paymentForm" action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card p-5" style="border-radius: var(--radius-xl);">
@@ -207,7 +238,7 @@
 
                     <button id="payButton" type="submit" class="button is-accent is-medium is-fullwidth mt-5" style="border-radius: 12px; font-weight: 700; letter-spacing: -0.2px;" {% if not status.all_assigned %}disabled{% endif %}>
                         {% if status.all_assigned %}
-                            <i class="fas fa-lock mr-2"></i> Payer {{ "%.2f"|format(cart_total) }} €
+                            <i class="fas fa-lock mr-2"></i> {% if is_modification and difference <= 0 %}Confirmer la modification{% else %}Payer {{ "%.2f"|format(difference if is_modification and difference > 0 else cart_total) }} €{% endif %}
                         {% else %}
                             <i class="fas fa-exclamation-circle mr-2"></i> Sièges non assignés
                         {% endif %}

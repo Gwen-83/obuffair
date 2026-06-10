@@ -23,10 +23,20 @@
             {% set search_params = session.get('search_params', {}) %}
             {% set nb_passagers = search_params.get('passagers', 1) | int %}
             {% set cart_total = session.get('total_panier', 0) | float %}
+            {% set is_modification = session.get('modifying_pnr') is not none %}
+            {% set original_total = session.get('original_total', 0) | float %}
 
             <div class="cart-total">
                 <div class="cart-total-label">Total ({{ nb_passagers }} passager{% if nb_passagers > 1 %}s{% endif %})</div>
-                <div class="cart-total-price">{{ "%.2f"|format(cart_total) }} €</div>
+                {% if is_modification %}
+                    {% if cart_total < original_total %}
+                        <div class="cart-total-price">0.00 €</div>
+                    {% else %}
+                        <div class="cart-total-price">+ {{ "%.2f"|format(cart_total - original_total) }} €</div>
+                    {% endif %}
+                {% else %}
+                    <div class="cart-total-price">{{ "%.2f"|format(cart_total) }} €</div>
+                {% endif %}
             </div>
         </div>
     </div>

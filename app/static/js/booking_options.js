@@ -102,6 +102,8 @@ let pendingSeatAction = null;
 let passengers = [];
 let basePricesAller = {};
 let basePricesRetour = {};
+let isModification = false;
+let originalTotal = 0;
 
 /**
  * Met à jour l'affichage du modèle de l'avion pour le segment de vol sélectionné.
@@ -132,6 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
     basePricesAller = JSON.parse(dataEl.dataset.basePricesAller || '{}');
     basePricesRetour = JSON.parse(dataEl.dataset.basePricesRetour || '{}');
     currentLegType = dataEl.dataset.currentLegType || 'aller';
+    isModification = dataEl.dataset.isModification === 'true';
+    originalTotal = parseFloat(dataEl.dataset.originalTotal || '0');
 
     window.buildAllMaps();
     window.updateAllPassengerCards();
@@ -442,6 +446,19 @@ window.updatePassengerOptions = function(pIndex) {
         repasSelect.innerHTML = `<option value="standard">Standard (Inclus)</option><option value="premium">Premium (+${tarifs.repas_eco['premium'] || 15}€)</option><option value="vegetarien">Végétarien (+${tarifs.repas_eco['vegetarien'] || 15}€)</option>`;
     }
     
+    const initRepas = document.getElementById(`init_repas_${pNum}`);
+    if (initRepas && !p.initializedOptions) {
+        if (repasSelect.querySelector(`option[value="${initRepas.value}"]`)) {
+            repasSelect.value = initRepas.value;
+        }
+        p.initializedOptions = true;
+    }
+    
+    const bagInput = document.getElementById(`input_bagages_${pNum}`);
+    if (bagInput) {
+        document.getElementById(`bagages_count_${pNum}`).innerText = bagInput.value;
+    }
+    
     // Mise à jour du total si changement de repas
     if (repasSelect) {
         repasSelect.onchange = window.calculateGrandTotal;
@@ -527,12 +544,27 @@ window.calculateGrandTotal = function() {
         }
     });
     
-    const totalStr = total.toFixed(2) + ' €';
+    let totalStr = total.toFixed(2) + ' €';
     const displayEl = document.getElementById('grand_total_display');
-    if (displayEl) displayEl.innerText = totalStr;
+    
+    if (isModification) {
+        const warningEl = document.getElementById('modificationWarning');
+        if (total < originalTotal) {
+            if (warningEl) warningEl.style.display = 'block';
+            if (displayEl) displayEl.innerHTML = `<span style="text-decoration: line-through; color: var(--flighty-gray); font-size: 1.2rem;" class="mr-2">${totalStr}</span>0.00 €`;
+            totalStr = '0.00 €';
+        } else {
+            if (warningEl) warningEl.style.display = 'none';
+            const diff = total - originalTotal;
+            if (displayEl) displayEl.innerHTML = `<span class="is-size-5 mr-2" style="color: var(--flighty-gray);">+</span>${diff.toFixed(2)} €`;
+            totalStr = '+' + diff.toFixed(2) + ' €';
+        }
+    } else {
+        if (displayEl) displayEl.innerText = totalStr;
+    }
     
     // Synchroniser dynamiquement avec l'en-tête de réservation (Booking Header)
     document.querySelectorAll('.header-total-price, #headerTotalPrice, .panier-total, .booking-base-total, #bookingBaseTotal, #total-panier, .cart-total-price').forEach(el => {
-        el.innerText = totalStr;
+        el.innerHTML = totalStr;
     });
 }
