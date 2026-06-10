@@ -353,6 +353,7 @@ def profil():
                    7: 'Juil', 8: 'Août', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Déc'}
         for billet in prochains_billets:
             vol = billet.vol
+            if not vol : continue
             resa = billet.reservation
             
             # Clé unique pour regrouper par réservation ET par vol (pour les escales)
@@ -1274,6 +1275,40 @@ def download_ticket(reservation_id):
         # Si WeasyPrint crashe à l'exécution (ex: librairies C défectueuses sur Mac), on utilise le fallback
         return html_content
 
+def group_flights_by_journey(billets):
+    """
+    Groups a list of tickets into outbound and return journeys based on flight continuity and time gaps.
+    Returns two lists of flight objects: (aller_vols, retour_vols).
+    """
+    if not billets:
+        return [], []
+
+    vols = {}
+    for b in billets:
+        if b.id_vol not in vols:
+            vols[b.id_vol] = b.vol
+    
+    vols_list = sorted(list(vols.values()), key=lambda v: v.date_heure_dep_utc)
+    
+    if not vols_list:
+        return [], []
+
+    is_ar = len(vols_list) > 1 and vols_list[-1].id_aeroport_arrivee == vols_list[0].id_aeroport_depart
+
+    if is_ar:
+        max_gap = timedelta(0)
+        split_index = -1
+        for i in range(len(vols_list) - 1):
+            gap = vols_list[i+1].date_heure_dep_utc - vols_list[i].date_heure_arr_utc
+            if gap > max_gap:
+                max_gap = gap
+                split_index = i + 1
+        
+        if split_index != -1 and max_gap > timedelta(hours=12):
+            return vols_list[:split_index], vols_list[split_index:]
+
+    return vols_list, []
+
 @client_bp.route('/mes-reservations', methods=['GET', 'POST'])
 @login_required
 def mes_reservations():
@@ -1293,6 +1328,9 @@ def mes_reservations():
     repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
     
     for resa in user_reservations:
+        aller_vols_obj, _ = group_flights_by_journey(resa.billets)
+        aller_ids = {v.id_vol for v in aller_vols_obj}
+
         resa_dict = {
             'id_reservation': resa.id_reservation,
             'pnr': resa.pnr or 'N/A',
@@ -1322,6 +1360,7 @@ def mes_reservations():
                     'arr_city': vol.aeroport_arrivee.ville if vol.aeroport_arrivee else vol.id_aeroport_arrivee,
                     'status_text': vol.statut.capitalize(),
                     'status_class': 'status-delayed' if is_delayed else 'status-ontime',
+                    'journey_type': 'aller' if vol.id_vol in aller_ids else 'retour',
                     'sort_time': vol.date_heure_dep_utc,
                     'passagers': []
                 }
@@ -1348,6 +1387,9 @@ def gerer_reservation(pnr):
     
     # Sécurisation : Seul le client ayant fait la réservation peut y accéder
     reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+
+    aller_vols_obj, _ = group_flights_by_journey(reservation.billets)
+    aller_ids = {v.id_vol for v in aller_vols_obj}
     
     repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
     vols_map = {}
@@ -1373,6 +1415,7 @@ def gerer_reservation(pnr):
                 'arr_time': arr_time_local.strftime('%H:%M'),
                 'status_text': vol.statut.capitalize(),
                 'status_class': 'status-delayed' if is_delayed else 'status-ontime',
+                'journey_type': 'aller' if vol.id_vol in aller_ids else 'retour',
                 'passagers': []
             }
             

@@ -28,40 +28,65 @@
             
             <!-- En-tête global de l'itinéraire -->
             <div class="p-5" style="background-color: #F8FAFC; border-bottom: 1px solid rgba(0, 42, 92, 0.08);">
-                {% for vol in reservation.vols %}
+                {% set aller_vols = reservation.vols | selectattr('journey_type', 'equalto', 'aller') | list %}
+                {% set retour_vols = reservation.vols | selectattr('journey_type', 'equalto', 'retour') | list %}
+                {% set journeys = [] %}
+                {% if aller_vols %}{% set _ = journeys.append(aller_vols) %}{% endif %}
+                {% if retour_vols %}{% set _ = journeys.append(retour_vols) %}{% endif %}
+                
+                {% for journey in journeys %}
+                {% set dep_vol = journey[0] %}
+                {% set arr_vol = journey[-1] %}
+                {% set is_retour = (dep_vol.journey_type == 'retour') %}
                 <div class="{% if not loop.last %}mb-5 pb-5{% endif %}" style="position: relative; {% if not loop.last %}border-bottom: 1px dashed rgba(0, 42, 92, 0.12);{% endif %}">
                     
                     <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
                         <div class="is-flex is-align-items-center">
-                            <span class="tag is-success is-light mr-3" style="font-weight: 700;">
-                                {% if reservation.vols|length > 1 %}{% if loop.first %}Vol aller{% else %}Vol retour{% endif %}{% else %}Aller simple{% endif %}
-                            </span>
+                            <span class="tag is-success is-light mr-3" style="font-weight: 700;">{% if is_retour %}Vol retour{% else %}Vol aller{% endif %}</span>
                             <span class="has-text-weight-bold is-size-6" style="color: var(--flighty-text);">
-                                <i class="fas fa-plane mr-2" style="color: var(--flighty-text);"></i> {{ vol.flight_number }}
+                                <i class="fas fa-plane mr-2" style="color: var(--flighty-text);"></i> {% for v in journey %}{{ v.flight_number }}{% if not loop.last %}, {% endif %}{% endfor %}
                             </span>
                         </div>
                         <div class="has-text-weight-semibold is-size-6" style="color: var(--flighty-text);">
-                            <i class="far fa-calendar-alt mr-2" style="color: var(--flighty-gray);"></i>{{ vol.date }}
+                            <i class="far fa-calendar-alt mr-2" style="color: var(--flighty-gray);"></i>{{ dep_vol.date }}
                         </div>
                     </div>
                     
-                    <div class="is-flex is-align-items-center is-justify-content-space-between px-2 mt-2">
-                        <div class="has-text-centered" style="flex: 1;">
-                            <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ vol.dep_time }}</div>
-                            <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ vol.dep_iata }}</div>
-                            <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ vol.dep_city }}</div>
+                    <div class="is-flex is-align-items-center is-justify-content-space-between px-2 mt-2" style="overflow-x: auto; padding-bottom: 0.5rem;">
+                        <!-- Départ -->
+                        <div class="has-text-centered" style="min-width: 90px;">
+                            <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ dep_vol.dep_time }}</div>
+                            <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ dep_vol.dep_iata }}</div>
+                            <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ dep_vol.dep_city }}</div>
                         </div>
                         
-                        <div class="has-text-centered px-4" style="flex: 2;">
+                        {% for i in range(journey|length) %}
+                        <div class="is-flex-grow-1 is-flex is-align-items-center px-4" style="min-width: 80px;">
                             <div style="width: 100%; height: 2px; background: repeating-linear-gradient(to right, rgba(0, 42, 92, 0.15), rgba(0, 42, 92, 0.15) 6px, transparent 6px, transparent 12px); position: relative;">
-                                <i class="fas fa-plane" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) {% if loop.index == 2 %}scaleX(-1){% endif %}; color: var(--primary-light); background: #F8FAFC; padding: 0 10px; font-size: 1.2rem;"></i>
+                                <i class="fas fa-plane" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) {% if is_retour %}scaleX(-1){% endif %}; color: var(--primary-light); background: #F8FAFC; padding: 0 10px; font-size: 1.2rem; z-index: 2;"></i>
                             </div>
                         </div>
-                        
-                        <div class="has-text-centered" style="flex: 1;">
-                            <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ vol.arr_time }}</div>
-                            <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ vol.arr_iata }}</div>
-                            <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ vol.arr_city }}</div>
+
+                        {% if not loop.last %}
+                        <!-- Escale -->
+                        <div class="has-text-centered" style="min-width: 130px;">
+                            <div class="is-flex is-justify-content-center is-align-items-center" style="color: var(--primary); font-weight: 700; gap: 8px;">
+                                <span class="is-size-5">{{ journey[i].arr_time }}</span>
+                                <i class="fas fa-arrow-right is-size-7" style="color: var(--flighty-gray);"></i>
+                                <span class="is-size-5">{{ journey[i+1].dep_time }}</span>
+                            </div>
+                            <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ journey[i].arr_iata }}</div>
+                            <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ journey[i].arr_city }}</div>
+                            <div class="tag is-warning is-light is-rounded mt-1" style="font-size: 0.65rem; font-weight: 700; padding: 2px 8px; height: auto;">Escale</div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                        <!-- Arrivée -->
+                        <div class="has-text-centered" style="min-width: 90px;">
+                            <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ arr_vol.arr_time }}</div>
+                            <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ arr_vol.arr_iata }}</div>
+                            <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ arr_vol.arr_city }}</div>
                         </div>
                     </div>
                 </div>
@@ -71,61 +96,36 @@
             <!-- Liste des passagers -->
             {% set unique_passagers = reservation.vols[0].passagers if reservation.vols else [] %}
             <div class="p-4">
-                <h4 class="title is-6 mb-4" style="color: var(--primary); border-bottom: 1px solid rgba(0, 42, 92, 0.08); padding-bottom: 0.75rem;">
-                    <i class="fas fa-users mr-2"></i> Informations Passagers
-                </h4>
-                
-                {% for passager in unique_passagers %}
-                <div class="flighty-card p-3 mb-4" style="border-radius: 12px; border-left: 4px solid var(--primary-light); box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid rgba(0, 42, 92, 0.08); background: white; transition: all 0.2s ease;">
-                    
-                    <!-- Nom du passager -->
-                    <div class="is-flex is-align-items-center mb-3 pb-2" style="border-bottom: 1px dashed rgba(0, 42, 92, 0.15);">
-                        <h4 class="title is-6 m-0 is-flex is-align-items-center" style="font-size: 0.95rem;">
-                            <span class="tag is-rounded mr-2" style="background-color: var(--flighty-text); color: white; font-weight: 700;">P{{ loop.index }}</span>
-                            <i class="fas fa-user-circle mr-2" style="color: var(--flighty-text);"></i> {{ passager.prenom }} {{ passager.nom | upper }}
-                        </h4>
-                        <span class="tag" style="background-color: rgba(0, 42, 92, 0.05); color: var(--flighty-text); border: 1px solid rgba(0, 42, 92, 0.1); font-weight: 700; border-radius: 8px;">
-                            <i class="fas fa-gem mr-2" style="color: var(--primary-light);"></i> {{ passager.classe }}
-                        </span>
-                    </div>
-                    
-                    <!-- Options du passager -->
-                    <div class="columns is-mobile is-multiline is-variable is-2">
-                        <!-- Siège -->
-                        <div class="column is-12-mobile is-4-tablet is-flex">
-                            <div class="is-flex is-flex-direction-column" style="height: 100%; border: 1px solid rgba(0, 42, 92, 0.08); border-radius: 8px; padding: 0.75rem 0.85rem; background: rgba(0, 42, 92, 0.02); width: 100%;">
-                                <p class="has-text-grey mb-1 is-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;"><i class="fas fa-chair mr-1" style="font-size: 0.85rem;"></i> Siège</p>
-                                <p class="has-text-weight-bold mb-2" style="color: var(--flighty-text); font-size: 0.9rem;">
-                                    {% if passager.seat != 'Non assigné' %}
-                                        {{ passager.seat }}
-                                    {% else %}
-                                        <span class="has-text-weight-bold" style="color: #FF9500; font-size: 0.8rem;"><i class="fas fa-exclamation-triangle mr-1"></i> À assigner</span>
-                                    {% endif %}
-                                </p>
-                                <a href="{{ url_for('client.init_modification', pnr=reservation.pnr, target='options', highlight='siege', p_index=loop.index0) }}" class="button is-white is-small is-fullwidth mt-auto" style="border: 1px solid rgba(0, 42, 92, 0.15); border-radius: 6px; font-weight: 600; color: var(--primary-light); background-color: white; height: 2em; font-size: 0.7rem;"><i class="fas fa-edit mr-2"></i>Modifier</a>
-                            </div>
-                        </div>
-                        
-                        <!-- Bagages -->
-                        <div class="column is-12-mobile is-4-tablet is-flex">
-                            <div class="is-flex is-flex-direction-column" style="height: 100%; border: 1px solid rgba(0, 42, 92, 0.08); border-radius: 8px; padding: 0.75rem 0.85rem; background: rgba(0, 42, 92, 0.02); width: 100%;">
-                                <p class="has-text-grey mb-1 is-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;"><i class="fas fa-suitcase-rolling mr-1" style="font-size: 0.85rem;"></i> Bagages</p>
-                                <p class="has-text-weight-bold mb-2" style="color: var(--flighty-text); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ passager.baggage }}">{{ passager.baggage }}</p>
-                                <a href="{{ url_for('client.init_modification', pnr=reservation.pnr, target='options', highlight='bagage', p_index=loop.index0) }}" class="button is-white is-small is-fullwidth mt-auto" style="border: 1px solid rgba(0, 42, 92, 0.15); border-radius: 6px; font-weight: 600; color: var(--primary-light); background-color: white; height: 2em; font-size: 0.7rem;"><i class="fas fa-edit mr-2"></i>Modifier</a>
-                            </div>
-                        </div>
-                        
-                        <!-- Repas -->
-                        <div class="column is-12-mobile is-4-tablet is-flex">
-                            <div class="is-flex is-flex-direction-column" style="height: 100%; border: 1px solid rgba(0, 42, 92, 0.08); border-radius: 8px; padding: 0.75rem 0.85rem; background: rgba(0, 42, 92, 0.02); width: 100%;">
-                                <p class="has-text-grey mb-1 is-uppercase font-weight-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;"><i class="fas fa-utensils mr-1" style="font-size: 0.85rem;"></i> Repas</p>
-                                <p class="has-text-weight-bold mb-2" style="color: var(--flighty-text); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ passager.meal }}">{{ passager.meal }}</p>
-                                <a href="{{ url_for('client.init_modification', pnr=reservation.pnr, target='options', highlight='repas', p_index=loop.index0) }}" class="button is-white is-small is-fullwidth mt-auto" style="border: 1px solid rgba(0, 42, 92, 0.15); border-radius: 6px; font-weight: 600; color: var(--primary-light); background-color: white; height: 2em; font-size: 0.7rem;"><i class="fas fa-edit mr-2"></i>Modifier</a>
-                            </div>
-                        </div>
-                    </div>
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-4 pb-3" style="border-bottom: 1px solid rgba(0, 42, 92, 0.08);">
+                    <h4 class="title is-5 m-0" style="color: var(--primary);">
+                        <i class="fas fa-users mr-2"></i> Informations Passagers et Options
+                    </h4>
+                    <a href="{{ url_for('client.init_modification', pnr=reservation.pnr, target='options') }}" class="button is-accent is-rounded font-weight-bold px-4" style="box-shadow: 0 4px 10px rgba(255, 199, 44, 0.3);">
+                        <i class="fas fa-edit mr-2"></i> Modifier la réservation
+                    </a>
                 </div>
-                {% endfor %}
+                
+                <div class="passenger-list">
+                    {% for passager in unique_passagers %}
+                    <div class="flighty-card p-3 mb-3" style="border-radius: 12px; border-left: 4px solid var(--primary-light); box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid rgba(0, 42, 92, 0.08); background: white; transition: all 0.2s ease;">
+                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 pb-2" style="border-bottom: 1px dashed rgba(0, 42, 92, 0.15);">
+                            <h5 class="title is-6 m-0" style="letter-spacing: -0.2px;">
+                                <span class="tag is-rounded mr-2" style="background-color: var(--flighty-text); color: white; font-weight: 700;">P{{ loop.index }}</span>
+                                <i class="fas fa-user-circle mr-2" style="color: var(--flighty-text);"></i> {{ passager.prenom }} {{ passager.nom | upper }}
+                            </h5>
+                            <div class="tag" style="background-color: rgba(0, 42, 92, 0.05); color: var(--primary); border: 1px solid rgba(0, 42, 92, 0.1); font-weight: 700;">
+                                <i class="fas fa-gem mr-1" style="color: var(--primary);"></i> {{ passager.classe }}
+                            </div>
+                        </div>
+                        
+                        <div class="is-flex is-align-items-center is-flex-wrap-wrap" style="gap: 12px; font-size: 0.8rem; color: var(--flighty-text); font-weight: 500;">
+                            <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px; {% if passager.seat == 'Non assigné' %}color: #FF9500;{% endif %}"><i class="fas fa-chair mr-2" style="color: {% if passager.seat != 'Non assigné' %}var(--primary){% else %}#FF9500{% endif %};"></i> {{ passager.seat if passager.seat != 'Non assigné' else 'Siège à assigner' }}</span>
+                            <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px;"><i class="fas fa-suitcase-rolling mr-2" style="color: var(--primary);"></i> {{ passager.baggage }}</span>
+                            <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px;"><i class="fas fa-utensils mr-2" style="color: var(--primary);"></i> {{ passager.meal }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
 
