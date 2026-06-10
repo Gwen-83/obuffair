@@ -308,6 +308,8 @@
      data-max-passengers="{{ nb_passagers }}" 
      data-selected-flight="{{ session.get('vol_retour', {}).get('id_vol') if is_retour_step else session.get('vol_aller', {}).get('id_vol') }}"
      data-selected-classes='{{ (session.get("vol_retour", {}).get("classes", []) if is_retour_step else session.get("vol_aller", {}).get("classes", [])) | tojson | safe }}'
+     data-highlight="{{ highlight_option or '' }}"
      style="display:none;"></div>
 <script src="{{ url_for('static', filename='js/booking_options.js') }}"></script>
+
 {% endblock %}

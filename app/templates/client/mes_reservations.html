@@ -18,68 +18,131 @@
         </div>
         
         {% for resa in reservations %}
-        <div class="resa-booking-card">
-            <div class="resa-header-top">
+        <div class="flighty-card p-0 mb-6" style="border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); background: white;">
+            <!-- En-tête de la réservation -->
+            <div class="is-flex is-justify-content-space-between is-align-items-center p-4" style="background-color: rgba(0, 42, 92, 0.03); border-bottom: 1px solid rgba(0, 42, 92, 0.08);">
                 <div>
-                    <h3 class="title is-5 m-0" style="color: var(--primary);">Réservation <span style="font-family: monospace;">{{ resa.pnr }}</span></h3>
-                    <p class="is-size-7 has-text-grey mt-1">Effectuée le {{ resa.date_resa }} • Statut: <strong style="color: {% if resa.statut == 'Confirmee' %}var(--flighty-green){% else %}var(--flighty-orange){% endif %};">{{ resa.statut }}</strong></p>
+                    <div class="is-flex is-align-items-center mb-1">
+                        <h3 class="title is-5 m-0 mr-3" style="color: var(--primary);">Réservation</h3>
+                        <span class="tag" style="background-color: white; color: var(--primary); font-family: monospace; font-size: 1rem; font-weight: 700; border: 1px solid rgba(0, 42, 92, 0.15); box-shadow: 0 2px 4px rgba(0, 42, 92, 0.05);">{{ resa.pnr }}</span>
+                    </div>
+                    <p class="is-size-7 has-text-grey mt-2 is-flex is-align-items-center">
+                        <i class="fas fa-calendar-check mr-2"></i> Effectuée le {{ resa.date_resa }} 
+                        <span class="mx-3" style="color: rgba(0, 42, 92, 0.15);">|</span> 
+                        Statut : <span class="tag is-light {% if resa.statut == 'Confirmee' %}is-success{% else %}is-warning{% endif %} is-rounded ml-2" style="font-size: 0.7rem; font-weight: 600;">{{ resa.statut }}</span>
+                    </p>
                 </div>
-                <a href="{{ url_for('client.gerer_reservation', pnr=resa.pnr) }}" class="button is-primary is-outlined is-rounded font-weight-bold">
+                <a href="{{ url_for('client.gerer_reservation', pnr=resa.pnr) }}" class="button is-primary is-outlined is-rounded font-weight-bold is-small">
                     Gérer la réservation
                 </a>
             </div>
 
-            {% for vol in resa.vols %}
-            <div class="flighty-route mb-4" style="background: #F8FAFC; padding: 1rem; border-radius: 12px;">
-                <div style="width: 100px;">
-                    <div class="flighty-time">{{ vol.dep_time }}</div>
-                    <div class="flighty-iata">{{ vol.dep_iata }}</div>
-                    <div class="flighty-city">{{ vol.dep_city }}</div>
-                </div>
-                <div class="flighty-path">
-                    <div class="is-size-7 has-text-grey font-weight-bold mb-1" style="text-align: center;">{{ vol.flight_number }} • {{ vol.date }}</div>
-                    <i class="fas fa-plane"></i>
-                </div>
-                <div style="width: 100px; text-align: right;">
-                    <div class="flighty-time">{{ vol.arr_time }}</div>
-                    <div class="flighty-iata">{{ vol.arr_iata }}</div>
-                    <div class="flighty-city">{{ vol.arr_city }}</div>
-                </div>
-            </div>
-            {% endfor %}
+            <!-- Contenu de la réservation -->
+            <div class="p-5" style="background-color: white;">
+                <div class="flighty-card mb-4 p-0" style="border-radius: 12px; box-shadow: none; border: 1px solid rgba(0, 42, 92, 0.08); background: #F8FAFC; overflow: hidden;">
+                    <div class="p-4">
+                        {% set aller_vols = resa.vols | selectattr('journey_type', 'equalto', 'aller') | list %}
+                        {% set retour_vols = resa.vols | selectattr('journey_type', 'equalto', 'retour') | list %}
+                        {% set journeys = [] %}
+                        {% if aller_vols %}{% set _ = journeys.append(aller_vols) %}{% endif %}
+                        {% if retour_vols %}{% set _ = journeys.append(retour_vols) %}{% endif %}
+                        
+                        {% for journey in journeys %}
+                        {% set dep_vol = journey[0] %}
+                        {% set arr_vol = journey[-1] %}
+                        {% set is_retour = (dep_vol.journey_type == 'retour') %}
+                        <div class="{% if not loop.last %}mb-4 pb-4{% endif %}" {% if not loop.last %}style="border-bottom: 1px dashed rgba(0, 42, 92, 0.12);"{% endif %}>
+                            <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                                <div class="is-flex is-align-items-center">
+                                    <span class="tag is-success is-light mr-3" style="font-weight: 700;">{% if is_retour %}Vol retour{% else %}Vol aller{% endif %}</span>
+                                    <span class="has-text-weight-bold is-size-6" style="color: var(--flighty-text);">
+                                        <i class="fas fa-plane mr-2" style="color: var(--flighty-gray);"></i> {% for v in journey %}{{ v.flight_number }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                    <span class="has-text-grey mx-3">•</span>
+                                    <span class="has-text-weight-semibold is-size-6" style="color: var(--flighty-text);">{{ dep_vol.date }}</span>
+                                </div>
+                                <div class="is-flex is-align-items-center">
+                                    <span class="is-size-7 has-text-grey font-weight-bold mr-3"><i class="fas fa-users mr-1"></i> {{ dep_vol.passagers|length }} passager(s)</span>
+                                    <div class="tag is-light font-weight-bold {% if dep_vol.status_class == 'status-ontime' %}is-success{% else %}is-warning{% endif %} is-small">{{ dep_vol.status_text }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="is-flex is-align-items-center is-justify-content-space-between" style="width: 100%; overflow-x: auto; padding-bottom: 0.5rem;">
+                                <!-- Départ -->
+                                <div class="has-text-centered" style="min-width: 70px;">
+                                    <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ dep_vol.dep_time }}</div>
+                                    <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ dep_vol.dep_iata }}</div>
+                                    <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ dep_vol.dep_city }}</div>
+                                </div>
+                                
+                                {% for i in range(journey|length) %}
+                                <div class="is-flex-grow-1 is-flex is-align-items-center px-3" style="min-width: 60px;">
+                                    <div style="width: 100%; height: 2px; background: repeating-linear-gradient(to right, rgba(0, 42, 92, 0.15), rgba(0, 42, 92, 0.15) 6px, transparent 6px, transparent 12px); position: relative;">
+                                        <i class="fas fa-plane" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) {% if is_retour %}scaleX(-1){% endif %}; color: rgba(0, 42, 92, 0.25); background: #F8FAFC; padding: 0 8px; font-size: 1rem; z-index: 2;"></i>
+                                    </div>
+                                </div>
 
-            <div class="has-text-centered mt-4">
-                <button class="button is-ghost toggle-details-btn" data-target="details-{{ resa.id_reservation }}" style="color: var(--flighty-gray); font-weight: 600;">
-                    Voir les cartes d'embarquement <i class="fas fa-chevron-down ml-2"></i>
-                </button>
-            </div>
+                                {% if not loop.last %}
+                                <!-- Escale -->
+                                <div class="has-text-centered" style="min-width: 110px;">
+                                    <div class="is-flex is-justify-content-center is-align-items-center" style="color: var(--primary); font-weight: 700; gap: 6px;">
+                                        <span class="is-size-5">{{ journey[i].arr_time }}</span>
+                                        <i class="fas fa-arrow-right is-size-7" style="color: var(--flighty-gray);"></i>
+                                        <span class="is-size-5">{{ journey[i+1].dep_time }}</span>
+                                    </div>
+                                    <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ journey[i].arr_iata }}</div>
+                                    <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ journey[i].arr_city }}</div>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
 
-            <div class="boarding-passes-wrapper" id="details-{{ resa.id_reservation }}">
-                {% for vol in resa.vols %}
-                    <h4 class="title is-6 mt-4 mb-3" style="color: var(--primary);">Vol {{ vol.flight_number }}</h4>
-                    {% for passager in vol.passagers %}
-                    <div class="mini-boarding-pass">
-                        <div class="bp-header">
-                            <span>{{ passager.prenom }} {{ passager.nom }}</span>
-                            <span class="tag is-dark is-rounded is-small">{{ passager.classe }}</span>
-                        </div>
-                        <div class="bp-body">
-                            <div class="bp-field">
-                                <div class="bp-label">Siège</div>
-                                <div class="bp-value">{{ passager.seat }}</div>
-                            </div>
-                            <div class="bp-field">
-                                <div class="bp-label">Repas</div>
-                                <div class="bp-value">{{ passager.meal }}</div>
-                            </div>
-                            <div class="bp-field">
-                                <div class="bp-label">Bagages</div>
-                                <div class="bp-value">{{ passager.baggage }}</div>
+                                <!-- Arrivée -->
+                                <div class="has-text-centered" style="min-width: 70px;">
+                                    <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ arr_vol.arr_time }}</div>
+                                    <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ arr_vol.arr_iata }}</div>
+                                    <div class="is-size-7 has-text-grey font-weight-bold mt-1">{{ arr_vol.arr_city }}</div>
+                                </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                {% endfor %}
+                </div>
+
+                <div class="has-text-centered mt-2">
+                    <button class="button is-ghost toggle-details-btn" data-target="details-{{ resa.id_reservation }}" style="color: var(--flighty-gray); font-weight: 600; font-size: 0.9rem;">
+                        Voir les détails <i class="fas fa-chevron-down ml-2"></i>
+                    </button>
+                </div>
+
+                <!-- Détails Passagers -->
+                <div class="boarding-passes-wrapper" id="details-{{ resa.id_reservation }}" style="background-color: rgba(0, 42, 92, 0.02); padding: 1.5rem; margin-top: 0.5rem; border-radius: 12px; border: 1px solid rgba(0, 42, 92, 0.08);">
+                    <h4 class="title is-6 mb-4" style="color: var(--primary); border-bottom: 1px solid rgba(0, 42, 92, 0.08); padding-bottom: 0.75rem;">
+                        <i class="fas fa-users mr-2"></i> Informations Passagers
+                    </h4>
+                    
+                    {% set unique_passagers = resa.vols[0].passagers if resa.vols else [] %}
+                    <div class="passenger-list">
+                        {% for passager in unique_passagers %}
+                            <div class="flighty-card p-3 mb-3" style="border-radius: 12px; border-left: 4px solid var(--primary-light); box-shadow: 0 2px 8px rgba(0,0,0,0.02); border: 1px solid rgba(0, 42, 92, 0.08); background: white;">
+                                <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 pb-2" style="border-bottom: 1px dashed rgba(0, 42, 92, 0.15);">
+                                    <h5 class="title is-6 m-0" style="letter-spacing: -0.2px;">
+                                        <span class="tag is-rounded mr-2" style="background-color: #1C1C1E; color: white; font-weight: 700;">P{{ loop.index }}</span>
+                                        <i class="fas fa-user-circle mr-2" style="color: #1C1C1E;"></i> {{ passager.prenom }} {{ passager.nom | upper }}
+                                    </h5>
+                                    <div class="tag" style="background-color: rgba(0, 42, 92, 0.05); color: var(--primary); border: 1px solid rgba(0, 42, 92, 0.1); font-weight: 700;">
+                                        <i class="fas fa-gem mr-1" style="color: var(--primary);"></i> {{ passager.classe }}
+                                    </div>
+                                </div>
+                                
+                                <div class="is-flex is-align-items-center is-flex-wrap-wrap" style="gap: 12px; font-size: 0.8rem; color: var(--flighty-text); font-weight: 500;">
+                                    <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px; {% if passager.seat == 'Non assigné' %}color: #FF9500;{% endif %}"><i class="fas fa-chair mr-2" style="color: {% if passager.seat != 'Non assigné' %}var(--primary){% else %}#FF9500{% endif %};"></i> {{ passager.seat if passager.seat != 'Non assigné' else 'Siège à assigner' }}</span>
+                                    <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px;"><i class="fas fa-suitcase-rolling mr-2" style="color: var(--primary);"></i> {{ passager.baggage }}</span>
+                                    <span style="background: rgba(0, 42, 92, 0.04); padding: 4px 10px; border-radius: 8px;"><i class="fas fa-utensils mr-2" style="color: var(--primary);"></i> {{ passager.meal }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
             </div>
         </div>
         {% else %}

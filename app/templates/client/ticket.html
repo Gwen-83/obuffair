@@ -1,25 +1,28 @@
-{% extends "components/base.html" %} {% block title %}Support - O'Buffair{%
-endblock %} {% block extra_css %}
+{% extends "components/base.html" %}
+{% block title %}Support - O'Buffair{% endblock %}
+
+{% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/ticket.css') }}">
-{% endblock %} {% block content %}
+{% endblock %}
+
+{% block content %}
 <section class="section">
   <div class="container" style="max-width: 1100px">
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %} {% for category, message in messages %}
-    <div
-      class="notification is-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} is-light"
-    >
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+    <div class="notification is-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' }} is-light">
       <button class="delete"></button>
       {{ message }}
     </div>
-    {% endfor %} {% endif %} {% endwith %}
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
     <div class="support-hero">
       <h1 class="title is-2">Besoin d'aide ? Envoyez un ticket au support</h1>
       <p class="subtitle is-5" style="max-width: 760px">
-        Que vous soyez connecté ou non, notre équipe support est prête à vous
-        accompagner. Si vous êtes connecté, vos informations sont préremplies
-        pour accélérer l’envoi.
+        Que vous soyez connecté ou non, notre équipe support est prête à vous accompagner. Si vous êtes connecté, vos informations sont préremplies pour accélérer l'envoi.
       </p>
     </div>
 
@@ -39,8 +42,7 @@ endblock %} {% block extra_css %}
                 <strong>Nom :</strong> {{ user_info.nom or 'Non renseigné' }}
               </p>
               <p>
-                <strong>Email :</strong> {{ user_info.email or 'Non renseigné'
-                }}
+        <strong>Email :</strong> {{ user_info.email or 'Non renseigné' }}
               </p>
             </div>
             {% else %}
@@ -60,17 +62,8 @@ endblock %} {% block extra_css %}
             <div class="field">
               <label class="label">Adresse email</label>
               <div class="control has-icons-left">
-                <input
-                  class="input"
-                  type="email"
-                  name="email_contact"
-                  value="{{ form_data.email_contact }}"
-                  placeholder="exemple@domaine.com"
-                  required
-                />
-                <span class="icon is-small is-left"
-                  ><i class="fas fa-envelope"></i
-                ></span>
+        <input class="input" type="email" name="email_contact" value="{{ form_data.email_contact }}" placeholder="exemple@domaine.com" required />
+        <span class="icon is-small is-left"><i class="fas fa-envelope"></i></span>
               </div>
             </div>
             {% endif %}
@@ -141,25 +134,13 @@ endblock %} {% block extra_css %}
             <div class="field">
               <label class="label">Description</label>
               <div class="control">
-                <textarea
-                  class="textarea"
-                  name="description"
-                  rows="8"
-                  placeholder="Décrivez votre demande, le numéro de réservation concerné et toute information utile."
-                  required
-                >
-{{ form_data.description }}</textarea
-                >
+        <textarea class="textarea" name="description" rows="8" placeholder="Décrivez votre demande, le numéro de réservation concerné et toute information utile." required>{{ form_data.description }}</textarea>
               </div>
             </div>
 
-            <div
-              class="field is-grouped is-justify-content-space-between is-align-items-center"
-            >
+    <div class="field is-grouped is-justify-content-space-between is-align-items-center">
               <div>
-                <span class="tag is-info is-light"
-                  >Nous répondons généralement en moins de 24h</span
-                >
+        <span class="tag is-info is-light">Nous répondons généralement en moins de 24h</span>
               </div>
               <div class="control">
                 <button type="submit" class="button is-primary">
