@@ -1446,25 +1446,33 @@ def init_modification(pnr):
         # Respect strict de l'ordre chronologique des vols
         p_billets_aller = []
         for v in aller_vols:
+            found = False
             for b in p_billets:
                 if b.id_vol == v.id_vol:
                     p_billets_aller.append(b)
+                    found = True
                     break
+            if not found:
+                p_billets_aller.append(None)
                     
         p_billets_retour = []
         for v in retour_vols:
+            found = False
             for b in p_billets:
                 if b.id_vol == v.id_vol:
                     p_billets_retour.append(b)
+                    found = True
                     break
+            if not found:
+                p_billets_retour.append(None)
         
-        c_aller = p_billets_aller[0].classe if p_billets_aller else 'Eco'
-        c_retour = p_billets_retour[0].classe if p_billets_retour else 'Eco'
+        c_aller = p_billets_aller[0].classe if p_billets_aller and p_billets_aller[0] else 'Eco'
+        c_retour = p_billets_retour[0].classe if p_billets_retour and p_billets_retour[0] else 'Eco'
         classes_aller.append(c_aller)
         classes_retour.append(c_retour)
         
-        bag_val = p_billets_aller[0].bagages_sup if p_billets_aller else 0
-        rep_idx = p_billets_aller[0].options_repas if p_billets_aller else 0
+        bag_val = p_billets_aller[0].bagages_sup if p_billets_aller and p_billets_aller[0] else 0
+        rep_idx = p_billets_aller[0].options_repas if p_billets_aller and p_billets_aller[0] else 0
         rep_str = repas_map_rev.get(rep_idx, 'standard')
 
         rank_aller = {'Eco':1, 'Business':2, 'First':3}.get(c_aller, 1)
@@ -1481,8 +1489,8 @@ def init_modification(pnr):
             'bagages': f"{bag_val}_23kg" if p_billets_aller else "0",
             'repas': rep_str,
             'classe_aller': c_aller, 'classe_retour': c_retour,
-            'sieges_aller': [b.siege or '' for b in p_billets_aller],
-            'sieges_retour': [b.siege or '' for b in p_billets_retour]
+            'sieges_aller': [(b.siege if b and b.siege else '') for b in p_billets_aller],
+            'sieges_retour': [(b.siege if b and b.siege else '') for b in p_billets_retour]
         })
 
     def get_flight_pricing(vols_subset):
