@@ -49,8 +49,8 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_required
 def dashboard():
     """Tableau de bord administrateur"""
-    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols ")).fetchone()
-    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee' ")).fetchone()
+    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols WHERE DATE(date_heure_dep_utc) = CURDATE()")).fetchone()
+    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee'")).fetchone()
     # Récupérer vols + model avion + capacité tot et nbr de résa/vol
     vols_rows = db.session.execute(text("""
         SELECT v.*,
@@ -61,7 +61,9 @@ def dashboard():
         LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
         LEFT JOIN billets b ON b.id_vol = v.id_vol
         LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
+        WHERE DATE(v.date_heure_dep_utc) = CURDATE()
         GROUP BY v.id_vol
+        ORDER BY v.date_heure_dep_utc ASC
     """)).mappings().all()
 
     # calcul pourcentage remplissage/vol
@@ -72,10 +74,8 @@ def dashboard():
         nb_resa_vol = d.get('nb_reservations') or 0
         d['fill_percent'] = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         vols.append(d)
-    #for vol in vols:
-    #    if vol.date_heure_dep_utc 
-    return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
 
+    return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
 @admin_bp.route('/config_avion', methods=['GET', 'POST'])
 @admin_required
 def config_avion():
