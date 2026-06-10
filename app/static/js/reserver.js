@@ -156,8 +156,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Mise à jour du texte de la carte résumé
-        const optionsDate = { weekday: 'short', day: 'numeric', month: 'short' };
-        const formatDate = (d) => d.toLocaleDateString('fr-FR', optionsDate);
+        const formatDate = (d) => {
+            const str = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        };
         
         allerDisplay.innerText = startDate ? formatDate(startDate) : 'Sélectionnez une date';
         
@@ -174,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // --- Validation: Empêcher le même aéroport d'origine et destination ---
         const isSameAirport = (formDepart.value === formArrivee.value) && formDepart.value !== '';
+        const hasAirports = formDepart.value !== '' && formArrivee.value !== '';
         inputArrivee.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
         inputDepart.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
 
@@ -189,10 +192,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Activation du bouton selon le type de vol
         if (isOneWay) {
-            if (startDate && !isSameAirport) btnContinue.removeAttribute('disabled');
+            if (startDate && hasAirports && !isSameAirport) btnContinue.removeAttribute('disabled');
             else btnContinue.setAttribute('disabled', 'true');
         } else {
-            if (startDate && endDate && !isSameAirport) btnContinue.removeAttribute('disabled');
+            if (startDate && endDate && hasAirports && !isSameAirport) btnContinue.removeAttribute('disabled');
             else btnContinue.setAttribute('disabled', 'true');
         }
     }

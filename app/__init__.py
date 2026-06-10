@@ -1,6 +1,6 @@
 # Fichier : app/__init__.py
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from sqlalchemy import text
@@ -62,16 +62,18 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(client_bp)
 
-    @app.route('/')
-    def index():
-        return render_template('client/acceuil.html')
-    
+    @app.route('/client', strict_slashes=False)
+    @app.route('/client/<path:path>')
+    def redirect_client_prefix(path=''):
+        """Redirige de manière permanente les anciennes URLs /client vers la racine"""
+        return redirect(f'/{path}', code=301)
+
     @app.route('/styleguide')
     def styleguide():
         """Afficher la charte UI / Design System"""
         return render_template('styleguide.html', now=datetime.now())
     
-    @app.route('/client/test')
+    @app.route('/test')
     def client_test():
         """Page de test simple pour afficher l'output"""
         # Make sure this line says .test and NOT .recherche_vol
