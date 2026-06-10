@@ -68,22 +68,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (btnAddDocument) {
         btnAddDocument.addEventListener('click', () => {
-            if (row1 && row1.style.display === 'none') {
+            if (row1 && (row1.style.display === 'none' || row1.classList.contains('is-hidden'))) {
                 row1.style.display = 'flex';
-            if (row1 && row1.classList.contains('is-hidden')) {
                 row1.classList.remove('is-hidden');
                 if (deleteDoc1) deleteDoc1.value = '0';
-            } else if (row2 && row2.style.display === 'none') {
+            } else if (row2 && (row2.style.display === 'none' || row2.classList.contains('is-hidden'))) {
                 row2.style.display = 'flex';
-            } else if (row2 && row2.classList.contains('is-hidden')) {
                 row2.classList.remove('is-hidden');
                 if (deleteDoc2) deleteDoc2.value = '0';
             }
             
-            if (row1 && row2 && row1.style.display !== 'none' && row2.style.display !== 'none') {
-                if (btnAddWrapper) btnAddWrapper.style.display = 'none';
-            if (row1 && row2 && !row1.classList.contains('is-hidden') && !row2.classList.contains('is-hidden')) {
-                if (btnAddWrapper) btnAddWrapper.classList.add('is-hidden');
+            if (row1 && row2 && 
+                (row1.style.display !== 'none' && !row1.classList.contains('is-hidden')) && 
+                (row2.style.display !== 'none' && !row2.classList.contains('is-hidden'))) {
+                if (btnAddWrapper) {
+                    btnAddWrapper.style.display = 'none';
+                    btnAddWrapper.classList.add('is-hidden');
+                }
             }
         });
     }

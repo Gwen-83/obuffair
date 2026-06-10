@@ -20,6 +20,15 @@
 .select select { border-radius: 12px; border: 1px solid #E5E5EA; font-weight: 600; color: var(--flighty-text); height: 2.8em; box-shadow: none !important;}
 .select select:focus { border-color: var(--primary); }
 
+/* Inputs de recherche centralisés */
+.flighty-search-input {
+    border-radius: 12px; 
+    height: 2.8em; 
+    font-weight: 600; 
+    box-shadow: none; 
+    border: 1px solid #E5E5EA;
+}
+
 /* Animation: Aucun retour disponible */
 @keyframes shakeWarning {
     0%, 100% { transform: translateX(0); }

@@ -14,7 +14,7 @@
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
                         <div class="control has-icons-left is-relative">
-                            <input type="text" id="inputDepart" class="input" style="border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;" placeholder="Chercher une ville..." autocomplete="off">
+                            <input type="text" id="inputDepart" class="input flighty-search-input" placeholder="Chercher une ville..." autocomplete="off">
                             <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
                             <div id="dropdownDepart" class="autocomplete-dropdown"></div>
                         </div>
@@ -25,7 +25,7 @@
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
                         <div class="control has-icons-left is-relative">
-                            <input type="text" id="inputArrivee" class="input" style="border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;" placeholder="Chercher une ville..." autocomplete="off">
+                            <input type="text" id="inputArrivee" class="input flighty-search-input" placeholder="Chercher une ville..." autocomplete="off">
                             <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
                             <div id="dropdownArrivee" class="autocomplete-dropdown"></div>
                         </div>
@@ -37,7 +37,7 @@
                         <label class="flighty-label">Type de vol</label>
                         <div class="control has-icons-left">
                             <div class="select is-fullwidth">
-                                <select id="selectTypeVol" style="background-color: white; border-radius: 12px; height: 2.8em; font-weight: 600; box-shadow: none; border: 1px solid #E5E5EA;">
+                                <select id="selectTypeVol" class="flighty-search-input" style="background-color: white;">
                                     <option value="AR" {% if search_params.get('type_vol', 'AR') == 'AR' %}selected{% endif %}>Aller-retour</option>
                                     <option value="AS" {% if search_params.get('type_vol') == 'AS' %}selected{% endif %}>Aller simple</option>
                                 </select>
