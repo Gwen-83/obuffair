@@ -93,6 +93,21 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     }
+
+    // --- ANIMATION DE SURBRILLANCE (Etape des classes) ---
+    if (flightDataElement && flightDataElement.dataset.highlight) {
+        const parts = flightDataElement.dataset.highlight.split('_');
+        if (parts[0] === 'classe') {
+            const tariffs = document.querySelector('.flight-tariffs-section');
+            if (tariffs) {
+                tariffs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                tariffs.style.transition = 'all 0.5s ease';
+                tariffs.style.boxShadow = '0 0 0 4px var(--accent)';
+                tariffs.style.borderRadius = '16px';
+                setTimeout(() => { tariffs.style.boxShadow = 'none'; }, 2000);
+            }
+        }
+    }
 });
 
 let currentPassengerNum = 1;
@@ -145,6 +160,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Appel initial pour afficher le modèle du premier avion
     updateAircraftModelDisplay(currentLegType, 0);
+
+    // --- ANIMATION DE SURBRILLANCE (Etape des options) ---
+    if (dataEl && dataEl.dataset.highlight) {
+        const parts = dataEl.dataset.highlight.split('_');
+        if (parts.length >= 2) {
+            const optionType = parts[0];
+            const pIndex = parseInt(parts[1]);
+            const pNum = pIndex + 1;
+            
+            if (typeof window.selectPassenger === 'function') {
+                window.selectPassenger(pNum);
+            }
+            
+            setTimeout(() => {
+                let elToHighlight = null;
+                if (optionType === 'siege') {
+                    elToHighlight = document.getElementById(`pass-seat-badge-${pIndex}`);
+                } else if (optionType === 'bagage') {
+                    const lbl = document.getElementById(`bagage_label_${pNum}`);
+                    if (lbl) elToHighlight = lbl.parentElement;
+                } else if (optionType === 'repas') {
+                    const sel = document.getElementById(`repas_select_${pNum}`);
+                    if (sel) elToHighlight = sel.parentElement;
+                }
+                if (elToHighlight) {
+                    elToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    elToHighlight.style.transition = 'all 0.5s ease';
+                    elToHighlight.style.boxShadow = '0 0 0 4px var(--accent)';
+                    elToHighlight.style.borderRadius = '8px';
+                    setTimeout(() => { elToHighlight.style.boxShadow = 'none'; }, 2000);
+                }
+            }, 500);
+        }
+    }
 });
 
 window.updateAllPassengerCards = function() {

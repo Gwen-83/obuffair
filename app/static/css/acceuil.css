@@ -161,3 +161,41 @@ body {
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     pointer-events: none; /* Laisse passer le clic pour le drag and drop */
 }
+
+/* --- NOUVELLES CLASSES EXTRAITES DE L'HTML --- */
+.acceuil-container { max-width: 1200px; }
+.hero-title { font-weight: 800; }
+.hero-subtitle { font-weight: 500; }
+.hidden-data { display: none; }
+.link-unstyled { text-decoration: none; }
+.icon-primary { color: var(--primary); }
+.btn-tall { height: 3em; }
+.section-title { color: var(--primary); font-weight: 800; }
+
+.loyalty-medal-wrapper { font-size: 2.5rem; color: var(--accent); }
+.loyalty-status {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.text-white-50 { color: rgba(255,255,255,0.5); }
+.text-white-70 { color: rgba(255,255,255,0.7); }
+.text-white-80 { color: rgba(255,255,255,0.8); }
+.link-underline { text-decoration: underline; }
+.loyalty-gem-wrapper { font-size: 3rem; color: var(--accent); }
+
+.route-side { width: 100px; }
+.route-side.is-right { text-align: right; }
+.ticket-actions-divider { border-bottom: 1px solid #E5E5EA; }
+.custom-subtitle { color: var(--flighty-text); font-weight: 700; }
+.icon-empty-state { color: #E5E5EA; }
+
+.network-map-container {
+    height: 450px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+}

@@ -184,43 +184,10 @@
      data-base-prices-retour='{"Eco": {{ session.get("vol_retour", {}).get("prix_eco", 0) }}, "Business": {{ session.get("vol_retour", {}).get("prix_biz", 0) }}, "First": {{ session.get("vol_retour", {}).get("prix_first", 0) }}}'
      data-current-leg-type='{% if aller_legs %}aller{% else %}retour{% endif %}'
      data-is-modification='{{ "true" if session.get("modifying_pnr") else "false" }}'
-     data-original-total='{{ session.get("original_total", 0) }}'>
+     data-original-total='{{ session.get("original_total", 0) }}'
+     data-highlight="{{ highlight_option or '' }}">
 </div>
 
 <script src="{{ url_for('static', filename='js/booking_options.js') }}"></script>
 
-{% if highlight_option %}
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const parts = "{{ highlight_option }}".split('_');
-    const optionType = parts[0];
-    const pIndex = parseInt(parts[1]);
-    const pNum = pIndex + 1;
-    
-    if (typeof window.selectPassenger === 'function') {
-        window.selectPassenger(pNum);
-    }
-    
-    setTimeout(() => {
-        let elToHighlight = null;
-        if (optionType === 'siege') {
-            elToHighlight = document.getElementById(`pass-seat-badge-${pIndex}`);
-        } else if (optionType === 'bagage') {
-            const lbl = document.getElementById(`bagage_label_${pNum}`);
-            if (lbl) elToHighlight = lbl.parentElement;
-        } else if (optionType === 'repas') {
-            const sel = document.getElementById(`repas_select_${pNum}`);
-            if (sel) elToHighlight = sel.parentElement;
-        }
-        if (elToHighlight) {
-            elToHighlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            elToHighlight.style.transition = 'all 0.5s ease';
-            elToHighlight.style.boxShadow = '0 0 0 4px var(--accent)';
-            elToHighlight.style.borderRadius = '8px';
-            setTimeout(() => { elToHighlight.style.boxShadow = 'none'; }, 2000);
-        }
-    }, 500);
-});
-</script>
-{% endif %}
 {% endblock %}

@@ -9,27 +9,27 @@
 
 {% block content %}
     <section class="hero-booking">
-        <div class="container" style="max-width: 1200px;">
-            <h1 class="title has-text-white is-2" style="font-weight: 800;">Où souhaitez-vous aller ?</h1>
-            <p class="subtitle has-text-white" style="font-weight: 500;">Découvrez l'Europe avec O'Buffair.</p>
+        <div class="container acceuil-container">
+            <h1 class="title has-text-white is-2 hero-title">Où souhaitez-vous aller ?</h1>
+            <p class="subtitle has-text-white hero-subtitle">Découvrez l'Europe avec O'Buffair.</p>
         </div>
     </section>
 
-<div id="airportsData" data-airports="{{ airports_data|tojson|forceescape }}" style="display: none;"></div>
+<div id="airportsData" data-airports="{{ airports_data|tojson|forceescape }}" class="hidden-data"></div>
 
-    <div class="container" style="max-width: 1200px;">
+    <div class="container acceuil-container">
         <div class="flighty-card search-overlap-card mb-6">
             <div class="columns is-vcentered">
                 <!-- Départ animé -->
                 <div class="column is-4">
                     <div class="field">
                         <label class="flighty-label">Aéroport de Départ</label>
-                        <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
+                        <a href="{{ url_for('client.booking') }}" class="link-unstyled">
                             <div class="control has-icons-left">
                                 <div class="fake-input">
                                 <span id="anim-depart-text" class="dynamic-airport-text">Départ...</span>
                                 </div>
-                                <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-departure icon-primary"></i></span>
                             </div>
                         </a>
                     </div>
@@ -39,12 +39,12 @@
                 <div class="column is-4">
                     <div class="field">
                         <label class="flighty-label">Aéroport d'Arrivée</label>
-                        <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
+                        <a href="{{ url_for('client.booking') }}" class="link-unstyled">
                             <div class="control has-icons-left">
                                 <div class="fake-input">
                                 <span id="anim-arrivee-text" class="dynamic-airport-text">Arrivée...</span>
                                 </div>
-                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
+                                <span class="icon is-small is-left"><i class="fas fa-plane-arrival icon-primary"></i></span>
                             </div>
                         </a>
                     </div>
@@ -54,7 +54,7 @@
                 <div class="column is-4">
                     <div class="field">
                         <label class="flighty-label">&nbsp;</label>
-                        <a href="{{ url_for('client.booking') }}" class="button is-accent is-fullwidth" style="height: 3em;">
+                        <a href="{{ url_for('client.booking') }}" class="button is-accent is-fullwidth btn-tall">
                             <span class="icon"><i class="fas fa-search"></i></span>
                             <span>Réserver</span>
                         </a>
@@ -65,7 +65,7 @@
 
         <!-- Section Destinations Phares -->
         <div class="destinations-section">
-            <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Inspirez-vous pour votre prochain voyage</h2>
+            <h2 class="title is-3 mb-5 section-title">Inspirez-vous pour votre prochain voyage</h2>
             <div class="destinations-carousel" id="destinationsCarousel">
                 {% for dest in destinations %}
                 <div class="destination-card">
@@ -83,15 +83,15 @@
         <div class="columns is-variable is-6">
             
             <div class="column is-4">
-                <h3 class="title is-4 mb-4" style="color: var(--primary); font-weight: 800;">Mon Profil Fidélité</h3>
+                <h3 class="title is-4 mb-4 section-title">Mon Profil Fidélité</h3>
                 <div class="premium-dark-card mb-5">
                     <div class="premium-content">
                         {% if session.get('user_id') %}
                         <div class="is-flex is-justify-content-space-between is-align-items-start mb-3">
-                            <div style="font-size: 2.5rem; color: var(--accent);">
+                            <div class="loyalty-medal-wrapper">
                                 <i class="fas fa-medal"></i>
                             </div>
-                            <p style="color: var(--accent); font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">{{ loyalty_info.status if loyalty_info else 'Membre Classic' }}</p>
+                            <p class="loyalty-status">{{ loyalty_info.status if loyalty_info else 'Membre Classic' }}</p>
                         </div>
                         <p class="title is-4 has-text-white mb-1">{{ session.get('prenom', 'Prénom') }} {{ session.get('nom', 'Nom') }}</p>
                         
@@ -106,18 +106,18 @@
                             </div>
                         </div>
                         <progress class="progress is-small is-premium" value="{{ loyalty_info.progress_percent if loyalty_info else 0 }}" max="100">{{ loyalty_info.progress_percent if loyalty_info else 0 }}%</progress>
-                        <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que {{ loyalty_info.points_to_next if loyalty_info else '?' }} points avant le statut {{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</p>
+                        <p class="is-size-7 mt-2 text-white-50">Plus que {{ loyalty_info.points_to_next if loyalty_info else '?' }} points avant le statut {{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</p>
                         {% else %}
                         <div class="is-flex is-justify-content-center mb-4 mt-2">
-                            <div style="font-size: 3rem; color: var(--accent);">
+                            <div class="loyalty-gem-wrapper">
                                 <i class="fas fa-gem"></i>
                             </div>
                         </div>
                         <p class="title is-4 has-text-white has-text-centered mb-2">Rejoignez O'Buffair Club</p>
-                        <p class="is-size-6 has-text-centered mb-5" style="color: rgba(255,255,255,0.8);">Gagnez des miles à chaque vol et profitez d'avantages exclusifs pour vos prochains voyages.</p>
+                        <p class="is-size-6 has-text-centered mb-5 text-white-80">Gagnez des miles à chaque vol et profitez d'avantages exclusifs pour vos prochains voyages.</p>
                         <div class="has-text-centered">
-                            <a href="{{ url_for('auth.register') }}" class="button is-accent is-fullwidth" style="height: 3em;">S'inscrire maintenant</a>
-                            <p class="is-size-7 mt-3"><a href="{{ url_for('auth.login') }}" style="color: rgba(255,255,255,0.7); text-decoration: underline;">Déjà membre ? Se connecter</a></p>
+                            <a href="{{ url_for('auth.register') }}" class="button is-accent is-fullwidth btn-tall">S'inscrire maintenant</a>
+                            <p class="is-size-7 mt-3"><a href="{{ url_for('auth.login') }}" class="text-white-70 link-underline">Déjà membre ? Se connecter</a></p>
                         </div>
                         {% endif %}
                     </div>
@@ -125,19 +125,19 @@
             </div>
 
             <div class="column is-8">
-                <h3 class="title is-4 mb-4" style="color: var(--primary); font-weight: 800;">Mon Prochain Voyage</h3>
+                <h3 class="title is-4 mb-4 section-title">Mon Prochain Voyage</h3>
                 
                 {% if next_flight %}
                 <div class="flighty-card">
                     <div class="flighty-header">
                         <div class="flighty-airline">
-                            <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair {{ next_flight.flight_number }} • {{ next_flight.date }}
+                            <i class="fas fa-plane-departure icon-primary"></i> O'Buffair {{ next_flight.flight_number }} • {{ next_flight.date }}
                         </div>
                         <div class="flighty-status status-ontime">{{ next_flight.status }}</div>
                     </div>
 
                     <div class="flighty-route">
-                        <div style="width: 100px;">
+                        <div class="route-side">
                             <div class="flighty-time">{{ next_flight.dep_time }}</div>
                             <div class="flighty-iata">{{ next_flight.dep_iata }}</div>
                             <div class="flighty-city">{{ next_flight.dep_city }}</div>
@@ -145,20 +145,20 @@
                         <div class="flighty-path">
                             <i class="fas fa-plane"></i>
                         </div>
-                        <div style="width: 100px; text-align: right;">
+                        <div class="route-side is-right">
                             <div class="flighty-time">{{ next_flight.arr_time }}</div>
                             <div class="flighty-iata">{{ next_flight.arr_iata }}</div>
                             <div class="flighty-city">{{ next_flight.arr_city }}</div>
                         </div>
                     </div>
                     
-                    <div class="has-text-right mb-4 pb-4" style="border-bottom: 1px solid #E5E5EA;">
+                    <div class="has-text-right mb-4 pb-4 ticket-actions-divider">
                         <a href="{{ url_for('client.gerer_reservation', pnr=next_flight.pnr) }}" class="button is-small is-light is-rounded font-weight-bold">
                             <i class="fas fa-download mr-2"></i> Mon Billet PDF
                         </a>
                     </div>
                     
-                    <h4 class="title is-5 mb-4" style="color: var(--flighty-text); font-weight: 700;">Personnaliser mon expérience</h4>
+                    <h4 class="title is-5 mb-4 custom-subtitle">Personnaliser mon expérience</h4>
                     
                     <div class="option-box">
                         <div>
@@ -186,7 +186,7 @@
                 </div>
                 {% else %}
                 <div class="flighty-card has-text-centered py-6">
-                    <i class="fas fa-plane-slash is-size-1 mb-4" style="color: #E5E5EA;"></i>
+                    <i class="fas fa-plane-slash is-size-1 mb-4 icon-empty-state"></i>
                     <p class="has-text-grey font-weight-bold mb-4">Vous n'avez aucun vol à venir.</p>
                     <a href="{{ url_for('client.booking') }}" class="button is-accent">Réserver un vol maintenant</a>
                 </div>
@@ -196,9 +196,9 @@
 
         <!-- Carte globale des routes (Type Volotea) -->
         <div class="map-routes-section mt-6 mb-6">
-            <h3 class="title is-3 mb-5 has-text-centered" style="color: var(--primary); font-weight: 800;">Notre Réseau</h3>
-            <div id="network-map" class="flighty-card" style="height: 450px; padding: 0; overflow: hidden; position: relative; z-index: 1;"></div>
-            <div id="mapRoutesData" data-routes="{{ map_routes|tojson|forceescape }}" style="display: none;"></div>
+            <h3 class="title is-3 mb-5 has-text-centered section-title">Notre Réseau</h3>
+            <div id="network-map" class="flighty-card network-map-container"></div>
+            <div id="mapRoutesData" data-routes="{{ map_routes|tojson|forceescape }}" class="hidden-data"></div>
         </div>
 
     </div>
