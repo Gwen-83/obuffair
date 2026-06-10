@@ -7,7 +7,6 @@ from flask import Blueprint, render_template, request, jsonify, redirect, url_fo
 from app.portail_auth.decorators import admin_required
 from app import db
 from app.model import Avion, Vols, Support, Aeroport, User
-from app.model import Avion, Vols, Support, Aeroport, User
 from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
@@ -49,8 +48,8 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_required
 def dashboard():
     """Tableau de bord administrateur"""
-    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols WHERE DATE(date_heure_dep_utc) = CURDATE()")).fetchone()
-    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee'")).fetchone()
+    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols ")).fetchone()
+    nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee' ")).fetchone()
     # Récupérer vols + model avion + capacité tot et nbr de résa/vol
     vols_rows = db.session.execute(text("""
         SELECT v.*,
@@ -61,9 +60,7 @@ def dashboard():
         LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
         LEFT JOIN billets b ON b.id_vol = v.id_vol
         LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
-        WHERE DATE(v.date_heure_dep_utc) = CURDATE()
         GROUP BY v.id_vol
-        ORDER BY v.date_heure_dep_utc ASC
     """)).mappings().all()
 
     # calcul pourcentage remplissage/vol
@@ -74,8 +71,10 @@ def dashboard():
         nb_resa_vol = d.get('nb_reservations') or 0
         d['fill_percent'] = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         vols.append(d)
-
+    #for vol in vols:
+    #    if vol.date_heure_dep_utc 
     return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
+
 @admin_bp.route('/config_avion', methods=['GET', 'POST'])
 @admin_required
 def config_avion():
@@ -462,6 +461,29 @@ def support():
     
     return render_template('admin/html/support.html', tickets=tickets, stats=stats)
 
+@admin_bp.route('/support/<int:id_ticket>', methods=['GET', 'POST'])
+@admin_required
+def support_detail(id_ticket):
+    """Détail et réponse à un ticket de support"""
+    ticket = db.session.get(Support, id_ticket)
+    if not ticket:
+        flash('Ticket introuvable.', 'danger')
+        return redirect(url_for('admin.support'))
+
+    # Récupérer l'email du client s'il existe (pour réponse par mail)
+    user_email = None
+    try:
+        if getattr(ticket, 'id_client', None):
+            user = db.session.get(User, ticket.id_client)
+            if user and getattr(user, 'email', None):
+                user_email = user.email
+    except Exception:
+        user_email = None
+
+    ticket.date_creation = ticket.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_creation, 'strftime') else ticket.date_creation
+    ticket.date_modification = ticket.date_modification.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_modification, 'strftime') else ticket.date_modification
+    return render_template('admin/html/support_detail.html', ticket=ticket, user_email=user_email)
+
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required
 def get_vols():
@@ -605,14 +627,50 @@ def update_vol(id_vol):
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
 
+@admin_bp.route('/api/vols/<int:id_vol>/reservations_count', methods=['GET'])
+@admin_required
+def count_reservations_vol(id_vol):
+    """API : Compte les réservations actives liées à un vol"""
+    row = db.session.execute(text("""
+        SELECT COUNT(DISTINCT r.id_reservation) AS nb
+        FROM billets b
+        JOIN reservations r ON r.id_reservation = b.id_reservation
+        WHERE b.id_vol = :id_vol
+          AND r.statut != 'Annulee'
+    """), {"id_vol": id_vol}).fetchone()
+    return jsonify({"nb_reservations": row[0] if row else 0})
+
+
 @admin_bp.route('/api/vols/<int:id_vol>', methods=['DELETE'])
 @admin_required
 def delete_vol(id_vol):
-    """API : Supprimer un vol"""
+    """API : Supprimer un vol et toutes ses réservations/billets associés"""
     vol = Vols.query.get(id_vol)
     if not vol:
         return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
     try:
+        # 1. Récupère les id_reservation liés aux billets de ce vol
+        resa_ids = db.session.execute(text("""
+            SELECT DISTINCT b.id_reservation
+            FROM billets b
+            WHERE b.id_vol = :id_vol
+        """), {"id_vol": id_vol}).fetchall()
+        resa_ids = [r[0] for r in resa_ids]
+
+        # 2. Supprime les billets du vol
+        db.session.execute(text("DELETE FROM billets WHERE id_vol = :id_vol"), {"id_vol": id_vol})
+
+        # 3. Supprime les réservations qui n'ont plus aucun billet
+        if resa_ids:
+            db.session.execute(text("""
+                DELETE FROM reservations
+                WHERE id_reservation IN :ids
+                  AND id_reservation NOT IN (
+                      SELECT DISTINCT id_reservation FROM billets
+                  )
+            """), {"ids": tuple(resa_ids) if len(resa_ids) > 1 else (resa_ids[0],)})
+
+        # 4. Supprime le vol lui-même
         db.session.delete(vol)
         db.session.commit()
         return jsonify({'success': True})

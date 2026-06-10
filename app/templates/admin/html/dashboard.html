@@ -201,9 +201,6 @@ Administrateur - OBufFair{% endblock %} {% block content %}
                         <th class="has-text-white">Arrivée prévue</th>
                         <th class="has-text-white">Statut</th>
                         <th class="has-text-white">Remplissage</th>
-                        <th class="has-text-white has-text-centered">
-                          Actions
-                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -244,16 +241,6 @@ Administrateur - OBufFair{% endblock %} {% block content %}
                               {{ vol.fill_percent }}%
                             </progress>
                           </div>
-                        </td>
-                        <td class="has-text-centered">
-                          <button
-                            class="button is-small is-outlined"
-                            title="Gérer le vol"
-                          >
-                            <span class="icon is-small"
-                              ><i class="fas fa-edit"></i
-                            ></span>
-                          </button>
                         </td>
                       </tr>
                       {% endfor %}

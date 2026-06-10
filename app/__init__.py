@@ -93,4 +93,8 @@ def create_app():
     def internal_error(error):
         return render_template('errors/500.html'), 500
 
+    # ========== INITIALISER HOOK STATUTS VOLS ==========
+    from app.algos.update_status import init_status_hook
+    init_status_hook(app)
+
     return app
