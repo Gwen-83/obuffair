@@ -4,6 +4,7 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/acceuil.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 {% endblock %}
 
 {% block content %}
@@ -13,6 +14,8 @@
             <p class="subtitle has-text-white" style="font-weight: 500;">Découvrez l'Europe avec O'Buffair.</p>
         </div>
     </section>
+
+<div id="airportsData" data-airports="{{ airports_data|tojson|forceescape }}" style="display: none;"></div>
 
     <div class="container" style="max-width: 1200px;">
         <div class="flighty-card search-overlap-card mb-6">
@@ -24,7 +27,7 @@
                         <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
                             <div class="control has-icons-left">
                                 <div class="fake-input">
-                                    <span class="anim-depart"></span>
+                                <span id="anim-depart-text" class="dynamic-airport-text">Départ...</span>
                                 </div>
                                 <span class="icon is-small is-left"><i class="fas fa-plane-departure" style="color: var(--primary);"></i></span>
                             </div>
@@ -39,7 +42,7 @@
                         <a href="{{ url_for('client.booking') }}" style="text-decoration: none;">
                             <div class="control has-icons-left">
                                 <div class="fake-input">
-                                    <span class="anim-arrivee"></span>
+                                <span id="anim-arrivee-text" class="dynamic-airport-text">Arrivée...</span>
                                 </div>
                                 <span class="icon is-small is-left"><i class="fas fa-plane-arrival" style="color: var(--primary);"></i></span>
                             </div>
@@ -64,25 +67,9 @@
         <div class="destinations-section">
             <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Inspirez-vous pour votre prochain voyage</h2>
             <div class="destinations-carousel" id="destinationsCarousel">
-                {% set city_images = {
-                    'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
-                    'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
-                    'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
-                    'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
-                    'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
-                    'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
-                } %}
-                {% set default_image = 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=600&auto=format&fit=crop' %}
-                {% set default_dest = [
-                    {'ville': 'Rome', 'prix': 124},
-                    {'ville': 'Londres', 'prix': 98},
-                    {'ville': 'Madrid', 'prix': 85},
-                    {'ville': 'Berlin', 'prix': 110}
-                ] %}
-                {% set display_dest = destinations if destinations else default_dest %}
-                {% for dest in display_dest %}
+                {% for dest in destinations %}
                 <div class="destination-card">
-                    <img src="{{ city_images.get(dest.ville, default_image) }}" alt="{{ dest.ville }}">
+                    <img src="{{ dest.image_url }}" alt="{{ dest.ville }}">
                     <div class="destination-overlay"></div>
                     <div class="destination-info">
                         <div class="destination-city">{{ dest.ville }}</div>
@@ -166,7 +153,7 @@
                     </div>
                     
                     <div class="has-text-right mb-4 pb-4" style="border-bottom: 1px solid #E5E5EA;">
-                        <a href="{{ url_for('client.gerer_reservation') }}" class="button is-small is-light is-rounded font-weight-bold">
+                        <a href="{{ url_for('client.gerer_reservation', pnr=next_flight.pnr) }}" class="button is-small is-light is-rounded font-weight-bold">
                             <i class="fas fa-download mr-2"></i> Mon Billet PDF
                         </a>
                     </div>
@@ -206,9 +193,19 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- Carte globale des routes (Type Volotea) -->
+        <div class="map-routes-section mt-6 mb-6">
+            <h3 class="title is-3 mb-5 has-text-centered" style="color: var(--primary); font-weight: 800;">Notre Réseau</h3>
+            <div id="network-map" class="flighty-card" style="height: 450px; padding: 0; overflow: hidden; position: relative; z-index: 1;"></div>
+            <div id="mapRoutesData" data-routes="{{ map_routes|tojson|forceescape }}" style="display: none;"></div>
+        </div>
+
     </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://api.mapbox.com/mapbox.js/plugins/arc.js/v0.1.0/arc.js"></script>
 <script src="{{ url_for('static', filename='js/acceuil.js') }}"></script>
 {% endblock %}

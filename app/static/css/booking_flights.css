@@ -7,6 +7,8 @@
     --flighty-green: #34C759;
     --flighty-orange: #FF9500;
     --flighty-blue: #0A84FF;
+    --flighty-yellow: #FFCC00;
+    --shadow-premium: 0 12px 32px rgba(0, 42, 92, 0.1);
 }
 
 /* Conteneur principal de la carte de vol */
@@ -49,13 +51,33 @@
 .flighty-city { font-size: 12px; color: var(--flighty-gray); font-weight: 600; }
 
 /* Ligne de vol (Flighty style pointillés) */
-.flight-path-wrapper { flex-grow: 1; margin: 0 16px; position: relative; display: flex; flex-direction: column; align-items: center; }
+.flight-path-wrapper { flex-grow: 1; margin: 0 16px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 40px;}
 .flight-path-line { 
-    width: 100%; height: 2px; position: relative; top: 10px; z-index: 1;
+    width: 100%; height: 2px; position: relative; z-index: 1;
     background: repeating-linear-gradient(to right, #D1D1D6, #D1D1D6 4px, transparent 4px, transparent 8px); 
 }
-.flight-duration { font-size: 11px; font-weight: 800; color: var(--flighty-text); background: var(--flighty-bg); padding: 0 6px; z-index: 2; border-radius: 10px;}
-.flight-stop-info { font-size: 10px; font-weight: 600; color: var(--flighty-gray); margin-top: 14px; text-align: center;}
+.flight-duration { 
+    position: absolute; top: -20px; left: 50%; transform: translateX(-50%); 
+    font-size: 11px; font-weight: 800; color: var(--flighty-text); 
+    background: var(--flighty-bg); padding: 0 6px; z-index: 2; border-radius: 10px;
+}
+.flight-stop-info { 
+    position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%); 
+    font-size: 10px; font-weight: 600; color: var(--flighty-gray); text-align: center; white-space: nowrap;
+}
+
+.flight-stop-dot {
+    position: absolute; top: 50%; transform: translate(-50%, -50%);
+    width: 6px; height: 6px; background-color: var(--flighty-orange);
+    border-radius: 50%; z-index: 2; border: 2px solid var(--flighty-bg);
+    box-sizing: content-box;
+}
+
+.flight-stop-iata {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    font-size: 10px; font-weight: 800; color: var(--flighty-orange);
+    background: var(--flighty-bg); padding: 0 4px; border-radius: 4px;
+}
 
 /* Équipements (Wi-Fi, USB...) */
 .flight-amenities { display: flex; gap: 12px; font-size: 11px; font-weight: 600; color: var(--flighty-gray); border-top: 1px solid #E5E5EA; padding-top: 12px;}
@@ -63,31 +85,48 @@
 
 /* --- SECTION DROITE : TARIFS (ECO/BIZ/FIRST) --- */
 .flight-tariffs-section { 
-    flex: 1 1 45%; 
+    flex: 1 1 50%; 
     display: flex; 
-    background: #F9F9FB; 
+    gap: 12px;
+    padding: 16px;
+    background: var(--flighty-bg); 
     border-left: 1px solid #E5E5EA;
 }
 
 .tariff-form { display: contents; }
 .tariff-btn { 
-    flex: 1; padding: 16px 12px; border: none; background: transparent; 
-    border-right: 1px solid #E5E5EA; display: flex; flex-direction: column; 
-    align-items: flex-start; cursor: pointer; transition: all 0.2s; text-align: left;
+    flex: 1; padding: 16px; border: 2px solid transparent; border-radius: 16px; 
+    display: flex; flex-direction: column; align-items: flex-start; 
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; 
+    text-align: left; position: relative; overflow: hidden;
 }
-.tariff-btn:last-child { border-right: none; }
+.tariff-btn:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+.tariff-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(100%); }
 
-/* Hover effects (Sélection de la classe) */
-.tariff-btn.eco:hover { background: rgba(10, 132, 255, 0.05); }
-.tariff-btn.biz:hover { background: rgba(0, 42, 92, 0.05); }
-.tariff-btn.first:hover { background: rgba(255, 199, 44, 0.1); }
+/* Themes Distincts par Classe */
+.tariff-btn.eco { background: #F0F8FF; border-color: #D6E8F9; }
+.tariff-btn.eco:hover:not(:disabled) { border-color: var(--flighty-blue); }
+.tariff-btn.eco .t-class { color: var(--flighty-blue); }
+
+.tariff-btn.biz { background: #002A5C; border-color: #002A5C; color: white; }
+.tariff-btn.biz:hover:not(:disabled) { border-color: var(--accent); }
+.tariff-btn.biz .t-class { color: var(--accent); }
+.tariff-btn.biz .t-price { color: white; }
+.tariff-btn.biz .t-features { color: rgba(255,255,255,0.8); }
+.tariff-btn.biz .t-features .yes { color: var(--accent); }
+
+.tariff-btn.first { background: linear-gradient(135deg, #1C1C1E, #3A3A3C); border-color: #FFD700; color: white; }
+.tariff-btn.first:hover:not(:disabled) { box-shadow: 0 12px 24px rgba(255, 215, 0, 0.2); }
+.tariff-btn.first .t-class { color: #FFD700; }
+.tariff-btn.first .t-price { color: white; }
+.tariff-btn.first .t-features { color: rgba(255,255,255,0.8); }
+.tariff-btn.first .t-features .yes { color: #FFD700; }
 
 .t-class { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
-.t-class.eco { color: var(--flighty-blue); }
-.t-class.biz { color: var(--primary); }
-.t-class.first { color: var(--accent); }
 
 .t-price { font-size: 22px; font-weight: 800; color: var(--flighty-text); letter-spacing: -0.5px; margin-bottom: 8px;}
+
+.seats-left-badge { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: rgba(255, 59, 48, 0.1); color: var(--flighty-red); margin-top: 4px; }
 
 .t-features { font-size: 11px; color: var(--flighty-gray); font-weight: 500; line-height: 1.5; }
 .t-features i { font-size: 9px; width: 12px; }
@@ -95,123 +134,85 @@
 .t-features .no { color: #D1D1D6; }
 
 /* =========================================================
-   NOUVEAU DESIGN : SUGGESTION PROCHAIN VOL (FLIGHTY STYLE)
+   NOUVEAU DESIGN : ÉTAT VIDE & ALTERNATIVES (YELLOW/LIGHT)
    ========================================================= */
-.flighty-empty-state {
-    background: transparent;
-    padding: 40px 20px;
+.flighty-empty-header {
+    background: rgba(255, 204, 0, 0.1); /* Fond jaune très léger */
+    border: 1px solid rgba(255, 204, 0, 0.3);
+    border-radius: 16px;
+    padding: 24px;
     text-align: center;
+    margin-bottom: 32px;
 }
 
-.flighty-suggestion-card {
-    background: var(--flighty-bg);
-    border-radius: 20px;
-    padding: 24px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-    border: 1px solid rgba(0,0,0,0.04);
+/* Carte Compacte d'Alternative */
+.flighty-compact-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(0,0,0,0.03);
+    box-shadow: var(--shadow-soft);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: default;
+}
+
+.flighty-compact-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-premium);
+    border-color: rgba(255, 204, 0, 0.4); /* Highlight jaune au hover */
+}
+
+.compact-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.compact-body {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.compact-route {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.compact-details {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
-    margin-top: 32px;
-    transition: transform 0.2s;
+    align-items: flex-start;
 }
 
-@media (min-width: 768px) {
-    .flighty-suggestion-card {
-        flex-direction: row;
-        text-align: left;
-        align-items: center;
-        justify-content: space-between;
+@media (min-width: 769px) {
+    .compact-details {
+        align-items: flex-end;
+        text-align: right;
     }
 }
 
-.suggestion-icon-wrapper {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: rgba(52, 199, 89, 0.15); /* Soft Flighty Green */
-    color: var(--flighty-green);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-    margin-bottom: 16px;
-    flex-shrink: 0;
-}
-
-@media (min-width: 768px) {
-    .suggestion-icon-wrapper {
-        margin-bottom: 0;
-        margin-right: 20px;
-    }
-}
-
-.suggestion-text-content {
-    flex-grow: 1;
-    margin-bottom: 24px;
-}
-
-@media (min-width: 768px) {
-    .suggestion-text-content {
-        margin-bottom: 0;
-        margin-right: 20px;
-    }
-}
-
-.suggestion-title {
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--flighty-text);
-    letter-spacing: -0.5px;
-    margin-bottom: 4px;
-}
-
-.suggestion-desc {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--flighty-gray);
-}
-
-.suggestion-date {
-    color: var(--flighty-text);
-    font-weight: 800;
-}
-
-/* Bouton Pilule Flighty iOS */
-.flighty-btn-pill {
-    background-color: var(--flighty-text);
-    color: var(--flighty-bg);
+/* Bouton d'action à droite */
+.flighty-btn-select {
+    background-color: var(--primary);
+    color: white;
     border: none;
-    border-radius: 24px;
-    padding: 14px 28px;
-    font-size: 15px;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.2s, opacity 0.2s;
+    transition: background-color 0.2s, transform 0.2s;
     display: inline-flex;
     align-items: center;
     white-space: nowrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-.flighty-btn-pill:hover {
+.flighty-btn-select:hover {
+    background-color: var(--flighty-text);
     transform: scale(1.02);
-    opacity: 0.9;
-}
-.flighty-btn-pill i {
-    margin-left: 8px;
-}
-
-/* Lien Modifier ma recherche */
-.flighty-link-secondary {
-    color: var(--flighty-gray);
-    font-weight: 600;
-    font-size: 14px;
-    text-decoration: none;
-    transition: color 0.2s;
-    display: inline-block;
-    margin-top: 24px;
-}
-.flighty-link-secondary:hover {
-    color: var(--flighty-text);
 }

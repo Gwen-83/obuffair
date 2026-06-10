@@ -41,7 +41,7 @@ body {
 .premium-dark-card {
     background: linear-gradient(135deg, #0B0F19 0%, #001B40 100%);
     border-radius: var(--radius-xl);
-    padding: 32px; color: white;
+    padding: 20px 32px; color: white;
     box-shadow: var(--shadow-premium);
     position: relative; overflow: hidden;
     height: 100%; display: flex; flex-direction: column; justify-content: space-between;
@@ -105,3 +105,131 @@ body {
 .flighty-input { border-radius: 12px; border: 1px solid #E5E5EA; height: 3em; font-weight: 500; box-shadow: none; }
 .flighty-input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(0,42,92,0.1); }
 .form-label { font-size: 12px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
+
+/* --- Custom File Upload Flighty --- */
+.flighty-file-cta {
+    background-color: var(--bg-light) !important;
+    border: 1px solid #E5E5EA !important;
+    border-right: none !important;
+    border-radius: 12px 0 0 12px !important;
+    color: var(--primary) !important;
+    font-weight: 700 !important;
+    height: 3em !important;
+}
+.flighty-file-name {
+    border: 1px solid #E5E5EA !important;
+    border-radius: 0 12px 12px 0 !important;
+    box-shadow: none !important;
+    height: 3em !important;
+    display: flex !important;
+    align-items: center !important;
+    color: var(--flighty-gray) !important;
+    font-weight: 500 !important;
+}
+.file-input:focus ~ .flighty-file-cta,
+.file-label:hover .flighty-file-cta {
+    background-color: #E5E5EA !important;
+}
+
+/* --- Thème cohérent O'Buffair pour les cartes de fidélité --- */
+.loyalty-watermark {
+    position: absolute; 
+    bottom: 20px; 
+    right: 32px; 
+    font-weight: 900; 
+    font-size: 2.4rem; 
+    letter-spacing: -1px; 
+    line-height: 1; 
+    user-select: none; 
+    pointer-events: none; 
+    z-index: 0;
+}
+.loyalty-plane {
+    font-size: 1.5rem;
+}
+
+.card-silver {
+    background: linear-gradient(135deg, #E5E5EA 0%, #FFFFFF 30%, #D1D1D6 80%, #98989D 100%);
+    border: 1px solid #98989D;
+}
+.card-silver p { color: var(--flighty-text) !important; }
+.card-silver p.is-size-7 { color: var(--flighty-gray) !important; }
+.card-silver .loyalty-plane { color: var(--flighty-gray) !important; opacity: 0.5 !important; }
+.card-silver .loyalty-watermark { opacity: 0.12 !important; }
+
+.card-gold {
+    background: linear-gradient(135deg, #FDE68A 0%, #FFF9D2 30%, #F5C64B 80%, #D49B00 100%);
+    border: 1px solid #E4B227;
+}
+.card-gold p { color: var(--primary) !important; }
+.card-gold p.is-size-7 { color: rgba(0, 42, 92, 0.6) !important; }
+.card-gold .loyalty-plane { color: var(--primary) !important; opacity: 0.40 !important; }
+.card-gold .loyalty-watermark { color: var(--primary) !important; opacity: 0.18 !important; }
+
+.card-platinum {
+    background: linear-gradient(135deg, #D4E6F1 0%, #FFFFFF 30%, #AED6F1 80%, #7FB3D5 100%);
+    border: 1px solid #7FB3D5;
+}
+.card-platinum p { color: var(--primary) !important; }
+.card-platinum p.is-size-7 { color: rgba(0, 42, 92, 0.6) !important; }
+.card-platinum .loyalty-plane { color: var(--primary) !important; opacity: 0.40 !important; }
+.card-platinum .loyalty-watermark { color: var(--primary) !important; opacity: 0.18 !important; }
+
+/* --- Profil Layout & General --- */
+.profil-section { flex: 1; padding-top: 2rem; }
+.profil-container { max-width: 1200px; }
+.profil-title { color: var(--primary); font-weight: 800; }
+.primary-icon { color: var(--primary); }
+.primary-light-icon { color: var(--primary-light); }
+
+/* --- Dashboard / Fidelity --- */
+.premium-card-wrapper { position: relative; overflow: hidden; }
+.premium-card-name { letter-spacing: 1px; }
+.premium-card-date { color: rgba(255,255,255,0.5); }
+
+.miles-title { color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+.miles-number { margin-bottom: 0; }
+.miles-star { color: var(--accent); font-size: 2.5rem; }
+.miles-subtitle { color: rgba(255,255,255,0.6); margin-top: 4px; margin-bottom: 12px; }
+
+.status-text { color: rgba(255,255,255,0.8); }
+.status-accent { color: var(--accent); }
+.status-progress { margin-bottom: 2px !important; }
+.status-desc { color: rgba(255,255,255,0.6); margin-top: 0; }
+.status-strong { color: #ffffff; }
+
+.profil-all-reservations { border-radius: 20px; font-weight: 600; }
+.next-flight-link { text-decoration: none; display: block; }
+.next-flight-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+.next-flight-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-premium); }
+
+.flighty-iata-large { font-size: 28px; }
+.flighty-gray-icon { color: var(--flighty-gray); }
+.flighty-time-large { font-size: 18px; margin-bottom: 0; }
+.pnr-value { font-family: monospace; }
+.profil-empty-vol { border-radius: 12px; }
+
+/* --- Formulaires Profil --- */
+.form-section-title { color: var(--flighty-text); }
+.form-divider { background-color: #E5E5EA; margin: 2rem 0; height: 1px; border: none; }
+
+.doc-field-wrapper { width: 100%; }
+.doc-select-wrapper { height: 3em; }
+.doc-select { height: 100%; border-radius: 12px; border: 1px solid #E5E5EA; box-shadow: none; }
+.doc-file-wrapper { gap: 12px; }
+.doc-file-inner { flex: 1; }
+.doc-preview-btn { background-color: var(--bg-light); border: 1px solid #E5E5EA; color: var(--primary); height: 3em; width: 3em; padding: 0; border-radius: 12px; flex-shrink: 0; }
+.doc-delete-wrapper { margin-top: -1.1rem; padding-top: 0; }
+.doc-add-btn { color: var(--primary); font-weight: 600; padding-left: 0; }
+.flighty-file-name.has-document { color: var(--flighty-text) !important; }
+
+.profil-submit-btn { border-radius: 12px; font-weight: bold; padding: 0 32px; height: 3em; }
+.pref-icon-empty { color: #D1D1D6; }
+
+/* Suppression de l'encadrement des boutons fantômes (ghost) au clic */
+.button.is-ghost:focus,
+.button.is-ghost:active {
+    box-shadow: none !important;
+    outline: none !important;
+    background-color: transparent !important;
+}

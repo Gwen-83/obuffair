@@ -4,16 +4,62 @@ Gère le profil, modifications de réservation et gestion de compte.
 """
 
 from functools import wraps
-from flask import Blueprint, render_template, request, session, url_for, redirect, flash
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app, make_response
 from app import db
-from sqlalchemy import func, cast, Date, text
-from app.model import Aeroport, Vols, User, Support
+from sqlalchemy import func, text
+from sqlalchemy.orm import joinedload
+from app.model import Aeroport, Vols, User, Support, Reservation, Passager, Billet
 from datetime import datetime, timedelta, timezone
+from app.algos.search import search_itineraries
+from app.algos.yield_management import calculer_prix
+import string, random
 import re
+import os
+from werkzeug.utils import secure_filename
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    WEASYPRINT_AVAILABLE = False
 
 
 # Blueprint
-client_bp = Blueprint('client', __name__, url_prefix='/client')
+client_bp = Blueprint('client', __name__)
+
+TARIFS_OPTIONS = {
+    'bagages_eco': {
+        '0': 0,
+        '1': 45,
+        '2': 80,
+        '3': 115
+    },
+    'repas_eco': {
+        'standard': 0,
+        'premium': 15,
+        'vegetarien': 15
+    }
+}
+
+@client_bp.context_processor
+def inject_tarifs():
+    return dict(TARIFS_OPTIONS=TARIFS_OPTIONS)
+
+def update_total_panier():
+    search_params = session.get('search_params', {})
+    if not search_params:
+        session.pop('total_panier', None)
+        return
+    try:
+        nb_passagers = int(search_params.get('passagers', 1))
+    except (ValueError, TypeError):
+        nb_passagers = 1
+        
+    prix_aller = float(session.get('vol_aller', {}).get('prix', 0)) if session.get('vol_aller') else 0.0
+    prix_retour = float(session.get('vol_retour', {}).get('prix', 0)) if session.get('vol_retour') else 0.0
+    prix_options = float(session.get('options', {}).get('prix', 0)) if session.get('options') else 0.0
+    
+    session['total_panier'] = ((prix_aller + prix_retour) + prix_options) * nb_passagers
+    session.modified = True
 
 def login_required(f):
     @wraps(f)
@@ -24,45 +70,114 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@client_bp.after_request
+def disable_booking_cache(response):
+    """Désactiver la mise en cache (BFCache) pour le flux de réservation."""
+    if request.endpoint and request.endpoint.startswith('client.booking'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
+
 @client_bp.route('/')
 def accueil():
     """Accueil"""
-    # Données simples simulées : prêtes à être remplacées par une requête SQLAlchemy
-    loyalty_info = {
-        'status': 'Gold Member',
-        'points': '12 450',
-        'flights_year': 8,
-        'progress_percent': 75,
-        'points_to_next': '2 550',
-        'next_tier': 'Platinum'
-    }
-
-    next_flight = {
-        'flight_number': 'AF712',
-        'date': '14 Juin 2026',
-        'status': 'Confirmé',
-        'dep_time': '10:30',
-        'dep_iata': 'CDG',
-        'dep_city': 'Paris',
-        'arr_time': '12:35',
-        'arr_iata': 'FCO',
-        'arr_city': 'Rome',
-        'seat': 'Non assigné',
-        'meal': 'Standard',
-        'baggage': '1 bagage cabine + 1 bagage soute.'
-    }
     
+    # --- Liste des aéroports pour l'animation de recherche ---
+    try:
+        aeroports_db = db.session.execute(text("SELECT id_aeroport, ville, latitude, longitude FROM aeroports")).mappings().all()
+        airports_data = []
+        for a in aeroports_db:
+            airports_data.append({
+                'iata': a['id_aeroport'],
+                'city': a['ville'],
+                'lat': float(a['latitude']) if a['latitude'] is not None else None,
+                'lng': float(a['longitude']) if a['longitude'] is not None else None
+            })
+    except Exception as e:
+        print(f"Erreur SQL Aéroports: {e}")
+        airports_data = []
+
+    # --- Requête pour toutes les routes (Carte Réseau) ---
+    try:
+        routes_db = db.session.execute(text("""
+            SELECT DISTINCT 
+                ad.id_aeroport as dep_iata, ad.latitude as dep_lat, ad.longitude as dep_lng,
+                aa.id_aeroport as arr_iata, aa.latitude as arr_lat, aa.longitude as arr_lng
+            FROM vols v
+            JOIN aeroports ad ON v.id_aeroport_depart = ad.id_aeroport
+            JOIN aeroports aa ON v.id_aeroport_arrivee = aa.id_aeroport
+            WHERE ad.latitude IS NOT NULL AND ad.longitude IS NOT NULL
+              AND aa.latitude IS NOT NULL AND aa.longitude IS NOT NULL
+        """)).mappings().all()
+        
+        map_routes = [{
+            'dep_iata': r['dep_iata'], 'dep_lat': float(r['dep_lat']), 'dep_lng': float(r['dep_lng']), 
+            'arr_iata': r['arr_iata'], 'arr_lat': float(r['arr_lat']), 'arr_lng': float(r['arr_lng'])
+        } for r in routes_db]
+    except Exception as e:
+        print(f"Erreur SQL Carte Routes: {e}")
+        map_routes = []
+
     # --- Requête pour les destinations du carrousel ---
     try:
-        lowest_prices = db.session.query(
+        lowest_prices_query = db.session.query(
+            Aeroport.id_aeroport,
             Aeroport.ville,
+            Aeroport.latitude,
+            Aeroport.longitude,
             func.min(Vols.prix_de_base).label('min_prix')
         ).join(Vols, Vols.id_aeroport_arrivee == Aeroport.id_aeroport)\
-         .group_by(Aeroport.ville)\
-         .order_by(func.min(Vols.prix_de_base))\
-         .limit(6).all()
+         .filter(Vols.date_heure_dep_utc > datetime.utcnow())\
+         .group_by(Aeroport.id_aeroport, Aeroport.ville, Aeroport.latitude, Aeroport.longitude)\
+         .order_by(func.min(Vols.prix_de_base)).all()
          
-        destinations = [{'ville': row.ville, 'prix': int(row.min_prix) if row.min_prix is not None else 0} for row in lowest_prices]
+        map_destinations = []
+        for row in lowest_prices_query:
+            if row.latitude is not None and row.longitude is not None:
+                map_destinations.append({
+                    'iata': row.id_aeroport,
+                    'ville': row.ville,
+                    'lat': float(row.latitude),
+                    'lng': float(row.longitude),
+                    'prix': int(row.min_prix) if row.min_prix is not None else 0
+                })
+
+        # Utilisation de belles photos fixes pour les grandes villes, fallback générique pour le reste
+        city_images_map = {
+            'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
+            'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
+            'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
+            'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
+            'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
+            'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
+        }
+        
+        destinations = []
+        troll_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4u61wav4I9SolemD3pFQHW0iKL8X1ReekEg&s"
+        
+        current_time = datetime.utcnow().timestamp()
+        last_troll_time = session.get('last_troll_time', 0)
+        show_troll = False
+        
+        # Apparition limitée : au hasard toutes les 3 à 5 minutes (180 à 300 sec)
+        if (current_time - last_troll_time) > random.randint(180, 300):
+            show_troll = True
+            session['last_troll_time'] = current_time
+            
+        for row in lowest_prices:
+            base_url = city_images_map.get(row.ville, f"https://loremflickr.com/600/800/{row.ville.replace(' ', '')},cityview/all")
+                
+            destinations.append({
+                'ville': row.ville, 
+                'prix': int(row.min_prix) if row.min_prix is not None else 0,
+                'image_url': base_url
+            })
+            
+        # Si les conditions de temps sont réunies, on remplace UNE image au hasard par le troll
+        if show_troll and destinations:
+            random_idx = random.randint(0, len(destinations) - 1)
+            destinations[random_idx]['image_url'] = troll_url
     except Exception as e:
         print(f"Erreur SQL Carrousel Destinations: {e}")
         destinations = []
@@ -70,13 +185,13 @@ def accueil():
     # Fallback si aucun vol n'est présent dans la BDD ou en cas d'erreur
     if not destinations:
         destinations = [
-            {'ville': 'Rome', 'prix': 124},
-            {'ville': 'Londres', 'prix': 98},
-            {'ville': 'Madrid', 'prix': 85},
-            {'ville': 'Berlin', 'prix': 110}
+            {'ville': 'Rome', 'prix': 124, 'image_url': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Londres', 'prix': 98, 'image_url': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Madrid', 'prix': 85, 'image_url': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Berlin', 'prix': 110, 'image_url': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop'}
         ]
 
-    return render_template('client/acceuil.html', loyalty_info=loyalty_info, next_flight=next_flight, destinations=destinations)
+    return render_template('client/acceuil.html', destinations=destinations, airports_data=airports_data, map_routes=map_routes)
 
 @client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():
@@ -104,6 +219,42 @@ def profil():
         elif not num_tel: # Si le champ est vidé
             client_connecte.numero_telephone = None
             
+        # Suppression des documents si demandée
+        if request.form.get('delete_doc_1') == '1':
+            client_connecte.document_identite = None
+        if request.form.get('delete_doc_2') == '1':
+            client_connecte.document_identite_2 = None
+
+        # Traitement du fichier uploadé
+        if 'document_file' in request.files:
+            file = request.files['document_file']
+            if file and file.filename != '':
+                # Sécurisation du nom de fichier et ajout d'un préfixe unique avec l'ID du client
+                filename = secure_filename(file.filename)
+                unique_filename = f"user_{client_connecte.id_client}_{filename}"
+                
+                # Créer le dossier s'il n'existe pas
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                filepath = os.path.join(upload_folder, unique_filename)
+                file.save(filepath)
+                client_connecte.document_identite = unique_filename
+                
+        # Traitement du 2ème fichier uploadé
+        if 'document_file_2' in request.files:
+            file2 = request.files['document_file_2']
+            if file2 and file2.filename != '':
+                filename2 = secure_filename(file2.filename)
+                unique_filename2 = f"user_{client_connecte.id_client}_2_{filename2}"
+                
+                upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'documents')
+                os.makedirs(upload_folder, exist_ok=True)
+                
+                filepath = os.path.join(upload_folder, unique_filename2)
+                file2.save(filepath)
+                client_connecte.document_identite_2 = unique_filename2
+
         db.session.commit()
         session['prenom'] = client_connecte.prenom
         session['nom'] = client_connecte.nom
@@ -112,13 +263,25 @@ def profil():
         
     prochains_billets = client_connecte.get_prochains_vols()
     prochains_vols_data = []
+    vols_vus = set()  # Pour éviter d'afficher le même vol X fois si X passagers
     
     if prochains_billets:
         mois_fr = {1: 'Jan', 2: 'Fév', 3: 'Mars', 4: 'Avr', 5: 'Mai', 6: 'Juin', 
                    7: 'Juil', 8: 'Août', 9: 'Sept', 10: 'Oct', 11: 'Nov', 12: 'Déc'}
         for billet in prochains_billets:
             vol = billet.vol
-            date_vol = f"{vol.date_heure_dep_utc.day} {mois_fr[vol.date_heure_dep_utc.month]} {vol.date_heure_dep_utc.year}"
+            resa = billet.reservation
+            
+            # Clé unique pour regrouper par réservation ET par vol (pour les escales)
+            unique_key = f"{resa.id_reservation}_{vol.id_vol}"
+            if unique_key in vols_vus:
+                continue
+            vols_vus.add(unique_key)
+            
+            # Calcul du nombre de passagers rattachés à cette réservation pour ce vol
+            nb_passagers = sum(1 for b in resa.billets if b.id_vol == vol.id_vol)
+
+            date_vol = f"{vol.date_heure_dep_utc.day:02d}-{vol.date_heure_dep_utc.month:02d}-{vol.date_heure_dep_utc.year}"
             
             status_text = "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize()
             status_class = "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed"
@@ -129,10 +292,11 @@ def profil():
                 'status_text': status_text,
                 'status_class': status_class,
                 'dep_iata': vol.id_aeroport_depart,
+                'nb_passagers': nb_passagers,
                 'arr_iata': vol.id_aeroport_arrivee,
                 'dep_time': vol.date_heure_dep_utc.strftime('%H:%M'),
                 'arr_time': vol.date_heure_arr_utc.strftime('%H:%M'),
-                'pnr': f"X{billet.id_reservation}B9Q{billet.id_billet}"
+                'pnr': resa.pnr or "En attente"
             })
             
     return render_template('client/profil.html', client=client_connecte, prochains_vols=prochains_vols_data)
@@ -196,6 +360,15 @@ def support():
 @login_required
 def booking():
     """Réservation"""
+    # Si l'utilisateur clique sur le fil d'Ariane "Recherche" depuis une étape ultérieure,
+    # on vide les sélections de vol et de passagers, mais on conserve les paramètres de recherche.
+    if 'vol_aller' in session:
+        session.pop('vol_aller', None)
+        session.pop('vol_retour', None)
+        session.pop('options', None)
+        session.pop('passagers_data', None)
+        update_total_panier()
+        session.modified = True
     aeroports = db.session.execute(text("SELECT * FROM aeroports ORDER BY ville ASC")).mappings().all()
     search_params = session.get('search_params', {})
     return render_template('client/reserver.html', aeroports=aeroports, search_params=search_params)
@@ -206,144 +379,6 @@ def format_duration(td):
     hours = total_seconds // 3600
     minutes = (total_seconds % 3600) // 60
     return f"{hours}h {minutes:02d}m"
-
-def calculate_yield_prices(legs, type_vol):
-    """
-    Logique de Yield Management (Pricing dynamique).
-    Prend en compte : l'heure locale, les correspondances et le type de trajet.
-    """
-    base_price = sum(float(leg['prix_de_base']) for leg in legs)
-    
-    # 1. Discount de correspondance (Réseau Hub-and-Spoke)
-    # Vol avec escale = inconfort = prix réduit pour rester compétitif
-    stops = len(legs) - 1
-    if stops == 1:
-        base_price *= 0.85  # -15%
-    elif stops >= 2:
-        base_price *= 0.75  # -25%
-        
-    # 2. Yield management basé sur le temps avant le départ
-    # Utilisation de l'heure locale de la machine pour plus de précision
-    first_leg_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
-    time_to_dep = first_leg_local.replace(tzinfo=None) - datetime.now()
-    days_to_dep = time_to_dep.days
-    
-    if days_to_dep <= 3:
-        yield_multiplier = 1.8  # J-3 : Forte demande (+80%)
-    elif days_to_dep <= 7:
-        yield_multiplier = 1.4  # J-7 : Dernière minute (+40%)
-    elif days_to_dep <= 14:
-        yield_multiplier = 1.15 # J-14 : Remplissage (+15%)
-    elif days_to_dep >= 60:
-        yield_multiplier = 0.9  # J-60 : Achat en avance (-10%)
-    else:
-        yield_multiplier = 1.0  # Tarif standard
-        
-    # 3. Discount Aller-Retour (Fidélisation)
-    ar_multiplier = 0.9 if type_vol == 'AR' else 1.0  # -10% si A/R
-    
-    # Calcul final avec un prix plancher à 50€
-    final_eco = max(50, int(base_price * yield_multiplier * ar_multiplier)) 
-    
-    return {
-        'eco': final_eco,
-        'biz': int(final_eco * 2.5),
-        'first': int(final_eco * 4)
-    }
-
-def search_itineraries(origin, destination, target_date_str, max_stops=2):
-    """Algorithme de recherche avec filtrage par date locale de la machine"""
-    try:
-        target_date = datetime.strptime(target_date_str, '%Y-%m-%d').date()
-    except (ValueError, TypeError):
-        return []
-
-    valid_itineraries = []
-    
-    # Requête large en BDD : +/- 1 jour pour compenser les décalages horaires UTC vs Local
-    start_bound = target_date - timedelta(days=1)
-    end_bound = target_date + timedelta(days=2)
-
-    # 1. Vols Directs
-    direct_flights = db.session.execute(text("""
-        SELECT * FROM vols 
-        WHERE id_aeroport_depart = :origin 
-        AND id_aeroport_arrivee = :destination
-        AND DATE(date_heure_dep_utc) >= :start_bound
-        AND DATE(date_heure_dep_utc) < :end_bound
-    """), {
-        'origin': origin,
-        'destination': destination,
-        'start_bound': start_bound,
-        'end_bound': end_bound
-    }).mappings().all()
-    
-    for f in direct_flights:
-        # Filtrage exact sur le fuseau horaire local de la machine
-        f_local = f['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
-        if f_local.date() == target_date:
-            valid_itineraries.append([f])
-
-    # 2. Vols avec 1 Escale
-    if max_stops >= 1:
-        first_legs = db.session.execute(text("""
-            SELECT * FROM vols 
-            WHERE id_aeroport_depart = :origin 
-            AND id_aeroport_arrivee != :destination
-            AND DATE(date_heure_dep_utc) >= :start_bound
-            AND DATE(date_heure_dep_utc) < :end_bound
-        """), {
-            'origin': origin,
-            'destination': destination,
-            'start_bound': start_bound,
-            'end_bound': end_bound
-        }).mappings().all()
-        
-        for leg1 in first_legs:
-            leg1_local = leg1['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
-            if leg1_local.date() != target_date:
-                continue
-                
-            min_dep = leg1['date_heure_arr_utc'] + timedelta(minutes=45) # Escale min
-            max_dep = leg1['date_heure_arr_utc'] + timedelta(hours=12)   # Escale max
-            
-            second_legs = db.session.execute(text("""
-                SELECT * FROM vols 
-                WHERE id_aeroport_depart = :origin 
-                AND id_aeroport_arrivee = :destination
-                AND date_heure_dep_utc >= :min_dep
-                AND date_heure_dep_utc <= :max_dep
-            """), {
-                'origin': leg1['id_aeroport_arrivee'],
-                'destination': destination,
-                'min_dep': min_dep,
-                'max_dep': max_dep
-            }).mappings().all()
-            
-            for leg2 in second_legs:
-                valid_itineraries.append([leg1, leg2])
-                
-                # 3. Vols avec 2 Escales (Extension de leg2)
-                if max_stops >= 2:
-                    min_dep2 = leg2['date_heure_arr_utc'] + timedelta(minutes=45)
-                    max_dep2 = leg2['date_heure_arr_utc'] + timedelta(hours=12)
-                    third_legs = db.session.execute(text("""
-                        SELECT * FROM vols 
-                        WHERE id_aeroport_depart = :origin 
-                        AND id_aeroport_arrivee = :destination
-                        AND date_heure_dep_utc >= :min_dep
-                        AND date_heure_dep_utc <= :max_dep
-                    """), {
-                        'origin': leg2['id_aeroport_arrivee'],
-                        'destination': destination,
-                        'min_dep': min_dep2,
-                        'max_dep': max_dep2
-                    }).mappings().all()
-                    
-                    for leg3 in third_legs:
-                        valid_itineraries.append([leg1, leg2, leg3])
-
-    return valid_itineraries
 
 @client_bp.route('/booking-flights', methods=['GET', 'POST'])
 @login_required
@@ -367,10 +402,14 @@ def booking_flights():
                 session['search_params']['date_aller'] = new_aller
                 session['search_params']['date_retour'] = new_retour
                 session.modified = True
+                update_total_panier()
                 
         # S'il clique sur "Changer le vol aller"
         elif 'reset_aller' in request.form:
             session.pop('vol_aller', None)
+            session.pop('vol_retour', None)
+            session.pop('options', None)
+            update_total_panier()
             
         # Nouvelle recherche depuis reserver.html
         elif 'type_vol' in request.form:
@@ -378,15 +417,32 @@ def booking_flights():
             session.pop('vol_aller', None)
             session.pop('vol_retour', None)
             session.pop('options', None)
+            session.pop('passagers_data', None)
+            update_total_panier()
             
         # Sélection temporaire du vol aller pour un A/R
         elif 'id_vol_aller_temp' in request.form:
             session['vol_aller'] = {
                 'id_vol': request.form.get('id_vol_aller_temp'),
                 'classe': request.form.get('classe'),
-                'prix': float(request.form.get('prix', 0))
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
+                'prix': float(request.form.get('prix', 0)),
+                'prix_eco': float(request.form.get('prix_eco', 0)),
+                'prix_biz': float(request.form.get('prix_biz', 0)),
+                'prix_first': float(request.form.get('prix_first', 0))
             }
             
+            # Si on change de vol, on efface uniquement les sièges car l'avion change
+            if 'options' in session:
+                for p in session['options'].get('passagers', []):
+                    p['siege'] = ''
+            session.modified = True
+            update_total_panier()
+            
+            return redirect(url_for('client.booking_flights', step='retour'))
+            
+        return redirect(url_for('client.booking_flights'))
+
     search_params = session.get('search_params', {})
     
     if not search_params and request.method == 'GET':
@@ -396,7 +452,16 @@ def booking_flights():
     vol_aller_choisi = session.get('vol_aller') is not None
     
     # Détermine si on est à l'étape du choix du vol retour
-    is_retour_step = (type_vol == 'AR') and vol_aller_choisi
+    step_param = request.args.get('step')
+    is_retour_step = False
+    
+    if type_vol == 'AR':
+        if step_param == 'retour':
+            is_retour_step = True
+        elif step_param == 'aller':
+            is_retour_step = False
+        elif vol_aller_choisi and not session.get('vol_retour'):
+            is_retour_step = True
     
     # Inverse dynamiquement le départ/arrivée si on est sur le retour
     if is_retour_step:
@@ -416,28 +481,92 @@ def booking_flights():
     ville_dep = aero_dep[0] if aero_dep else iata_dep
     ville_arr = aero_arr[0] if aero_arr else iata_arr
     
-    date_vol = datetime.strptime(date_vol_raw, '%Y-%m-%d').strftime('%d/%m/%Y') if date_vol_raw else 'Date invalide'
+    date_vol = datetime.strptime(date_vol_raw, '%Y-%m-%d').strftime('%d-%m-%Y') if date_vol_raw else 'Date invalide'
     
     # 2. Exécuter l'algorithme
     raw_itineraries = search_itineraries(iata_dep, iata_arr, date_vol_raw)
     all_airports_rows = db.session.execute(text("SELECT id_aeroport, ville FROM aeroports")).fetchall()
     all_airports = {row[0]: row[1] for row in all_airports_rows}
     
+    # Pré-chargement des capacités pour tous les segments de vol retournés
+    unique_leg_ids = set(leg['id_vol'] for legs in raw_itineraries for leg in legs)
+    capacities = {}
+    if unique_leg_ids:
+        # OPTIMISATION : Requête unique (Bulk fetch) au lieu d'une boucle (N+1 Query)
+        res_caps = db.session.execute(text("""
+            SELECT v.id_vol, a.eco_rang_de, a.eco_rang_a, a.bus_rang_de, a.bus_rang_a, a.first_rang_de, a.first_rang_a, a.largeur_rangee,
+                   COALESCE(SUM(CASE WHEN b.classe = 'Eco' THEN 1 ELSE 0 END), 0) as sold_eco,
+                   COALESCE(SUM(CASE WHEN b.classe = 'Business' THEN 1 ELSE 0 END), 0) as sold_bus,
+                   COALESCE(SUM(CASE WHEN b.classe = 'First' THEN 1 ELSE 0 END), 0) as sold_first
+            FROM vols v
+            JOIN avions a ON v.immatriculation_avion = a.immatriculation
+            LEFT JOIN billets b ON b.id_vol = v.id_vol
+            WHERE v.id_vol IN :leg_ids
+            GROUP BY v.id_vol, a.immatriculation
+        """), {'leg_ids': tuple(unique_leg_ids)}).mappings().all()
+        
+        for row in res_caps:
+            def cap(de, a, width): return max(0, a - de + 1) * width if a >= de > 0 else 0
+            capacities[row['id_vol']] = {
+                'cap_eco': cap(row['eco_rang_de'], row['eco_rang_a'], row['largeur_rangee']),
+                'cap_bus': cap(row['bus_rang_de'], row['bus_rang_a'], row['largeur_rangee']),
+                'cap_first': cap(row['first_rang_de'], row['first_rang_a'], row['largeur_rangee']),
+                'sold_eco': int(row['sold_eco']),
+                'sold_bus': int(row['sold_bus']),
+                'sold_first': int(row['sold_first'])
+            }
+
     itineraries_data = []
     for legs in raw_itineraries:
+        caps = [capacities.get(leg['id_vol']) for leg in legs]
+        if None in caps:
+            continue # Données de capacité manquantes
+
         # Conversion des heures extrêmes en heure locale de la machine
         dep_time_local = legs[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
         arr_time_local = legs[-1]['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
         
-        # Appelle notre nouveau module de Yield Management
-        prices = calculate_yield_prices(legs, type_vol)
+        # Utilisation de l'algorithme unifié de Yield Management
+        total_cap = sum(c['cap_eco'] + c['cap_bus'] + c['cap_first'] for c in caps)
+        total_sold = sum(c['sold_eco'] + c['sold_bus'] + c['sold_first'] for c in caps)
+        taux_vol = float(total_sold) / total_cap if total_cap > 0 else 0.0
+        
+        cap_eco_sum = sum(c['cap_eco'] for c in caps)
+        taux_eco = float(sum(c['sold_eco'] for c in caps)) / cap_eco_sum if cap_eco_sum > 0 else 0.0
+        
+        cap_bus_sum = sum(c['cap_bus'] for c in caps)
+        taux_bus = float(sum(c['sold_bus'] for c in caps)) / cap_bus_sum if cap_bus_sum > 0 else 0.0
+        
+        cap_first_sum = sum(c['cap_first'] for c in caps)
+        taux_first = float(sum(c['sold_first'] for c in caps)) / cap_first_sum if cap_first_sum > 0 else 0.0
+        
+        base_price = sum(float(leg['prix_de_base']) for leg in legs)
+        stops = len(legs) - 1
+        if stops == 1: base_price *= 0.85
+        elif stops >= 2: base_price *= 0.75
+        if type_vol == 'AR': base_price *= 0.9
+        
+        date_dep = legs[0]['date_heure_dep_utc']
+        now = datetime.utcnow()
+        
+        p_eco = calculer_prix(base_price, date_dep, now, taux_vol, taux_eco, 'eco')['prix_final']
+        p_biz = calculer_prix(base_price * 2.5, date_dep, now, taux_vol, taux_bus, 'business')['prix_final']
+        p_first = calculer_prix(base_price * 4.0, date_dep, now, taux_vol, taux_first, 'first')['prix_final']
+        
+        prices = {
+            'eco': max(50, int(p_eco)),
+            'biz': int(p_biz),
+            'first': int(p_first)
+        }
         
         segments = []
         for i, leg in enumerate(legs):
             leg_dep_local = leg['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
             leg_arr_local = leg['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
             
-            layover = format_duration(legs[i+1]['date_heure_dep_utc'] - leg['date_heure_arr_utc']) if i < len(legs) - 1 else None
+            layover_td = legs[i+1]['date_heure_dep_utc'] - leg['date_heure_arr_utc'] if i < len(legs) - 1 else None
+            layover = format_duration(layover_td) if layover_td else None
+            is_short_layover = (layover_td < timedelta(minutes=60)) if layover_td else False
             segments.append({
                 'flight_number': f"OB{leg['id_vol']}",
                 'dep_iata': leg['id_aeroport_depart'],
@@ -446,10 +575,16 @@ def booking_flights():
                 'arr_iata': leg['id_aeroport_arrivee'],
                 'arr_city': all_airports.get(leg['id_aeroport_arrivee'], leg['id_aeroport_arrivee']),
                 'arr_time': leg_arr_local.strftime('%H:%M'),
-                'layover': layover
+                'layover': layover,
+                'is_short_layover': is_short_layover
             })
             
         stops = len(legs) - 1
+        
+        avail_eco = min(max(0, c['cap_eco'] - c['sold_eco']) for c in caps)
+        avail_bus = min(max(0, c['cap_bus'] - c['sold_bus']) for c in caps)
+        avail_first = min(max(0, c['cap_first'] - c['sold_first']) for c in caps)
+        
         itineraries_data.append({
             'id': "_".join(str(leg['id_vol']) for leg in legs),  # Ex: "12_15" pour vols 12 + 15
             'dep_time': dep_time_local.strftime('%H:%M'),
@@ -460,15 +595,17 @@ def booking_flights():
             'price_eco': prices['eco'],
             'price_biz': prices['biz'],
             'price_first': prices['first'],
+            'avail_eco': avail_eco, 'cap_eco': min(c['cap_eco'] for c in caps),
+            'avail_biz': avail_bus, 'cap_biz': min(c['cap_bus'] for c in caps),
+            'avail_first': avail_first, 'cap_first': min(c['cap_first'] for c in caps),
             'segments': segments
         })
         
     # Trier par heure de départ
     itineraries_data.sort(key=lambda x: x['dep_time'])
     
-    # --- Recherche de la prochaine date disponible si aucun vol ---
-    next_available_date_str = None
-    next_available_date_formatted = None
+    # --- Recherche de jusqu'à 3 dates alternatives si aucun vol ---
+    alternative_vols = []
     
     if not itineraries_data and date_vol_raw:
         try:
@@ -479,8 +616,8 @@ def booking_flights():
             if is_retour_step and search_params.get('date_aller'):
                 min_date = max(min_date, datetime.strptime(search_params.get('date_aller'), '%Y-%m-%d').date())
                 
-            # On cherche à -1 jour et jusqu'à +14 jours (trié par proximité)
-            offsets = [-1] + [i for i in range(1, 15)]
+            # On cherche à -1 jour et jusqu'à +7 jours (trié par proximité)
+            offsets = [-1] + [i for i in range(1, 8)]
             offsets.sort(key=abs)
             
             for offset in offsets:
@@ -489,10 +626,72 @@ def booking_flights():
                     continue
                     
                 check_date_str = check_date.strftime('%Y-%m-%d')
-                if search_itineraries(iata_dep, iata_arr, check_date_str):
-                    next_available_date_str = check_date_str
-                    next_available_date_formatted = check_date.strftime('%d/%m/%Y')
-                    break
+                found_itineraries = search_itineraries(iata_dep, iata_arr, check_date_str)
+                if found_itineraries:
+                    best_itin = found_itineraries[0]
+                    
+                    # Calculer le vrai prix dynamique pour le vol alternatif
+                    alt_cap_eco = 0
+                    alt_sold_eco = 0
+                    
+                    # OPTIMISATION : Requête unique (IN) au lieu d'une boucle (N+1)
+                    alt_leg_ids = tuple(leg['id_vol'] for leg in best_itin)
+                    res_caps = db.session.execute(text("""
+                        SELECT a.eco_rang_de, a.eco_rang_a, a.largeur_rangee,
+                            COALESCE(SUM(CASE WHEN b.classe = 'Eco' THEN 1 ELSE 0 END), 0) as sold_eco
+                        FROM vols v JOIN avions a ON v.immatriculation_avion = a.immatriculation LEFT JOIN billets b ON b.id_vol = v.id_vol
+                        WHERE v.id_vol IN :leg_ids GROUP BY v.id_vol, a.immatriculation
+                    """), {'leg_ids': alt_leg_ids}).mappings().all()
+                    
+                    for res in res_caps:
+                        def cap(de, a, width): return max(0, a - de + 1) * width if a >= de > 0 else 0
+                        alt_cap_eco += cap(res['eco_rang_de'], res['eco_rang_a'], res['largeur_rangee'])
+                        alt_sold_eco += int(res['sold_eco'])
+                    
+                    alt_base_price = sum(float(leg['prix_de_base']) for leg in best_itin)
+                    alt_stops = len(best_itin) - 1
+                    if alt_stops == 1: alt_base_price *= 0.85
+                    elif alt_stops >= 2: alt_base_price *= 0.75
+                    if type_vol == 'AR': alt_base_price *= 0.9
+
+                    alt_taux_remplissage = float(alt_sold_eco) / alt_cap_eco if alt_cap_eco > 0 else 0.0
+                    
+                    p_eco = calculer_prix(alt_base_price, best_itin[0]['date_heure_dep_utc'], datetime.utcnow(), alt_taux_remplissage, alt_taux_remplissage, 'eco')['prix_final']
+                    prices = {'eco': max(50, int(p_eco))}
+                    
+                    alt_has_short = False
+                    for i in range(len(best_itin) - 1):
+                        laytd = best_itin[i+1]['date_heure_dep_utc'] - best_itin[i]['date_heure_arr_utc']
+                        if laytd < timedelta(minutes=60):
+                            alt_has_short = True
+                    
+                    dep_time_local = best_itin[0]['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+                    arr_time_local = best_itin[-1]['date_heure_arr_utc'].replace(tzinfo=timezone.utc).astimezone()
+                    
+                    alt_stops = len(best_itin) - 1
+                    if alt_stops == 0:
+                        alt_stops_text = "Vol Direct"
+                    elif alt_stops == 1:
+                        alt_stops_text = f"1 Escale ({best_itin[0]['id_aeroport_arrivee']})"
+                    else:
+                        alt_stops_text = f"{alt_stops} Escales"
+                        
+                    alternative_vols.append({
+                        'id_vol': "_".join(str(leg['id_vol']) for leg in best_itin),
+                        'date_str': check_date.strftime('%d-%m-%Y'),
+                        'date_brute': check_date_str,
+                        'prix_eco': prices['eco'],
+                        'id_aeroport_depart': best_itin[0]['id_aeroport_depart'],
+                        'id_aeroport_arrivee': best_itin[-1]['id_aeroport_arrivee'],
+                        'heure_depart_str': dep_time_local.strftime('%H:%M'),
+                        'heure_arrivee_str': arr_time_local.strftime('%H:%M'),
+                        'is_direct': len(best_itin) == 1,
+                        'has_short_layover': alt_has_short,
+                        'stops_text': alt_stops_text
+                    })
+                    
+                    if len(alternative_vols) >= 3:
+                        break
         except Exception:
             pass
     
@@ -518,8 +717,7 @@ def booking_flights():
                            ville_arr=ville_arr,
                            date_vol=date_vol,
                            itineraries=paginated_itineraries,
-                           next_available_date_str=next_available_date_str,
-                           next_available_date_formatted=next_available_date_formatted,
+                           alternative_vols=alternative_vols,
                            current_page=page,
                            total_pages=total_pages,
                            titre=titre)
@@ -534,7 +732,11 @@ def booking_passengers():
             vol_final = {
                 'id_vol': request.form.get('id_vol_final'),
                 'classe': request.form.get('classe'),
-                'prix': float(request.form.get('prix', 0))
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
+                'prix': float(request.form.get('prix', 0)),
+                'prix_eco': float(request.form.get('prix_eco', 0)),
+                'prix_biz': float(request.form.get('prix_biz', 0)),
+                'prix_first': float(request.form.get('prix_first', 0))
             }
             search_params = session.get('search_params', {})
             
@@ -542,6 +744,10 @@ def booking_passengers():
                 session['vol_retour'] = vol_final
             else:
                 session['vol_aller'] = vol_final
+                
+            update_total_panier()
+                
+        return redirect(url_for('client.booking_passengers'))
                 
     # Garde-fou : s'il n'y a pas de vol_aller sélectionné, retour au début
     if 'vol_aller' not in session:
@@ -556,7 +762,65 @@ def booking_options():
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
         
-    return render_template('client/booking_options.html')
+    if request.method == 'POST':
+        session['passagers_data'] = request.form.to_dict()
+        session.modified = True
+        return redirect(url_for('client.booking_options'))
+        
+    vol_aller = session.get('vol_aller', {})
+    vol_retour = session.get('vol_retour', {})
+
+    def get_leg_info(id_vol_str):
+        if not id_vol_str: return []
+        legs = str(id_vol_str).split('_')
+        leg_data = []
+        for idx, leg_id in enumerate(legs):
+            if not leg_id: continue
+            avion_info = db.session.execute(text("""
+                SELECT a.*, v.id_aeroport_depart, v.id_aeroport_arrivee 
+                FROM vols v JOIN avions a ON v.immatriculation_avion = a.immatriculation 
+                WHERE v.id_vol = :id_vol
+            """), {'id_vol': leg_id}).mappings().first()
+            
+            try:
+                taken_seats_rows = db.session.execute(text("SELECT siege FROM billets WHERE id_vol = :id_vol AND siege IS NOT NULL"), {'id_vol': leg_id}).fetchall()
+                taken_seats = [r[0] for r in taken_seats_rows if r[0]]
+            except Exception:
+                db.session.rollback()
+                taken_seats = []
+                
+            if avion_info:
+                leg_data.append({'leg_id': leg_id, 'idx': idx, 'avion': dict(avion_info), 'taken_seats': taken_seats, 'dep': avion_info['id_aeroport_depart'], 'arr': avion_info['id_aeroport_arrivee']})
+        return leg_data
+
+    aller_legs = get_leg_info(vol_aller.get('id_vol'))
+    retour_legs = get_leg_info(vol_retour.get('id_vol'))
+
+    search_params = session.get('search_params', {})
+    nb_passagers = int(search_params.get('passagers', 1))
+    
+    passagers_data = session.get('passagers_data', {})
+    
+    classes_aller = vol_aller.get('classes')
+    if not classes_aller:
+        classes_aller = [vol_aller.get('classe', 'Eco')] * nb_passagers
+        
+    classes_retour = vol_retour.get('classes') if vol_retour else []
+    if vol_retour and not classes_retour:
+        classes_retour = [vol_retour.get('classe', 'Eco')] * nb_passagers
+        
+    passengers = []
+    for i in range(1, nb_passagers + 1):
+        c_aller = classes_aller[i-1] if (i-1) < len(classes_aller) else 'Eco'
+        c_retour = classes_retour[i-1] if classes_retour and (i-1) < len(classes_retour) else c_aller
+        passengers.append({
+            'index': i - 1, 'num': i,
+            'prenom': passagers_data.get(f'prenom_{i}', f'Passager {i}'), 'nom': passagers_data.get(f'nom_{i}', ''),
+            'classe_aller': c_aller,
+            'classe_retour': c_retour
+        })
+
+    return render_template('client/booking_options.html', aller_legs=aller_legs, retour_legs=retour_legs, nb_passagers=nb_passagers, passengers=passengers)
 
 @client_bp.route('/booking-payment', methods=['GET', 'POST'])
 @login_required
@@ -565,99 +829,336 @@ def booking_payment():
     if 'vol_aller' not in session:
         return redirect(url_for('client.booking'))
         
+    vol_aller = session.get('vol_aller', {})
+    vol_retour = session.get('vol_retour', {})
+    legs_aller = str(vol_aller.get('id_vol', '')).split('_') if vol_aller.get('id_vol') else []
+    legs_retour = str(vol_retour.get('id_vol', '')).split('_') if vol_retour.get('id_vol') else []
+
     if request.method == 'POST':
-        siege = request.form.get('siege_selectionne', '')
-        bagages = request.form.get('bagages', '0')
-        repas = request.form.get('repas', 'standard')
+        if 'classe_1' in request.form or 'bagages_1' in request.form:
+            search_params = session.get('search_params', {})
+            nb_passagers = int(search_params.get('passagers', 1))
+            
+            prix_options = 0
+            options_per_passager = []
+            new_classes_aller = []
+            new_classes_retour = []
+            total_aller_price = 0
+            total_retour_price = 0
+            
+            for i in range(1, nb_passagers + 1):
+                bag = request.form.get(f'bagages_{i}', '0')
+                rep = request.form.get(f'repas_{i}', 'standard')
+                p_class_aller = request.form.get(f'classe_aller_{i}', 'Eco')
+                p_class_retour = request.form.get(f'classe_retour_{i}', 'Eco')
+                new_classes_aller.append(p_class_aller)
+                new_classes_retour.append(p_class_retour)
+                
+                sieges_aller = []
+                for idx_leg in range(len(legs_aller)):
+                    s = request.form.get(f'siege_aller_{idx_leg}_{i}')
+                    if s: sieges_aller.append(s)
+
+                sieges_retour = []
+                for idx_leg in range(len(legs_retour)):
+                    s = request.form.get(f'siege_retour_{idx_leg}_{i}')
+                    if s: sieges_retour.append(s)
+                
+                if p_class_aller == 'Eco': 
+                    total_aller_price += vol_aller.get('prix_eco', 0)
+                elif p_class_aller == 'Business': 
+                    total_aller_price += vol_aller.get('prix_biz', 0)
+                elif p_class_aller == 'First': 
+                    total_aller_price += vol_aller.get('prix_first', 0)
+                    
+                if p_class_retour == 'Eco':
+                    total_retour_price += vol_retour.get('prix_eco', 0)
+                elif p_class_retour == 'Business':
+                    total_retour_price += vol_retour.get('prix_biz', 0)
+                elif p_class_retour == 'First':
+                    total_retour_price += vol_retour.get('prix_first', 0)
+                
+                def rank(c): return {'Eco':1, 'Business':2, 'First':3}.get(c, 1)
+                max_rank = max(rank(p_class_aller), rank(p_class_retour) if vol_retour else 1)
+                highest_class = 'First' if max_rank == 3 else 'Business' if max_rank == 2 else 'Eco'
+                
+                if highest_class == 'Eco':
+                    prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
+                    prix_options += TARIFS_OPTIONS['repas_eco'].get(rep, 0)
+                elif highest_class == 'Business':
+                    prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
+                    bag_qty = int(bag) if str(bag).isdigit() else 0
+                    bag = f"{bag_qty + 2}_23kg"
+                    if rep not in ['premium', 'vegetarien']: rep = 'premium'
+                elif highest_class == 'First':
+                    prix_options += TARIFS_OPTIONS['bagages_eco'].get(bag, 0)
+                    bag_qty = int(bag) if str(bag).isdigit() else 0
+                    bag = f"{bag_qty + 2}_32kg"
+                    if rep not in ['gastronomique', 'vegetarien']: rep = 'gastronomique'
+                
+                options_per_passager.append({'bagages': bag, 'repas': rep, 'classe_aller': p_class_aller, 'classe_retour': p_class_retour, 'sieges_aller': sieges_aller, 'sieges_retour': sieges_retour})
+            
+            # Mise à jour du cache de session pour le vol et le prix
+            if 'vol_aller' in session:
+                session['vol_aller']['classes'] = new_classes_aller
+                session['vol_aller']['prix'] = total_aller_price / nb_passagers if nb_passagers > 0 else 0
+            if 'vol_retour' in session:
+                session['vol_retour']['classes'] = new_classes_retour
+                session['vol_retour']['prix'] = total_retour_price / nb_passagers if nb_passagers > 0 else 0
+
+            session['options'] = {
+                'passagers': options_per_passager,
+                'prix': prix_options / nb_passagers if nb_passagers > 0 else 0
+            }
+            update_total_panier()
+            session.modified = True
+            return redirect(url_for('client.booking_payment'))
+        else:
+            # --- LOGIQUE FINALE : INSERTION BASE DE DONNÉES ---
+            reservation_id, error_msg = create_reservation_in_db(session)
+            
+            if reservation_id:
+                reservation = db.session.get(Reservation, reservation_id)
+                flash(f'Paiement réussi ! Votre réservation (PNR: {reservation.pnr}) est confirmée.', 'success')
+                
+                # Nettoyage du cache
+                for key in ['search_params', 'vol_aller', 'vol_retour', 'options', 'passagers_data', 'total_panier']:
+                    session.pop(key, None)
+                
+                return redirect(url_for('client.booking_confirmation', reservation_id=reservation_id))
+            else:
+                session['booking_error'] = error_msg
+                return redirect(url_for('client.booking_confirmation', reservation_id='error'))
         
-        prix_options = 0
-        if bagages == '1': prix_options += 45
-        elif bagages == '2': prix_options += 80
+    # --- RÉCUPÉRATION DES DÉTAILS D'ESCALES POUR L'AFFICHAGE ---
+    def get_leg_info(id_vol_str):
+        if not id_vol_str: return []
+        legs = str(id_vol_str).split('_')
+        leg_data = []
+        for leg_id in legs:
+            if not leg_id: continue
+            vol_info = db.session.execute(text("SELECT id_aeroport_depart, id_aeroport_arrivee FROM vols WHERE id_vol = :id_vol"), {'id_vol': leg_id}).mappings().first()
+            if vol_info:
+                leg_data.append({'dep': vol_info['id_aeroport_depart'], 'arr': vol_info['id_aeroport_arrivee']})
+        return leg_data
+
+    aller_legs = get_leg_info(vol_aller.get('id_vol'))
+    retour_legs = get_leg_info(vol_retour.get('id_vol'))
+
+    return render_template('client/booking_payment.html', aller_legs=aller_legs, retour_legs=retour_legs)
+
+def create_reservation_in_db(session_data):
+    """
+    Crée une réservation complète (Reservation, Passagers, Billets)
+    à partir des données de la session et l'insère en base de données.
+    Retourne l'ID de la réservation en cas de succès, None sinon.
+    """
+    try:
+        client_id = session_data.get('user_id')
+        passengers_info = session_data.get('passagers_data', {})
+        options_info = session_data.get('options', {}).get('passagers', [])
+        vol_aller = session_data.get('vol_aller', {})
+        vol_retour = session_data.get('vol_retour', {})
+        search_params = session_data.get('search_params', {})
+        nb_passagers = int(search_params.get('passagers', 1))
+
+        if not client_id or not vol_aller:
+            raise ValueError("Identifiant client ou vol aller manquant dans la session.")
+
+        # 1. Créer la réservation principale
+        pnr = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        new_reservation = Reservation(
+            id_client=client_id,
+            date_reservation=datetime.utcnow(),
+            statut='Confirmee',
+            pnr=pnr
+        )
+        db.session.add(new_reservation)
+        db.session.flush()  # Pour obtenir new_reservation.id_reservation
+
+        # Récupérer l'utilisateur principal (Master)
+        master_user = db.session.get(User, client_id)
+
+        # 2. Créer les passagers et les billets associés
+        for i in range(nb_passagers):
+            p_num = i + 1
+            
+            # Remplissage par défaut avec le Master si c're le Passager 1 et que les infos sont vides
+            p_nom = passengers_info.get(f'nom_{p_num}', '').strip() or (master_user.nom if p_num == 1 and master_user else 'N/A')
+            p_prenom = passengers_info.get(f'prenom_{p_num}', '').strip() or (master_user.prenom if p_num == 1 and master_user else 'N/A')
+
+            # Créer le passager
+            new_passager = Passager(
+                id_reservation=new_reservation.id_reservation,
+                nom=p_nom,
+                prenom=p_prenom
+            )
+            db.session.add(new_passager)
+            db.session.flush() # Pour obtenir new_passager.id_passager
+
+            # Sécurisation en cas de données d'options incomplètes
+            p_options = options_info[i] if i < len(options_info) else {}
+            
+            # Convertir les options en format BDD
+            repas_map = {'standard': 0, 'premium': 1, 'vegetarien': 2, 'gastronomique': 3}
+            repas_val = repas_map.get(str(p_options.get('repas', 'standard')).lower(), 0)
+            
+            try:
+                # Extrait le chiffre de '2_23kg' ou '1' de manière robuste
+                bagages_str = str(p_options.get('bagages', '0')).split('_')[0]
+                bagages_val = int(bagages_str)
+            except (ValueError, TypeError):
+                bagages_val = 0
+
+            # Créer les billets pour chaque segment de vol
+            def create_billets_for_legs(vol_data, classe_key, sieges_key):
+                if not vol_data or not vol_data.get('id_vol'): return
+                leg_ids = str(vol_data.get('id_vol', '')).split('_')
+                sieges = p_options.get(sieges_key, [])
+                
+                classe = p_options.get(classe_key, 'Eco')
+                # Protection contre une valeur "Mixte" (hors contrainte ENUM)
+                if classe not in ['Eco', 'Business', 'First']:
+                    classe = 'Eco'
+                
+                for idx, leg_id in enumerate(leg_ids):
+                    if not leg_id: continue
+                    siege = sieges[idx] if idx < len(sieges) else None
+                    if siege == "": siege = None
+                    
+                    billet = Billet(
+                        id_reservation=new_reservation.id_reservation,
+                        id_vol=int(leg_id),
+                        id_passager=new_passager.id_passager,
+                        classe=classe,
+                        options_repas=repas_val,
+                        bagages_sup=bagages_val,
+                        siege=siege
+                    )
+                    db.session.add(billet)
+
+            create_billets_for_legs(vol_aller, 'classe_aller', 'sieges_aller')
+            create_billets_for_legs(vol_retour, 'classe_retour', 'sieges_retour')
+
+        db.session.commit()
+        return new_reservation.id_reservation, None
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERREUR CRÉATION RÉSERVATION: {e}")
+        return None, str(e)
+
+@client_bp.route('/booking-confirmation/<reservation_id>')
+@login_required
+def booking_confirmation(reservation_id):
+    if reservation_id == 'error':
+        error_msg = session.get('booking_error', 'Erreur SQL ou technique inconnue.')
+        session.pop('booking_error', None)
+        return render_template('client/booking_confirmation.html', error=error_msg)
         
-        if repas in ['premium', 'vegetarien']: prix_options += 15
+    try:
+        res_id = int(reservation_id)
+    except ValueError:
+        return redirect(url_for('client.booking'))
         
-        session['options'] = {
-            'siege': siege,
-            'bagages': bagages,
-            'repas': repas,
-            'prix': prix_options
-        }
-        session.modified = True
+    # Sécurise l'accès : seul le client qui a fait la résa peut la voir
+    reservation = db.session.query(Reservation).filter_by(id_reservation=res_id, id_client=session['user_id']).first_or_404()
+    return render_template('client/booking_confirmation.html', reservation=reservation)
+
+@client_bp.route('/download-ticket/<int:reservation_id>')
+@login_required
+def download_ticket(reservation_id):
+    reservation = db.session.query(Reservation).filter_by(id_reservation=reservation_id, id_client=session['user_id']).first_or_404()
+    
+    html_content = render_template('client/ticket_pdf.html', reservation=reservation)
+
+    if not WEASYPRINT_AVAILABLE:
+        # Fallback natif : on renvoie le HTML pour que le navigateur génère le PDF lui-même
+        return html_content
         
-    return render_template('client/booking_payment.html')
+    try:
+        pdf_file = HTML(string=html_content).write_pdf()
+        response = make_response(pdf_file)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=Obuffair_Ticket_{reservation.pnr}.pdf'
+        return response
+    except Exception as e:
+        # Si WeasyPrint crashe à l'exécution (ex: librairies C défectueuses sur Mac), on utilise le fallback
+        return html_content
 
 @client_bp.route('/mes-reservations', methods=['GET', 'POST'])
+@login_required
 def mes_reservations():
     """Mes réservations"""
-    # Données simulées : prêtes à être remplacées par "Reservation.query.filter_by(user_id=...).all()"
-    reservations = [
-        {
-            'flight_number': 'AF712',
-            'date': '14 Juin 2026',
-            'status_text': "À l'heure",
-            'status_class': 'status-ontime',
-            'dep_time': '10:30',
-            'dep_iata': 'CDG',
-            'dep_city': 'Paris',
-            'arr_time': '12:35',
-            'arr_iata': 'FCO',
-            'arr_city': 'Rome',
-            'is_delayed': False,
-            'is_direct': True,
-            'terminal': '2F',
-            'seat': '12A',
-            'meal': 'Standard',
-            'meal_icon': 'fa-utensils',
-            'meal_color': 'var(--primary)',
-            'baggage': '2 en soute',
-            'baggage_icon': 'fa-suitcase-rolling',
-            'baggage_color': 'var(--primary)',
-            'pnr': 'X8B9Q2'
-        },
-        {
-            'flight_number': 'AF1409',
-            'date': '20 Août 2026',
-            'status_text': 'Retardé',
-            'status_class': 'status-delayed',
-            'dep_time': '16:15',
-            'original_dep_time': '15:45',
-            'dep_iata': 'CDG',
-            'dep_city': 'Paris',
-            'arr_time': '20:45',
-            'original_arr_time': '20:15',
-            'arr_iata': 'FCO',
-            'arr_city': 'Rome',
-            'is_delayed': True,
-            'is_direct': False,
-            'stopover': '1 Escale: AMS (1h15)',
-            'terminal': '2E',
-            'seat': '24C',
-            'meal': 'Végétarien',
-            'meal_icon': 'fa-leaf',
-            'meal_color': 'var(--flighty-green)',
-            'baggage': '0 en soute',
-            'baggage_icon': 'fa-suitcase-rolling',
-            'baggage_color': 'var(--flighty-gray)',
-            'pnr': 'A1C2E3'
-        }
-    ]
+    user_id = session.get('user_id')
     
-    return render_template('client/mes_reservations.html', reservations=reservations)
+    # Récupérer les réservations de l'utilisateur
+    user_reservations = db.session.query(Reservation).options(
+        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
+        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
+        joinedload(Reservation.billets).joinedload(Billet.passager)
+    ).filter_by(id_client=user_id).order_by(Reservation.date_reservation.desc()).all()
+    
+    reservations_data = []
+    
+    # Dictionnaire pour mapper les options de repas
+    repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
+    
+    for resa in user_reservations:
+        resa_dict = {
+            'id_reservation': resa.id_reservation,
+            'pnr': resa.pnr or 'N/A',
+            'date_resa': resa.date_reservation.strftime('%d/%m/%Y') if resa.date_reservation else '',
+            'statut': resa.statut,
+            'vols': []
+        }
+        
+        vols_map = {}
+        for billet in resa.billets:
+            vol = billet.vol
+            if not vol: continue
+            
+            if vol.id_vol not in vols_map:
+                dep_time_local = vol.date_heure_dep_utc.replace(tzinfo=timezone.utc).astimezone()
+                arr_time_local = vol.date_heure_arr_utc.replace(tzinfo=timezone.utc).astimezone()
+                is_delayed = vol.statut.lower() not in ["à l'heure", "embarquement", "confirme"]
+                
+                vols_map[vol.id_vol] = {
+                    'flight_number': f"OB{vol.id_vol}",
+                    'date': dep_time_local.strftime('%d %B %Y'),
+                    'dep_time': dep_time_local.strftime('%H:%M'),
+                    'dep_iata': vol.id_aeroport_depart,
+                    'dep_city': vol.aeroport_depart.ville if vol.aeroport_depart else vol.id_aeroport_depart,
+                    'arr_time': arr_time_local.strftime('%H:%M'),
+                    'arr_iata': vol.id_aeroport_arrivee,
+                    'arr_city': vol.aeroport_arrivee.ville if vol.aeroport_arrivee else vol.id_aeroport_arrivee,
+                    'status_text': vol.statut.capitalize(),
+                    'status_class': 'status-delayed' if is_delayed else 'status-ontime',
+                    'sort_time': vol.date_heure_dep_utc,
+                    'passagers': []
+                }
+                
+            vols_map[vol.id_vol]['passagers'].append({
+                'nom': billet.passager.nom if billet.passager else 'N/A',
+                'prenom': billet.passager.prenom if billet.passager else 'N/A',
+                'classe': billet.classe,
+                'seat': billet.siege or 'Non assigné',
+                'meal': repas_map.get(billet.options_repas, 'Standard'),
+                'baggage': f"{billet.bagages_sup} en soute"
+            })
+            
+        resa_dict['vols'] = sorted(list(vols_map.values()), key=lambda x: x['sort_time'])
+        reservations_data.append(resa_dict)
+            
+    return render_template('client/mes_reservations.html', reservations=reservations_data)
 
-@client_bp.route('/gerer-reservation', methods=['GET', 'POST'])
-def gerer_reservation():
-    """Gérer la réservation"""
-    # Données simulées pour la gestion d'une réservation spécifique
-    reservation = {
-        'flight_number': 'AF712',
-        'arr_city': 'Rome',
-        'arr_iata': 'FCO',
-        'pnr': 'X8B9Q2',
-        'seat': '12A',
-        'seat_details': 'Business, Hublot',
-        'seat_class': 'is-primary',
-        'meal': 'Standard',
-        'meal_class': 'is-info',
-        'baggage': '2 bagages en soute (23kg max)'
-    }
+@client_bp.route('/gerer-reservation/<pnr>', methods=['GET', 'POST'])
+@login_required
+def gerer_reservation(pnr):
+    """Gérer une réservation spécifique (Master access)"""
+    user_id = session.get('user_id')
+    
+    # Sécurisation : Seul le client ayant fait la réservation peut y accéder
+    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+    
     return render_template('client/gerer_reservation.html', reservation=reservation)

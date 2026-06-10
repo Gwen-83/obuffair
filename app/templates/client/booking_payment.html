@@ -1,74 +1,344 @@
 {% extends 'client/base_booking.html' %}
 {% set step = 5 %}
 
+{% block booking_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/booking_payment.css') }}">
+<style>
+    .obuffair-payment-loader {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: radial-gradient(circle at center, #0B1E40, #000a18);
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+    }
+    .loader-content {
+        text-align: center;
+        width: 80%;
+        max-width: 700px;
+        position: relative;
+        z-index: 2;
+    }
+    .loader-icon-wrapper {
+        font-size: 6rem;
+        color: var(--accent);
+        margin-bottom: 2rem;
+        animation: bounceIcon 1.5s infinite alternate cubic-bezier(0.68, -0.55, 0.26, 1.55);
+    }
+    @keyframes bounceIcon {
+        0% { transform: translateY(0); text-shadow: 0 5px 15px rgba(255,199,44,0.3); }
+        100% { transform: translateY(-25px); text-shadow: 0 25px 25px rgba(255,199,44,0.1); }
+    }
+    .runway-progress {
+        position: relative;
+        width: 100%;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        margin-top: 3rem;
+        overflow: visible;
+    }
+    .progress-bar-fill {
+        position: absolute;
+        top: 0; left: 0; height: 100%;
+        background: linear-gradient(90deg, var(--primary-light), var(--accent));
+        width: 0%;
+        border-radius: 4px;
+        transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .plane-progress {
+        position: absolute;
+        top: -24px;
+        left: 0;
+        color: var(--accent);
+        font-size: 2rem;
+        transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateX(-50%);
+        filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    }
+    .loader-title {
+        font-weight: 900;
+        letter-spacing: -0.5px;
+        text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        transition: opacity 0.3s ease;
+    }
+    .floating-bg {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: none;
+    }
+    .float-el {
+        position: absolute;
+        color: rgba(255, 199, 44, 0.05); /* Filigrane jaune léger */
+        animation: floatAnim linear infinite;
+    }
+    @keyframes floatAnim {
+        0% { transform: translateY(110vh) rotate(0deg) scale(0.8); }
+        100% { transform: translateY(-20vh) rotate(360deg) scale(1.5); }
+    }
+    .fe-1 { font-size: 4rem; left: 10%; animation-duration: 10s; animation-delay: 0s; }
+    .fe-2 { font-size: 6rem; left: 30%; animation-duration: 14s; animation-delay: 2s; }
+    .fe-3 { font-size: 3rem; left: 55%; animation-duration: 8s; animation-delay: 1s; }
+    .fe-4 { font-size: 5rem; left: 75%; animation-duration: 12s; animation-delay: 3s; }
+    .fe-5 { font-size: 4.5rem; left: 85%; animation-duration: 11s; animation-delay: 0.5s; }
+</style>
+{% endblock %}
+
 {% block booking_content %}
 {% set search_params = session.get('search_params', {}) %}
 {% set nb_passagers = search_params.get('passagers', 1) | int %}
 {% set prix_aller = session.get('vol_aller', {}).get('prix', 0) | float %}
 {% set prix_retour = session.get('vol_retour', {}).get('prix', 0) | float %}
 {% set prix_options = session.get('options', {}).get('prix', 0) | float %}
-{% set cart_total = ((prix_aller + prix_retour) + prix_options) * nb_passagers %}
+{% set cart_total = session.get('total_panier', 0) | float %}
+{% set passagers_data = session.get('passagers_data', {}) %}
+{% set options_passagers = session.get('options', {}).get('passagers', []) %}
 
-<div class="columns is-centered">
-    <div class="column is-8">
+<div class="flighty-container">
+    <div class="columns is-variable is-6">
         
-        <h2 class="title is-3" style="color: var(--primary);">Paiement sécurisé</h2>
-        
-        <div class="flighty-card mb-6" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white;">
-            <div class="is-flex is-justify-content-space-between mb-4">
-                <span class="is-size-5 font-weight-bold">{{ search_params.get('depart') }} <i class="fas fa-arrow-right mx-2" style="color: var(--accent);"></i> {{ search_params.get('arrivee') }}</span>
-                <span class="title is-4 m-0" style="color: var(--accent);">{{ "%.2f"|format(cart_total) }} €</span>
-            </div>
+        <!-- COLONNE GAUCHE : RÉCAPITULATIF ÉTENDU -->
+        <div class="column is-7">
+            <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800; letter-spacing: -0.5px;">Récapitulatif de votre voyage</h2>
             
-            <div class="is-flex is-justify-content-space-between is-size-7" style="color: rgba(255,255,255,0.7);">
-                <span>{{ nb_passagers }} Passager{% if nb_passagers > 1 %}s{% endif %} • Classe {{ session.get('vol_aller', {}).get('classe', 'Eco') }} • Siège {{ session.get('options', {}).get('siege', 'Non assigné') }}</span>
-                <span>Taxes & frais inclus</span>
+            {% set vols_aller_ids = session.get('vol_aller', {}).get('id_vol', '') | string %}
+            {% set has_stop = '_' in vols_aller_ids %}
+
+            <!-- Vols -->
+            <div class="flighty-card mb-5 p-5" style="border-radius: var(--radius-xl);">
+                <h4 class="title is-5 mb-4" style="color: var(--primary);"><i class="fas fa-plane-departure mr-2"></i> Itinéraire</h4>
+                
+                <!-- Vol Aller -->
+                <div class="is-flex is-justify-content-space-between is-align-items-center pb-3" style="border-bottom: 1px solid rgba(0,0,0,0.05);">
+                    <div>
+                        <span class="tag is-primary is-light font-weight-bold mb-2">Vol Aller</span>
+                        <div class="is-flex is-align-items-center mb-1">
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('depart') }}</span>
+                            
+                            {% if aller_legs and aller_legs|length > 1 %}
+                                <div class="is-flex is-align-items-center is-flex-direction-column mx-4" style="width: 80px;">
+                                    <span style="font-size: 0.6rem; color: #FF9500; font-weight: 800; text-transform: uppercase;">{{ aller_legs|length - 1 }} Escale{% if aller_legs|length > 2 %}s{% endif %}</span>
+                                    <div style="width: 100%; height: 2px; background: #D1D1D6; margin: 4px 0; position: relative; display: flex; justify-content: center;">
+                                        {% for i in range(aller_legs|length - 1) %}
+                                            <div style="width: 6px; height: 6px; border-radius: 50%; background: white; border: 2px solid #FF9500; position: absolute; left: {{ (i + 1) * (100 / aller_legs|length) }}%; top: 50%; transform: translate(-50%, -50%);"></div>
+                                        {% endfor %}
+                                    </div>
+                                    <span style="font-size: 0.6rem; color: var(--flighty-gray); font-weight: 700;">
+                                        {% for i in range(aller_legs|length - 1) %}{{ aller_legs[i].arr }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <i class="fas fa-arrow-right mx-4 has-text-grey-light is-size-6"></i>
+                            {% endif %}
+                            
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('arrivee') }}</span>
+                        </div>
+                        <p class="is-size-7 has-text-grey mt-1">Date : <span class="font-weight-bold">{{ search_params.get('date_aller') }}</span></p>
+                    </div>
+                    <div class="has-text-right">
+                        <span class="is-size-7 has-text-grey d-block mb-1">Numéro de vol</span>
+                        <span class="tag is-white" style="border: 1px solid #E5E5EA; font-family: monospace; font-weight: bold; font-size: 14px;">OB-{{ vols_aller_ids.replace('_', ', OB-') }}</span>
+                    </div>
+                </div>
+                
+                <!-- Vol Retour (si applicable) -->
+                {% if search_params.get('type_vol') == 'AR' %}
+                <div class="is-flex is-justify-content-space-between is-align-items-center pt-4">
+                    <div>
+                        <span class="tag is-info is-light font-weight-bold mb-2">Vol Retour</span>
+                        <div class="is-flex is-align-items-center mb-1">
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('arrivee') }}</span>
+                            
+                            {% if retour_legs and retour_legs|length > 1 %}
+                                <div class="is-flex is-align-items-center is-flex-direction-column mx-4" style="width: 80px;">
+                                    <span style="font-size: 0.6rem; color: #FF9500; font-weight: 800; text-transform: uppercase;">{{ retour_legs|length - 1 }} Escale{% if retour_legs|length > 2 %}s{% endif %}</span>
+                                    <div style="width: 100%; height: 2px; background: #D1D1D6; margin: 4px 0; position: relative; display: flex; justify-content: center;">
+                                        {% for i in range(retour_legs|length - 1) %}
+                                            <div style="width: 6px; height: 6px; border-radius: 50%; background: white; border: 2px solid #FF9500; position: absolute; left: {{ (i + 1) * (100 / retour_legs|length) }}%; top: 50%; transform: translate(-50%, -50%);"></div>
+                                        {% endfor %}
+                                    </div>
+                                    <span style="font-size: 0.6rem; color: var(--flighty-gray); font-weight: 700;">
+                                        {% for i in range(retour_legs|length - 1) %}{{ retour_legs[i].arr }}{% if not loop.last %}, {% endif %}{% endfor %}
+                                    </span>
+                                </div>
+                            {% else %}
+                                <i class="fas fa-arrow-right mx-4 has-text-grey-light is-size-6"></i>
+                            {% endif %}
+                            
+                            <span class="is-size-4 font-weight-bold" style="letter-spacing: -0.5px; color: var(--flighty-text);">{{ search_params.get('depart') }}</span>
+                        </div>
+                        <p class="is-size-7 has-text-grey mt-1">Date : <span class="font-weight-bold">{{ search_params.get('date_retour') }}</span></p>
+                    </div>
+                    <div class="has-text-right">
+                        <span class="is-size-7 has-text-grey d-block mb-1">Numéro de vol</span>
+                        <span class="tag is-white" style="border: 1px solid #E5E5EA; font-family: monospace; font-weight: bold; font-size: 14px;">OB-{{ session.get('vol_retour', {}).get('id_vol', 'En attente') | string | replace('_', ', OB-') }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Passagers et Options -->
+            <h4 class="title is-5 mb-3" style="color: var(--primary);"><i class="fas fa-users mr-2"></i> Passagers et Options </h4>
+            <div class="passenger-list">
+                {% set status = namespace(all_assigned=true) %}
+                {% for i in range(1, nb_passagers + 1) %}
+                {% set p_opt = options_passagers[i-1] if (i-1) < options_passagers|length else {} %}
+                
+                {% set sieges_aller = p_opt.get('sieges_aller', []) %}
+                {% set sieges_retour = p_opt.get('sieges_retour', []) %}
+                
+                {% if not sieges_aller %}{% set status.all_assigned = false %}{% endif %}
+                {% for s in sieges_aller %}{% if not s %}{% set status.all_assigned = false %}{% endif %}{% endfor %}
+                
+                {% if search_params.get('type_vol') == 'AR' %}
+                    {% if not sieges_retour %}{% set status.all_assigned = false %}{% endif %}
+                    {% for s in sieges_retour %}{% if not s %}{% set status.all_assigned = false %}{% endif %}{% endfor %}
+                {% endif %}
+                
+                <div class="flighty-card p-3 mb-3" style="border-radius: 16px; border-left: 4px solid var(--primary);">
+                    <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 pb-2" style="border-bottom: 1px dashed rgba(0,0,0,0.1);">
+                        <h5 class="title is-6 m-0" style="letter-spacing: -0.2px;">
+                            <span class="tag is-rounded is-dark mr-2">P{{ i }}</span> 
+                            {{ passagers_data.get('prenom_' ~ i, 'Prénom') }} {{ passagers_data.get('nom_' ~ i, 'Nom') | upper }}
+                        </h5>
+                        <div class="tag {% if sieges_aller and '' not in sieges_aller %}is-primary is-light{% else %}is-danger is-light{% endif %} is-medium font-weight-bold">
+                            {% if sieges_aller and '' not in sieges_aller %}
+                                Aller: {{ sieges_aller | join(' & ') }}
+                                {% if sieges_retour %} | Retour: {{ sieges_retour | join(' & ') }}{% endif %}
+                            {% else %}
+                                <i class="fas fa-exclamation-triangle mr-1"></i> Siège(s) manquant(s)
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="is-flex is-align-items-center" style="gap: 12px; font-size: 0.8rem; color: var(--flighty-text); font-weight: 500;">
+                        <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;"><i class="fas fa-plane mr-2" style="color: var(--primary);"></i> Aller: {{ p_opt.get('classe_aller', 'Eco') }} {% if search_params.get('type_vol') == 'AR' %} | Retour: {{ p_opt.get('classe_retour', 'Eco') }}{% endif %}</span>
+                        <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;">
+                            <i class="fas fa-suitcase-rolling mr-2" style="color: var(--primary);"></i>
+                            {% set bag_str = p_opt.get('bagages', '0') | string %}
+                            {% set bag_count = bag_str.split('_')[0] | int %}
+                            {{ bag_count }} Soute
+                        </span>
+                        <span style="background: #F2F2F7; padding: 4px 10px; border-radius: 8px;"><i class="fas fa-utensils mr-2" style="color: var(--primary);"></i> {{ p_opt.get('repas', 'Standard') | capitalize }}</span>
+                    </div>
+                </div>
+                {% endfor %}
             </div>
         </div>
 
-        <form action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card">
-            <h3 class="title is-5 mb-4"><i class="fas fa-lock mr-2" style="color: var(--flighty-green);"></i> Informations de paiement</h3>
-            
-            <div class="field">
-                <label class="label is-small">Nom sur la carte</label>
-                <div class="control">
-                    <input class="input" type="text" placeholder="EX: ANTOINE HARDY" value="{{ session.get('user_nom_complet', 'ANTOINE HARDY') }}" required>
+        <!-- COLONNE DROITE : PAIEMENT -->
+        <div class="column is-5">
+            <div class="flighty-card mb-5 p-5" style="background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border-radius: var(--radius-xl); box-shadow: var(--shadow-premium);">
+                <h3 class="title is-4 mb-4 has-text-white" style="letter-spacing: -0.5px;">Détail du prix</h3>
+                
+                <div class="is-flex is-justify-content-space-between is-size-6 mb-2">
+                    <span style="color: rgba(255,255,255,0.8);">Billets (x{{ nb_passagers }})</span>
+                    <span class="font-weight-bold">{{ "%.2f"|format((prix_aller + prix_retour) * nb_passagers) }} €</span>
                 </div>
-            </div>
-            
-            <div class="field">
-                <label class="label is-small">Numéro de carte</label>
-                <div class="control has-icons-left has-icons-right">
-                    <input class="input" type="text" placeholder="0000 0000 0000 0000" required>
-                    <span class="icon is-small is-left"><i class="fas fa-credit-card"></i></span>
-                    <span class="icon is-small is-right"><i class="fab fa-visa"></i></span>
+                <div class="is-flex is-justify-content-space-between is-size-6 mb-4 pb-4" style="border-bottom: 1px solid rgba(255,255,255,0.2);">
+                    <span style="color: rgba(255,255,255,0.8);">Options & Bagages</span>
+                    <span class="font-weight-bold">{{ "%.2f"|format(prix_options * nb_passagers) }} €</span>
                 </div>
-            </div>
-            
-            <div class="columns">
-                <div class="column is-6">
-                    <div class="field">
-                        <label class="label is-small">Date d'expiration</label>
-                        <div class="control">
-                            <input class="input" type="text" placeholder="MM/AA" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="column is-6">
-                    <div class="field">
-                        <label class="label is-small">Cryptogramme (CVC)</label>
-                        <div class="control">
-                            <input class="input" type="password" placeholder="123" required>
-                        </div>
-                    </div>
+                
+                <div class="is-flex is-justify-content-space-between is-align-items-center">
+                    <span class="is-size-5 font-weight-bold">Total TTC</span>
+                    <span class="title is-2 m-0" style="color: var(--accent); letter-spacing: -1px;">{{ "%.2f"|format(cart_total) }} €</span>
                 </div>
             </div>
 
-            <button type="submit" class="button is-accent is-large is-fullwidth mt-5">
-                <i class="fas fa-check-circle mr-2"></i> Confirmer le paiement
-            </button>
-        </form>
+            <form id="paymentForm" action="{{ url_for('client.booking_payment') }}" method="POST" class="flighty-card p-5" style="border-radius: var(--radius-xl);">
+                <h3 class="title is-5 mb-4" style="letter-spacing: -0.5px;"><i class="fas fa-lock mr-2" style="color: var(--success);"></i> Paiement Sécurisé</h3>
+                    
+                    <div class="field mb-4">
+                        <label class="form-label">Titulaire de la carte</label>
+                        <div class="control">
+                            <input class="input flighty-input" type="text" name="titulaire_carte" placeholder="Ex: ANTOINE HARDY" value="{{ session.get('prenom', '') | upper }} {{ session.get('nom', '') | upper }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="field mb-4">
+                        <label class="form-label">Numéro de carte</label>
+                        <div class="control has-icons-left has-icons-right">
+                            <input class="input flighty-input" type="text" name="numero_carte" placeholder="•••• •••• •••• 4242" value="4242 4242 4242 4242" required maxlength="19">
+                            <span class="icon is-small is-left input-icon-left"><i class="fas fa-credit-card"></i></span>
+                            <span class="icon is-small is-right"><i class="fab fa-cc-visa" style="color: #1434CB; font-size: 1.2rem;"></i></span>
+                        </div>
+                    </div>
+                    
+                    <div class="columns mb-5">
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="form-label">Expiration</label>
+                                <div class="control">
+                                    <input class="input flighty-input" type="text" name="expiration" placeholder="MM/AA" value="12/28" required maxlength="5">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-6">
+                            <div class="field">
+                                <label class="form-label">Cryptogramme (CVC)</label>
+                                <div class="control">
+                                    <input class="input flighty-input" type="password" name="cvc" placeholder="•••" value="123" required maxlength="3">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <button id="payButton" type="submit" class="button is-accent is-medium is-fullwidth mt-5" style="border-radius: 12px; font-weight: 700; letter-spacing: -0.2px;" {% if not status.all_assigned %}disabled{% endif %}>
+                        {% if status.all_assigned %}
+                            <i class="fas fa-lock mr-2"></i> Payer {{ "%.2f"|format(cart_total) }} €
+                        {% else %}
+                            <i class="fas fa-exclamation-circle mr-2"></i> Sièges non assignés
+                        {% endif %}
+                    </button>
+                    
+                    <div class="has-text-centered mt-4">
+                        <p class="is-size-7 has-text-grey font-weight-bold"><i class="fas fa-shield-check mr-1"></i> Vos informations sont chiffrées de bout en bout (SSL/TLS).</p>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+        
     </div>
 </div>
+
+<!-- Overlay de chargement pour le paiement -->
+<div id="payment-overlay" class="obuffair-payment-loader" style="display: none;" aria-hidden="true">
+    <div class="floating-bg">
+        <i class="fas fa-hamburger float-el fe-1"></i>
+        <i class="fas fa-plane float-el fe-2"></i>
+        <i class="fas fa-credit-card float-el fe-3"></i>
+        <i class="fas fa-passport float-el fe-4"></i>
+        <i class="fas fa-pizza-slice float-el fe-5"></i>
+    </div>
+    <div class="loader-content">
+        <div class="animation-container">
+            <div class="loader-icon-wrapper">
+                <div id="loader-icon-container">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+            </div>
+            <div class="runway-progress">
+                <div class="plane-progress" id="plane-progress-indicator">
+                    <i class="fas fa-plane"></i>
+                </div>
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+        </div>
+        <h3 class="title is-3 has-text-white mt-6 loader-title" id="planes-loading-text">
+            Embarquement de votre paiement...
+        </h3>
+        <p class="subtitle is-6 mt-3 loader-subtitle" style="color: rgba(255,255,255,0.8);">
+            Veuillez attacher votre ceinture et préparer vos papilles 🍔✈️
+        </p>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/booking_payment.js') }}"></script>
 {% endblock %}

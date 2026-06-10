@@ -48,7 +48,7 @@ def admin_required(f):
         
         if not user or not _is_truthy(user['is_admin']):
             flash('Accès refusé. Seuls les administrateurs peuvent accéder à cette page.', 'danger')
-            return redirect(url_for('index'))
+            return redirect(url_for('client.accueil'))
         
         return f(*args, **kwargs)
     return decorated_function

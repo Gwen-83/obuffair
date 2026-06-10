@@ -78,11 +78,11 @@ class Vols(db.Model):
     
     id_vol = db.Column(db.Integer, primary_key = True)
 
-    immatriculation_avion = db.Column(db.String(10), nullable=False, index=True)
+    immatriculation_avion = db.Column(db.String(10), db.ForeignKey('avions.immatriculation'), nullable=False, index=True)
 
-    id_aeroport_depart = db.Column(db.String(3), nullable=False, index=True)
+    id_aeroport_depart = db.Column(db.String(3), db.ForeignKey('aeroports.id_aeroport'), nullable=False, index=True)
 
-    id_aeroport_arrivee = db.Column(db.String(3), nullable=False, index=True)
+    id_aeroport_arrivee = db.Column(db.String(3), db.ForeignKey('aeroports.id_aeroport'), nullable=False, index=True)
 
     date_heure_dep_utc = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -94,6 +94,9 @@ class Vols(db.Model):
 
     # --- Relations ---
     billets = db.relationship('Billet', back_populates='vol', lazy=True)
+    avion = db.relationship('Avion', backref=db.backref('vols', lazy=True))
+    aeroport_depart = db.relationship('Aeroport', foreign_keys=[id_aeroport_depart])
+    aeroport_arrivee = db.relationship('Aeroport', foreign_keys=[id_aeroport_arrivee])
 
     def __repr__(self):
         return f'<Vol {self.id_vol}: {self.id_aeroport_depart} -> {self.id_aeroport_arrivee}>'
@@ -144,7 +147,7 @@ class Aeroport(db.Model):
     __tablename__ = 'aeroports'
     __table_args__ = {'extend_existing': True}
 
-    id_aeroport = db.Column(db.String(4), primary_key=True, nullable=False)
+    id_aeroport = db.Column(db.String(3), primary_key=True, nullable=False)
     nom = db.Column(db.String(120), nullable=False)
     ville = db.Column(db.String(100), nullable=False)
     pays = db.Column(db.String(100), nullable=False)
@@ -179,23 +182,38 @@ class Reservation(db.Model):
     id_client = db.Column(db.Integer, db.ForeignKey('clients.id_client'), nullable=False)
     date_reservation = db.Column(db.DateTime, default=datetime.utcnow)
     statut = db.Column(db.Enum('Confirmee', 'Annulee', 'En cours', 'En modification', 'Erreur'), default='Confirmee')
+    pnr = db.Column(db.String(10), unique=True, nullable=True)
 
     # --- Relations ---
     client = db.relationship('User', backref=db.backref('reservations', lazy='dynamic'))
     billets = db.relationship('Billet', back_populates='reservation', lazy=True, cascade="all, delete-orphan")
 
+class Passager(db.Model):
+    __tablename__ = 'passagers'
+    id_passager = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id_reservation = db.Column(db.Integer, db.ForeignKey('reservations.id_reservation'), nullable=False)
+    nom = db.Column(db.String(100), nullable=False)
+    prenom = db.Column(db.String(100), nullable=False)
+
+    # --- Relations ---
+    reservation = db.relationship('Reservation', backref=db.backref('passagers', lazy=True, cascade="all, delete-orphan"))
+    billets = db.relationship('Billet', back_populates='passager', lazy=True)
+
 class Billet(db.Model):
     __tablename__ = 'billets'
-    id_billet = db.Column(db.Integer, primary_key=True)
+    id_billet = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_reservation = db.Column(db.Integer, db.ForeignKey('reservations.id_reservation'), nullable=False)
     id_vol = db.Column(db.Integer, db.ForeignKey('vols.id_vol'), nullable=False)
     classe = db.Column(db.Enum('Eco', 'Business', 'First'), nullable=False, default='Eco')
-    options_repas = db.Column(db.Boolean, default=False)
-    bagages_sup = db.Column(db.Integer, default=0)
+    options_repas = db.Column(db.SmallInteger, nullable=True, default=0)
+    bagages_sup = db.Column(db.Integer, nullable=True, default=0)
+    siege = db.Column(db.String(4), nullable=True)
+    id_passager = db.Column(db.Integer, db.ForeignKey('passagers.id_passager'), nullable=True)
 
     # --- Relations ---
     reservation = db.relationship('Reservation', back_populates='billets')
     vol = db.relationship('Vols', back_populates='billets')
+    passager = db.relationship('Passager', back_populates='billets')
 
 """
 Modèles SQLAlchemy pour la base de données.
@@ -209,6 +227,7 @@ Stockage sécurisé des utilisateurs avec:
 
 from app import db  # Instance SQLAlchemy pour accéder à la BD
 from datetime import datetime, timedelta  # Pour gérer l'expiration des tokens
+from sqlalchemy.orm import joinedload
 
 class User(db.Model):
     """
@@ -238,8 +257,17 @@ class User(db.Model):
     # Numéro de téléphone (format +33X XX XX XX XX)
     numero_telephone = db.Column(db.String(20), nullable=True)
     
-    # Points de fidélité
+    # Chemin du document d'identité uploadé
+    document_identite = db.Column(db.String(255), nullable=True)
+
+    # Chemin du 2ème document d'identité uploadé
+    document_identite_2 = db.Column(db.String(255), nullable=True)
+
+    # Points de fidélité (solde disponible)
     points_fidelite = db.Column(db.Integer, default=0)
+    
+    # Points de fidélité totaux (historique complet pour le calcul du statut)
+    points_fidelite_accumules = db.Column(db.Integer, default=0)
     
     # Token pour réinitialiser le mot de passe
     reset_token = db.Column(db.String(255), unique=True, nullable=True)
@@ -262,6 +290,7 @@ class User(db.Model):
     def get_prochains_vols(self):
         """Retourne les prochains billets (vols) confirmés pour cet utilisateur"""
         return db.session.query(Billet)\
+            .options(joinedload(Billet.vol), joinedload(Billet.reservation))\
             .join(Reservation)\
             .join(Vols)\
             .filter(Reservation.id_client == self.id_client)\
@@ -269,3 +298,32 @@ class User(db.Model):
             .filter(Vols.date_heure_dep_utc >= datetime.utcnow())\
             .order_by(Vols.date_heure_dep_utc.asc())\
             .all()
+
+    @property
+    def infos_fidelite(self):
+        """Retourne les informations de fidélité du client calculées à partir de ses points totaux accumulés."""
+        total = self.points_fidelite_accumules or 0
+        if total < 50000:
+            return {
+                'actuel': 'Silver',
+                'suivant': 'Gold',
+                'points_max': 50000,
+                'restant': 50000 - total,
+                'accumules': total
+            }
+        elif total < 150000:
+            return {
+                'actuel': 'Gold',
+                'suivant': 'Platinum',
+                'points_max': 150000,
+                'restant': 150000 - total,
+                'accumules': total
+            }
+        else:
+            return {
+                'actuel': 'Platinum',
+                'suivant': 'Maximum atteint',
+                'points_max': total if total > 0 else 1,
+                'restant': 0,
+                'accumules': total
+            }

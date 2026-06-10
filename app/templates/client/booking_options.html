@@ -6,196 +6,168 @@
 {% endblock %}
 
 {% block booking_content %}
-<form action="{{ url_for('client.booking_payment') }}" method="POST" id="optionsForm">
-    <input type="hidden" name="siege_selectionne" id="input_seat" value="" required>
-
+<form action="{{ url_for('client.booking_payment') }}" method="POST" id="optionsForm" data-tarifs="{{ TARIFS_OPTIONS | tojson | forceescape }}">
     <div class="columns is-variable is-6">
         
-        <div class="column is-6">
-            <h3 class="title is-4" style="color: var(--primary);">Choix du siège</h3>
-            <p class="is-size-7 mb-4 has-text-grey">Cabine Airbus A330-200 • Le sens de la marche est vers le haut.</p>
+        <div class="column is-6" style="display: flex; flex-direction: column;">
+            <div class="mb-4">
+                <h3 class="title is-4 mb-2" style="color: var(--primary);">
+                    <span id="aircraft-model-display"></span>Choix des sièges
+                </h3>
+                <p class="is-size-6 has-text-grey mb-3" style="font-weight: 500;" id="remaining-seats-display">
+                    Il vous reste <strong style="color: var(--primary);">{{ nb_passagers * (aller_legs|length + retour_legs|length) }} siège(s)</strong> à assigner.
+                </p>
+            </div>
             
+            <div class="notification is-white instruction-banner mb-4 p-3 is-flex is-align-items-center" style="border-left: 4px solid var(--primary); border-radius: 4px;">
+                <i class="fas fa-info-circle is-size-4 mr-3" style="color: var(--primary);"></i>
+                <div class="is-size-7">
+                    <strong>Comment assigner vos sièges ?</strong><br>
+                    Sélectionnez un passager à droite, puis cliquez sur un siège du plan.
+                </div>
+            </div>
+            
+            <div class="flighty-segmented-control mb-4" id="legTabs">
+                {% for leg in aller_legs %}
+                <div class="segment-item {% if loop.index0 == 0 %}is-active{% endif %}" onclick="switchLeg('aller', {{ loop.index0 }}, this)">
+                    <i class="fas fa-plane-departure mr-2"></i> {% if aller_legs|length > 1 %}Aller - Vol {{ loop.index }}{% else %}Aller{% endif %} ({{ leg.dep }} - {{ leg.arr }})
+                </div>
+                {% endfor %}
+                {% for leg in retour_legs %}
+                <div class="segment-item {% if not aller_legs and loop.index0 == 0 %}is-active{% endif %}" onclick="switchLeg('retour', {{ loop.index0 }}, this)">
+                    <i class="fas fa-plane-arrival mr-2"></i> {% if retour_legs|length > 1 %}Retour - Vol {{ loop.index }}{% else %}Retour{% endif %} ({{ leg.dep }} - {{ leg.arr }})
+                </div>
+                {% endfor %}
+            </div>
+
             <div class="aerolopa-container">
-                <svg viewBox="0 0 525 600" width="100%" style="max-width: 450px;">
-                    <path d="M 50 0 L 50 600 M 475 0 L 475 600" stroke="#D1D1D6" stroke-width="4" fill="none"/>
-                    
-                    <g class="aerolopa-seat" onclick="selectSeat('1A', this)">
-                        <rect x="80" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="102.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1A</text>
-                        <rect x="80" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat taken" onclick="selectSeat('1C', this)">
-                        <rect x="130" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="152.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1C</text>
-                        <rect x="130" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <g class="aerolopa-seat" onclick="selectSeat('1D', this)">
-                        <rect x="215" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="237.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1D</text>
-                        <rect x="215" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('1E', this)">
-                        <rect x="265" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="287.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1E</text>
-                        <rect x="265" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <g class="aerolopa-seat" onclick="selectSeat('1J', this)">
-                        <rect x="350" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="372.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1J</text>
-                        <rect x="350" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('1L', this)">
-                        <rect x="400" y="40" width="45" height="60" rx="4" fill="#002A5C" opacity="0.9"></rect>
-                        <text x="422.5" y="75" font-family="sans-serif" font-size="12" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">1L</text>
-                        <rect x="400" y="40" width="45" height="60" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <line x1="50" y1="150" x2="475" y2="150" stroke="#D1D1D6" stroke-width="2" stroke-dasharray="6,4"/>
-
-                    <g class="aerolopa-seat" onclick="selectSeat('20A', this)">
-                        <rect x="80" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="97.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20A</text>
-                        <rect x="80" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('20B', this)">
-                        <rect x="118" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="135.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20B</text>
-                        <rect x="118" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <g class="aerolopa-seat taken" onclick="selectSeat('20C', this)">
-                        <rect x="188" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="205.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20C</text>
-                        <rect x="188" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('20D', this)">
-                        <rect x="226" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="243.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20D</text>
-                        <rect x="226" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('20E', this)">
-                        <rect x="264" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="281.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20E</text>
-                        <rect x="264" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('20F', this)">
-                        <rect x="302" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="319.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20F</text>
-                        <rect x="302" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <g class="aerolopa-seat" onclick="selectSeat('20J', this)">
-                        <rect x="372" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="389.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20J</text>
-                        <rect x="372" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('20L', this)">
-                        <rect x="410" y="200" width="35.06" height="49.53" rx="4" fill="#0A84FF" opacity="0.8"></rect>
-                        <text x="427.53" y="228" font-family="sans-serif" font-size="10" fill="#ffffff" text-anchor="middle" font-weight="600" pointer-events="none">20L</text>
-                        <rect x="410" y="200" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                    <g class="aerolopa-seat" onclick="selectSeat('21A', this)">
-                        <rect x="80" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="97.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21A</text>
-                        <rect x="80" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21B', this)">
-                        <rect x="118" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="135.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21B</text>
-                        <rect x="118" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21C', this)">
-                        <rect x="188" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="205.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21C</text>
-                        <rect x="188" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21D', this)">
-                        <rect x="226" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="243.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21D</text>
-                        <rect x="226" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21E', this)">
-                        <rect x="264" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="281.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21E</text>
-                        <rect x="264" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat taken" onclick="selectSeat('21F', this)">
-                        <rect x="302" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="319.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21F</text>
-                        <rect x="302" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21J', this)">
-                        <rect x="372" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="389.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21J</text>
-                        <rect x="372" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-                    <g class="aerolopa-seat" onclick="selectSeat('21L', this)">
-                        <rect x="410" y="260" width="35.06" height="49.53" rx="4" fill="#E5E5EA" opacity="1"></rect>
-                        <text x="427.53" y="288" font-family="sans-serif" font-size="10" fill="#1C1C1E" text-anchor="middle" font-weight="600" pointer-events="none">21L</text>
-                        <rect x="410" y="260" width="35.06" height="49.53" fill="transparent" style="cursor:pointer"></rect>
-                    </g>
-
-                </svg>
+                {% for leg in aller_legs %}
+                <div class="cabin-scroll-area seat-map-container" id="map-aller-{{ loop.index0 }}" style="display: {% if loop.index0 == 0 %}block{% else %}none{% endif %};" 
+                     data-type="aller" data-idx="{{ loop.index0 }}" 
+                     data-avion="{{ leg.avion | tojson | forceescape }}" 
+                     data-taken="{{ leg.taken_seats | tojson | forceescape }}"></div>
+                {% endfor %}
+                {% for leg in retour_legs %}
+                <div class="cabin-scroll-area seat-map-container" id="map-retour-{{ loop.index0 }}" style="display: {% if not aller_legs and loop.index0 == 0 %}block{% else %}none{% endif %};" 
+                     data-type="retour" data-idx="{{ loop.index0 }}" 
+                     data-avion="{{ leg.avion | tojson | forceescape }}" 
+                     data-taken="{{ leg.taken_seats | tojson | forceescape }}"></div>
+                {% endfor %}
             </div>
             
             <div class="is-flex is-justify-content-center gap-3">
+                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:linear-gradient(135deg, #1C1C1E, #3A3A3C); border-radius:2px;"></span> First</span>
                 <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:var(--primary); border-radius:2px;"></span> Business</span>
-                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:#0A84FF; border-radius:2px;"></span> Eco Plus</span>
-                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:#E5E5EA; border-radius:2px;"></span> Economy</span>
-                <span class="is-size-7"><span style="display:inline-block; width:12px; height:12px; background:#F2F2F7; border-radius:2px;"></span> Occupé</span>
+                <span class="is-size-7 mr-3"><span style="display:inline-block; width:12px; height:12px; background:#F0F8FF; border:1px solid #D6E8F9; border-radius:2px;"></span> Economy</span>
+                <span class="is-size-7"><span style="display:inline-block; width:12px; height:12px; background:#F2F2F7; opacity: 0.4; border-radius:2px;"></span> Occupé</span>
             </div>
         </div>
 
         <div class="column is-6">
-            <h3 class="title is-4" style="color: var(--primary);">Services à bord</h3>
+            <h3 class="title is-4 mb-4" style="color: var(--primary);">Passagers et Options</h3>
             
-            <div class="flighty-card">
-                <h4 class="title is-6 mb-3"><i class="fas fa-suitcase-rolling mr-2" style="color: var(--flighty-blue);"></i> Bagages en soute</h4>
-                <div class="select is-fullwidth">
-                    <select name="bagages">
-                        <option value="0">Aucun (Inclus)</option>
-                        <option value="1">1 Bagage en soute 23kg (+ 45 €)</option>
-                        <option value="2">2 Bagages en soute 23kg (+ 80 €)</option>
-                    </select>
-                </div>
-            </div>
+            <div class="passenger-cards-container {% if nb_passagers > 4 %}scrollable-passengers{% endif %}">
+                {% for p in passengers %}
+                <div class="flighty-card passenger-option-card mb-4 p-5" id="pass-card-{{ p.index }}" onclick="selectPassenger({{ p.num }})">
+                    <div class="is-flex is-justify-content-space-between is-align-items-flex-start mb-2">
+                        <div>
+                            <h4 class="title is-5 m-0" style="letter-spacing: -0.5px;"><span class="tag is-rounded is-dark mr-2">P{{ p.num }}</span>{{ p.prenom }} {{ p.nom }}</h4>
+                            <p class="is-size-7 mt-2 has-text-grey">Classe : <span class="has-text-weight-bold" id="pass-class-{{ p.index }}">...</span></p>
+                        </div>
+                        <div class="tag is-light is-medium font-weight-bold" id="pass-seat-badge-{{ p.index }}" style="min-width: 185px; white-space: nowrap; justify-content: center;">Sélectionner</div>
+                    </div>
+                    
+                    <input type="hidden" name="classe_aller_{{ p.num }}" id="input_classe_aller_{{ p.num }}" value="{{ p.classe_aller }}">
+                    <input type="hidden" name="classe_retour_{{ p.num }}" id="input_classe_retour_{{ p.num }}" value="{{ p.classe_retour }}">
+                    <input type="hidden" name="prix_upgrade_{{ p.index }}" id="prix_upgrade_{{ p.index }}" value="0">
 
-            <div class="flighty-card">
-                <h4 class="title is-6 mb-3"><i class="fas fa-utensils mr-2" style="color: var(--flighty-blue);"></i> Restauration O'Buffet</h4>
-                <div class="select is-fullwidth">
-                    <select name="repas">
-                        <option value="standard">Collation Standard (Inclus)</option>
-                        <option value="premium">Menu Premium Chaud (+ 15 €)</option>
-                        <option value="vegetarien">Menu Végétarien Chaud (+ 15 €)</option>
-                    </select>
-                </div>
-            </div>
+                    {% for leg in aller_legs %}
+                    <input type="hidden" name="siege_aller_{{ loop.index0 }}_{{ p.num }}" id="siege_aller_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="aller" data-idx="{{ loop.index0 }}" value="">
+                    {% endfor %}
+                    {% for leg in retour_legs %}
+                    <input type="hidden" name="siege_retour_{{ loop.index0 }}_{{ p.num }}" id="siege_retour_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="retour" data-idx="{{ loop.index0 }}" value="">
+                    {% endfor %}
 
-            <div class="has-text-right mt-6">
-                <button type="submit" class="button is-accent is-medium is-fullwidth">Procéder au Paiement <i class="fas fa-arrow-right ml-2"></i></button>
+                    <div class="passenger-options mt-4 pt-4" style="border-top: 1px solid rgba(0,0,0,0.05);" onclick="event.stopPropagation()">
+                        <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                            <span class="is-size-7 font-weight-bold" id="bagage_label_{{ p.num }}" style="flex: 1; padding-right: 10px; line-height: 1.3;">
+                                <i class="fas fa-suitcase-rolling mr-2 option-icon"></i> ...
+                            </span>
+                            <div class="is-flex is-align-items-center" id="bagage_controls_{{ p.num }}" style="flex-shrink: 0;">
+                                <button type="button" class="button is-small is-rounded is-white shadow-sm" onclick="event.stopPropagation(); updateBagages({{ p.num }}, -1)" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; padding: 0;">-</button>
+                                <span class="has-text-weight-bold is-size-7 mx-3" id="bagages_count_{{ p.num }}">0</span>
+                                <button type="button" class="button is-small is-rounded is-white shadow-sm" onclick="event.stopPropagation(); updateBagages({{ p.num }}, 1)" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; padding: 0;">+</button>
+                            </div>
+                            <input type="hidden" name="bagages_{{ p.num }}" id="input_bagages_{{ p.num }}" value="0">
+                        </div>
+                        <div class="is-flex is-justify-content-space-between is-align-items-center">
+                            <span class="is-size-7 font-weight-bold"><i class="fas fa-utensils mr-2 option-icon"></i> Repas à bord</span>
+                            <div class="select is-small" style="min-width: 150px; flex-shrink: 0;">
+                                <select name="repas_{{ p.num }}" id="repas_select_{{ p.num }}" style="border-radius: 8px; font-weight: 600; width: 100%;" onchange="calculateGrandTotal()">
+                                    <option value="standard">Standard (Inclus)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="is-flex is-justify-content-space-between is-align-items-center mt-5 mb-4 p-5" style="background: white; box-shadow: var(--shadow-soft); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
+                <span class="has-text-weight-bold is-size-5" style="letter-spacing: -0.5px;">Total à payer</span>
+                <span class="has-text-weight-bold is-size-3" style="color: var(--primary); letter-spacing: -1px;" id="grand_total_display">{{ "%.2f"|format((session.get("vol_aller", {}).get("prix", 0) + session.get("vol_retour", {}).get("prix", 0)) * nb_passagers) }} €</span>
+            </div>
+            
+            <div class="has-text-right mt-2">
+                <button type="submit" id="btnSubmitPayment" class="button is-accent is-medium is-fullwidth" onclick="this.classList.add('is-loading')" style="border-radius: 14px; font-weight: 700; letter-spacing: -0.2px;" disabled>Assignez les sièges</button>
             </div>
         </div>
 
     </div>
 </form>
 
-<script>
-    // Logique JavaScript pour gérer la superposition transparente d'AeroLOPA
-    function selectSeat(seatId, element) {
-        if(element.classList.contains('taken')) return;
-        
-        // Retirer la sélection de tous les autres sièges
-        document.querySelectorAll('.aerolopa-seat').forEach(s => s.classList.remove('selected'));
-        
-        // Ajouter la classe "selected" au siège cliqué
-        element.classList.add('selected');
-        
-        // Mettre à jour l'input caché pour le formulaire Flask
-        document.getElementById('input_seat').value = seatId;
-    }
-</script>
+<!-- Modal Custom pour le changement de classe -->
+<div class="modal" id="classChangeModal">
+  <div class="modal-background" onclick="closeClassModal()" style="background-color: rgba(10, 10, 10, 0.6); backdrop-filter: blur(3px);"></div>
+  <div class="modal-card" style="border-radius: 16px; overflow: hidden; max-width: 500px; width: 90%; margin: 0 auto; box-shadow: var(--shadow-premium);">
+    <header class="modal-card-head" id="classModalHeader" style="background-color: var(--primary); border-bottom: none; justify-content: center; padding: 1.5rem 1rem; transition: background-color 0.3s;">
+      <p class="modal-card-title has-text-centered mb-0" id="classModalTitle" style="color: #FFF; font-weight: 700; font-size: 1.25rem;">Changement de classe</p>
+    </header>
+    <section class="modal-card-body has-text-centered py-5">
+      <div class="mb-4">
+        <i id="classModalIcon" class="fas fa-exchange-alt is-size-1" style="color: var(--accent); transition: color 0.3s;"></i>
+      </div>
+      
+      <div class="is-flex is-justify-content-center is-align-items-center mb-4" style="gap: 20px;">
+        <div class="box px-4 py-2 m-0" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; box-shadow: none; min-width: 120px;">
+            <p class="is-size-7 has-text-grey font-weight-bold mb-1">Actuel</p>
+            <p class="is-size-5 font-weight-bold" id="modalOldClass" style="color: var(--flighty-text);"></p>
+        </div>
+        <i class="fas fa-arrow-right has-text-grey"></i>
+        <div class="box px-4 py-2 m-0" style="background-color: #f8f9fa; border: 1px solid #e0e0e0; box-shadow: none; min-width: 120px;">
+            <p class="is-size-7 has-text-grey font-weight-bold mb-1">Nouveau</p>
+            <p class="is-size-5 font-weight-bold" id="modalNewClass" style="color: var(--primary);"></p>
+        </div>
+      </div>
+
+      <p class="has-text-grey mb-4 is-size-6">
+        Ce changement s'appliquera à <strong>l'ensemble de vos vols</strong> et entraînera une modification tarifaire de <strong id="modalNewPrice" style="color: var(--flighty-text); font-size: 1.1rem;"></strong>.
+      </p>
+    </section>
+    <footer class="modal-card-foot" style="justify-content: center; gap: 1rem; background-color: #fff; border-top: 1px solid #E5E5EA; padding: 1.25rem;">
+      <button type="button" class="button is-white is-rounded" onclick="closeClassModal()" style="font-weight: 600; min-width: 130px; border: 1px solid #E5E5EA;">Annuler</button>
+      <button type="button" id="classModalConfirmBtn" class="button is-primary is-rounded" onclick="confirmClassChange()" style="font-weight: 600; min-width: 130px; transition: all 0.3s; border: none;">Confirmer</button>
+    </footer>
+  </div>
+</div>
+
+<div id="bookingOptionsData"
+     data-passengers="{{ passengers | tojson | forceescape }}"
+     data-base-prices-aller="{{ {'Eco': session.get('vol_aller', {}).get('prix_eco', 0), 'Business': session.get('vol_aller', {}).get('prix_biz', 0), 'First': session.get('vol_aller', {}).get('prix_first', 0)} | tojson | forceescape }}"
+     data-base-prices-retour="{{ {'Eco': session.get('vol_retour', {}).get('prix_eco', 0), 'Business': session.get('vol_retour', {}).get('prix_biz', 0), 'First': session.get('vol_retour', {}).get('prix_first', 0)} | tojson | forceescape }}"
+     data-current-leg-type='{% if aller_legs %}aller{% else %}retour{% endif %}'>
+</div>
+
+<script src="{{ url_for('static', filename='js/booking_options.js') }}"></script>
 
 {% endblock %}

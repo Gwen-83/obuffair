@@ -1,17 +1,177 @@
 {% extends 'components/base.html' %}
 
-{% block title %}404 Introuvable - O'Buffair{% endblock %}
+{% block title %}Erreur 67 - O'Buffair{% endblock %}
 
 {% block content %}
+<style>
+  .error-67-container {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--primary) 0%, #0B0F19 50%, var(--primary-light) 100%);
+    background-size: 200% 200%;
+    animation: bg-shift 3s ease infinite;
+    color: white;
+    border-radius: 24px;
+    padding: 5rem 2rem;
+    box-shadow: 0 16px 40px rgba(0, 42, 92, 0.25);
+    border: 1px solid rgba(255, 199, 44, 0.3);
+    text-align: center;
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+  }
+  @keyframes bg-shift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  .meme-title {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 10rem;
+    line-height: 1;
+    margin: 0 0 1rem 0;
+    gap: 1.5rem;
+  }
+  .digit {
+    display: inline-block;
+    font-weight: 900;
+    color: var(--accent);
+    text-shadow: 6px 6px 0px rgba(0,0,0,0.6);
+  }
+  .digit-6 {
+    animation: bounce-6 0.5s infinite alternate cubic-bezier(0.68, -0.55, 0.26, 1.55);
+  }
+  .digit-7 {
+    animation: bounce-7 0.5s infinite alternate cubic-bezier(0.68, -0.55, 0.26, 1.55);
+    animation-delay: 0.25s;
+  }
+  
+  @keyframes bounce-6 {
+    0% { transform: translateY(15px) rotate(-15deg) scale(0.9); }
+    100% { transform: translateY(-50px) rotate(15deg) scale(1.2); color: #ff3366; text-shadow: 10px 10px 0px rgba(0,0,0,0.4); }
+  }
+  @keyframes bounce-7 {
+    0% { transform: translateY(15px) rotate(15deg) scale(0.9); }
+    100% { transform: translateY(-50px) rotate(-15deg) scale(1.2); color: #33ccff; text-shadow: -10px 10px 0px rgba(0,0,0,0.4); }
+  }
+
+  .dancing-subtitle {
+    font-weight: 900;
+    animation: pulse-color 1.5s infinite alternate;
+  }
+  @keyframes pulse-color {
+    0% { color: var(--accent); transform: scale(1); }
+    50% { color: #ff3366; transform: scale(1.08); }
+    100% { color: #33ccff; transform: scale(1); }
+  }
+
+  .flying-plane-67 {
+    position: absolute;
+    z-index: 0;
+  }
+  .plane-1 {
+    font-size: 4rem;
+    color: rgba(255, 199, 44, 0.2);
+    animation: fly-chaos 5s linear infinite;
+  }
+  .plane-2 {
+    font-size: 3rem;
+    color: rgba(255, 51, 102, 0.2);
+    top: 20%;
+    animation: fly-chaos-reverse 6s linear infinite;
+  }
+  .plane-3 {
+    font-size: 5.5rem;
+    color: rgba(51, 204, 255, 0.15);
+    bottom: 5%;
+    animation: fly-loop 7s linear infinite;
+  }
+
+  @keyframes fly-chaos {
+    0% { transform: translate(-50vw, 100px) rotate(25deg) scale(0.5); opacity: 0; }
+    20% { opacity: 1; }
+    50% { transform: translate(0, -50px) rotate(-10deg) scale(1.5); }
+    80% { opacity: 1; }
+    100% { transform: translate(50vw, -200px) rotate(45deg) scale(0.5); opacity: 0; }
+  }
+  @keyframes fly-chaos-reverse {
+    0% { transform: translate(50vw, 50px) rotate(-25deg) scale(0.5) scaleX(-1); opacity: 0; }
+    20% { opacity: 1; }
+    50% { transform: translate(0, 150px) rotate(15deg) scale(1.3) scaleX(-1); }
+    80% { opacity: 1; }
+    100% { transform: translate(-50vw, -100px) rotate(-45deg) scale(0.5) scaleX(-1); opacity: 0; }
+  }
+  @keyframes fly-loop {
+    0% { transform: translate(-60vw, 50px) rotate(45deg); opacity: 0; }
+    10% { opacity: 1; }
+    50% { transform: translate(0vw, -150px) rotate(180deg) scale(2); }
+    90% { opacity: 1; }
+    100% { transform: translate(60vw, 50px) rotate(315deg); opacity: 0; }
+  }
+
+  .content-67 {
+    position: relative;
+    z-index: 1;
+  }
+  .meme-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--white);
+    margin: 1.5rem 0;
+    letter-spacing: 1px;
+    animation: wobble 2s ease-in-out infinite;
+  }
+  @keyframes wobble {
+    0%, 100% { transform: translateX(0%); }
+    15% { transform: translateX(-15px) rotate(-2deg); }
+    30% { transform: translateX(12px) rotate(2deg); }
+    45% { transform: translateX(-9px) rotate(-1deg); }
+    60% { transform: translateX(6px) rotate(1deg); }
+    75% { transform: translateX(-3px) rotate(0deg); }
+  }
+  .button.is-accent-custom {
+    background-color: var(--accent);
+    color: var(--primary);
+    font-weight: 800;
+    border: none;
+    transition: all 0.3s ease;
+  }
+  .button.is-accent-custom:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(255, 199, 44, 0.4);
+  }
+</style>
+
 <section class="section">
   <div class="container has-text-centered">
-    <div class="box">
-      <h1 class="title is-1 has-text-primary">404</h1>
-      <h2 class="subtitle">Page introuvable</h2>
-      <p class="content">La page que vous recherchez n'existe pas ou l'URL est incorrecte.</p>
-      <p class="mt-4">
-        <a class="button is-primary" href="{{ url_for('index') }}"><span class="icon"><i class="fa-solid fa-house"></i></span>&nbsp;Retour à l'accueil</a>
-      </p>
+    <div class="error-67-container">
+      <i class="fa-solid fa-plane flying-plane-67 plane-1"></i>
+      <i class="fa-solid fa-plane flying-plane-67 plane-2"></i>
+      <i class="fa-solid fa-plane flying-plane-67 plane-3"></i>
+      
+      <div class="content-67">
+        <div class="meme-title">
+          <span class="digit digit-6">6</span><span class="digit digit-7">7</span>
+        </div>
+        <h2 class="subtitle is-2 mt-4 mb-2 dancing-subtitle">VOL 67 INTROUVABLE</h2>
+        
+        <p class="meme-text">
+          "Six... Seven... L'URL est passée en mode 67 !"
+        </p>
+        
+        <p class="content has-text-light mb-5" style="max-width: 600px; margin: 0 auto; font-size: 1.1rem;">
+          Même avec nos meilleurs radars (et officiellement une erreur 404), impossible de localiser cette page. Elle a probablement pris la tangente.
+        </p>
+        
+        <p class="mt-5">
+          <a class="button is-accent-custom is-large is-rounded" href="{{ url_for('client.accueil') }}">
+            <span class="icon"><i class="fa-solid fa-plane-arrival"></i></span>
+            &nbsp;Atterrir à l'accueil
+          </a>
+        </p>
+      </div>
     </div>
   </div>
 </section>

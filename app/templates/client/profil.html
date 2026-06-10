@@ -7,17 +7,17 @@
 {% endblock %}
 
 {% block content %}
-<section class="section" style="flex: 1; padding-top: 2rem;">
-    <div class="container" style="max-width: 1200px;">
+<section class="section profil-section">
+    <div class="container profil-container">
         <div class="columns is-variable is-6">
             
             <div class="column is-3">
                 <aside class="sidebar-menu">
                     <p class="menu-label">Mon Compte</p>
                     <ul class="menu-list">
-                        <li><a class="is-active" onclick="switchTab('dashboard')"><i class="fas fa-chart-pie mr-3"></i> Tableau de bord</a></li>
-                        <li><a onclick="switchTab('profil')"><i class="fas fa-user-edit mr-3"></i> Informations</a></li>
-                        <li><a onclick="switchTab('preferences')"><i class="fas fa-sliders-h mr-3"></i> Préférences</a></li>
+                        <li><a class="is-active" data-tab="dashboard"><i class="fas fa-chart-pie mr-3"></i> Tableau de bord</a></li>
+                        <li><a data-tab="profil"><i class="fas fa-user-edit mr-3"></i> Informations</a></li>
+                        <li><a data-tab="preferences"><i class="fas fa-sliders-h mr-3"></i> Préférences</a></li>
                     </ul>
                     <p class="menu-label mt-5">Fidélité</p>
                     <ul class="menu-list">
@@ -30,40 +30,54 @@
             <div class="column is-9">
                 
                 <div id="tab-dashboard" class="content-tab">
-                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Bienvenue, {{ client.prenom }}</h2>
+                    <h2 class="title is-3 mb-5 profil-title">Bienvenue, {{ client.prenom }}</h2>
                     
                     <div class="columns mb-5 is-variable is-4">
                         <div class="column is-5">
-                            <div class="premium-dark-card">
+                            <div class="premium-dark-card card-{{ client.infos_fidelite.actuel | lower }} premium-card-wrapper">
                                 <div class="premium-content">
                                     <div class="is-flex is-justify-content-space-between is-align-items-start">
-                                        <p class="loyalty-tier">Gold Member</p>
-                                        <i class="fas fa-plane" style="color: var(--accent); opacity: 0.5; font-size: 1.5rem;"></i>
+                                        <p class="loyalty-tier">{{ client.infos_fidelite.actuel }} Member</p>
+                                    <i class="fas fa-plane loyalty-plane"></i>
                                     </div>
                                     <p class="loyalty-number">OB-{{ "%06d" | format(client.id_client) }}</p>
-                                    <div class="mt-5">
-                                        <p class="is-uppercase is-size-6 font-weight-bold" style="letter-spacing: 1px;">{{ client.prenom }} {{ client.nom }}</p>
-                                        <p class="is-size-7" style="color: rgba(255,255,255,0.5);">Valide jusqu'au 12/2026</p>
+                                    <div class="mt-4">
+                                        <p class="is-uppercase is-size-6 font-weight-bold premium-card-name">{{ client.prenom }} {{ client.nom }}</p>
+                                        <p class="is-size-7 premium-card-date">Valide jusqu'au 12/2026</p>
                                     </div>
                                 </div>
+                            <p class="m-0 loyalty-watermark">O'Buffair</p>
                             </div>
                         </div>
                         
                         <div class="column is-7">
                             <div class="premium-dark-card">
                                 <div class="premium-content">
-                                    <p class="is-size-6 font-weight-bold is-uppercase" style="color: rgba(255,255,255,0.7); letter-spacing: 1px;">Miles Prime Disponibles</p>
-                                    <p class="miles-value">
-                                        {{ client.points_fidelite }} <i class="fas fa-star" style="color: var(--accent); font-size: 2.5rem;"></i>
+                                    <p class="is-size-6 font-weight-bold is-uppercase miles-title">Miles Prime Disponibles</p>
+                                    <p class="miles-value miles-number">
+                                        {{ client.points_fidelite or 0 }} <i class="fas fa-star miles-star"></i>
+                                    </p>
+                                    <p class="is-size-7 miles-subtitle">
+                                        Solde restant à dépenser
                                     </p>
                                     
-                                    <div class="mt-5">
-                                        <div class="is-flex is-justify-content-space-between is-size-7 mb-2 font-weight-bold" style="color: rgba(255,255,255,0.8);">
-                                            <span>Statut Gold actuel</span>
-                                            <span style="color: var(--accent);">Objectif Platinum</span>
+                                    <div class="mt-4">
+                                        <div class="is-flex is-justify-content-space-between is-size-7 mb-2 font-weight-bold status-text">
+                                            <span>Statut {{ client.infos_fidelite.actuel }} actuel</span>
+                                            <span class="status-accent">{% if client.infos_fidelite.suivant != 'Maximum atteint' %}Objectif {% endif %}{{ client.infos_fidelite.suivant }}</span>
                                         </div>
-                                        <progress class="progress is-small is-premium" value="65" max="100">65%</progress>
-                                        <p class="is-size-7 mt-2" style="color: rgba(255,255,255,0.5);">Plus que 17 500 miles statut pour atteindre le niveau supérieur.</p>
+                                        {% set max_points = client.infos_fidelite.points_max %}
+                                        {% set current_points = client.infos_fidelite.accumules %}
+                                        {% set progress_percent = ((current_points / max_points) * 100) | round | int if max_points > 0 else 100 %}
+                                        {% set remaining_points = client.infos_fidelite.restant %}
+                                        <progress class="progress is-small is-premium status-progress" value="{{ progress_percent if progress_percent <= 100 else 100 }}" max="100">{{ progress_percent if progress_percent <= 100 else 100 }}%</progress>
+                                        <p class="is-size-7 status-desc">
+                                            {% if client.infos_fidelite.suivant != 'Maximum atteint' %}
+                                                <strong class="status-strong">{{ current_points }} / {{ max_points }}</strong> miles cumulés au total.
+                                            {% else %}
+                                                <strong class="status-strong">{{ current_points }}</strong> miles cumulés au total.
+                                            {% endif %}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -71,46 +85,53 @@
                     </div>
 
                     <div class="is-flex is-justify-content-space-between is-align-items-center mt-6 mb-4">
-                        <h3 class="title is-4 m-0" style="color: var(--primary); font-weight: 800;">Mon Prochain Vol</h3>
-                        <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light" style="border-radius: 20px; font-weight: 600;">Toutes mes réservations</a>
+                        <h3 class="title is-4 m-0 profil-title">Mon Prochain Vol</h3>
+                        <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light profil-all-reservations">Toutes mes réservations</a>
                     </div>
                     
-                    <a href="{{ url_for('client.mes_reservations') }}" style="text-decoration: none; display: block;">
-                        <div class="flighty-card" style="transition: transform 0.2s, box-shadow 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='var(--shadow-premium)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='var(--shadow-soft)';">
+                    {% if prochains_vols %}
+                    <a href="{{ url_for('client.gerer_reservation', pnr=prochains_vols[0].pnr) }}" class="next-flight-link">
+                        <div class="flighty-card next-flight-card">
                             <div class="flighty-header mb-3">
                                 <div class="flighty-airline">
-                                    <i class="fas fa-plane-departure" style="color: var(--primary);"></i> O'Buffair AF712 • 14 Juin 2026
+                                    <i class="fas fa-plane-departure primary-icon"></i> {{ prochains_vols[0].flight_number }} • {{ prochains_vols[0].date }}
+                                    <span class="tag is-info is-light ml-2">{{ prochains_vols[0].nb_passagers }} passager(s)</span>
                                 </div>
-                                <div class="flighty-status status-ontime">À l'heure</div>
+                                <div class="flighty-status {{ prochains_vols[0].status_class }}">{{ prochains_vols[0].status_text }}</div>
                             </div>
                             
                             <div class="is-flex is-align-items-center is-justify-content-space-between">
                                 <div>
-                                    <span class="flighty-iata" style="font-size: 28px;">CDG</span>
-                                    <i class="fas fa-arrow-right mx-3" style="color: var(--flighty-gray);"></i>
-                                    <span class="flighty-iata" style="font-size: 28px;">FCO</span>
+                                    <span class="flighty-iata flighty-iata-large">{{ prochains_vols[0].dep_iata }}</span>
+                                    <i class="fas fa-arrow-right mx-3 flighty-gray-icon"></i>
+                                    <span class="flighty-iata flighty-iata-large">{{ prochains_vols[0].arr_iata }}</span>
                                 </div>
                                 <div class="has-text-right">
-                                    <div class="flighty-time" style="font-size: 18px; margin-bottom: 0;">10:30 - 12:35</div>
+                                    <div class="flighty-time flighty-time-large">{{ prochains_vols[0].dep_time }} - {{ prochains_vols[0].arr_time }}</div>
                                 </div>
                                 <div class="has-text-right">
                                     <span class="flighty-label">PNR</span>
-                                    <span class="flighty-value is-size-6" style="font-family: monospace;">X8B9Q2</span>
+                                    <span class="flighty-value is-size-6 pnr-value">{{ prochains_vols[0].pnr }}</span>
                                 </div>
                                 <div>
-                                    <i class="fas fa-chevron-right" style="color: var(--flighty-gray);"></i>
+                                    <i class="fas fa-chevron-right flighty-gray-icon"></i>
                                 </div>
                             </div>
                         </div>
                     </a>
+                    {% else %}
+                    <div class="notification is-light has-text-centered profil-empty-vol">
+                        Aucun vol à venir.
+                    </div>
+                    {% endif %}
                 </div>
 
                 <div id="tab-profil" class="content-tab is-hidden">
-                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Informations Personnelles</h2>
+                    <h2 class="title is-3 mb-5 profil-title">Informations Personnelles</h2>
                     
                     <div class="flighty-card">
-                        <form>
-                            <h4 class="title is-5 mb-4" style="color: var(--flighty-text);"><i class="fas fa-user-circle mr-2" style="color: var(--primary-light);"></i> Identité</h4>
+                        <form method="POST" enctype="multipart/form-data">
+                            <h4 class="title is-5 mb-4 form-section-title"><i class="fas fa-user-circle mr-2 primary-light-icon"></i> Identité</h4>
                             <div class="columns is-multiline mb-4">
                                 <div class="column is-6">
                                     <div class="field">
@@ -133,46 +154,136 @@
                                 <div class="column is-6">
                                     <div class="field">
                                         <label class="form-label">Téléphone</label>
-                                        <div class="control"><input class="input flighty-input" type="tel" value="+33 6 12 34 56 78"></div>
+                                        <div class="control"><input class="input flighty-input" type="tel" name="numero_telephone" value="{{ client.numero_telephone or '' }}" placeholder="+33 6 00 00 00 00"></div>
                                     </div>
                                 </div>
                             </div>
                             
-                            <hr style="background-color: #E5E5EA; margin: 2rem 0;">
+                            <hr class="form-divider">
                             
-                            <h4 class="title is-5 mb-4" style="color: var(--flighty-text);"><i class="fas fa-passport mr-2" style="color: var(--primary-light);"></i> Documents de voyage</h4>
-                            <div class="columns is-multiline">
-                                <div class="column is-6">
-                                    <div class="field">
+                            <h4 class="title is-5 mb-3 form-section-title"><i class="fas fa-passport mr-2 primary-light-icon"></i> Documents de voyage</h4>
+                            
+                            <div class="columns is-multiline mb-1" id="document-row-1" {% if not client.document_identite %}style="display: none;"{% else %}style="display: flex;"{% endif %}>
+                                <div class="column is-6 is-flex">
+                                    <div class="field is-flex is-flex-direction-column doc-field-wrapper">
                                         <label class="form-label">Type de document</label>
-                                        <div class="select is-fullwidth">
-                                            <select class="flighty-input">
-                                                <option selected>Passeport</option>
-                                                <option>Carte d'Identité</option>
-                                            </select>
+                                        <div class="control mt-auto">
+                                            <div class="select is-fullwidth doc-select-wrapper">
+                                                <select name="type_document" class="flighty-input doc-select">
+                                                    <option selected>Carte d'Identité / Passeport</option>
+                                                    <option>Visa</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="column is-6">
-                                    <div class="field">
-                                        <label class="form-label">Numéro du document</label>
-                                        <div class="control"><input class="input flighty-input" type="text" value="12AB34567"></div>
+                                <div class="column is-6 is-flex">
+                                    <div class="field is-flex is-flex-direction-column doc-field-wrapper">
+                                        <label class="form-label">Document numérisé (PDF, Images)</label>
+                                        <div class="control mt-auto">
+                                            <div class="is-flex is-align-items-center doc-file-wrapper">
+                                                <div class="file has-name is-fullwidth doc-file-inner">
+                                                    <label class="file-label">
+                                                        <input class="file-input" type="file" name="document_file" accept=".pdf, image/*" id="document_upload">
+                                                        <span class="file-cta flighty-file-cta">
+                                                            <span class="file-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+                                                            <span class="file-label">Parcourir...</span>
+                                                        </span>
+                                                        <span class="file-name flighty-file-name {% if client.document_identite %}has-document{% endif %}" id="document_filename">
+                                                            {% if client.document_identite %}
+                                                                {{ client.document_identite }}
+                                                            {% else %}
+                                                                Aucun fichier sélectionné
+                                                            {% endif %}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                {% if client.document_identite %}
+                                                <a href="{{ url_for('static', filename='uploads/documents/' ~ client.document_identite) }}" target="_blank" class="button doc-preview-btn" title="Aperçu">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
+                                </div>
+                                <div class="column is-12 has-text-right doc-delete-wrapper">
+                                    <button type="button" class="button is-small is-ghost has-text-danger btn-delete-doc" data-target="1">
+                                        <i class="fas fa-trash-alt mr-2"></i> Supprimer le document
+                                    </button>
+                                    <input type="hidden" name="delete_doc_1" id="delete_doc_1" value="0">
+                                </div>
+                            </div>
+                        
+                            <div class="mb-2 mt-1" id="btnAddDocumentWrapper" {% if client.document_identite and client.document_identite_2 %}style="display: none;"{% endif %}>
+                                <button type="button" class="button is-small is-ghost doc-add-btn" id="btnAddDocument">
+                                    <i class="fas fa-plus mr-2"></i> Ajouter un document de voyage
+                                </button>
+                            </div>
+
+                            <!-- Ligne Document 2 (Masquée par défaut) -->
+                            <div class="columns is-multiline mb-1" id="document-row-2" {% if not client.document_identite_2 %}style="display: none;"{% else %}style="display: flex;"{% endif %}>
+                                <div class="column is-6 is-flex">
+                                    <div class="field is-flex is-flex-direction-column doc-field-wrapper">
+                                        <div class="control mt-auto">
+                                            <div class="select is-fullwidth doc-select-wrapper">
+                                                <select name="type_document_2" class="flighty-input doc-select">
+                                                    <option>Carte d'Identité / Passeport</option>
+                                                    <option selected>Visa</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-6 is-flex">
+                                    <div class="field is-flex is-flex-direction-column doc-field-wrapper">
+                                        <div class="control mt-auto">
+                                            <div class="is-flex is-align-items-center doc-file-wrapper">
+                                                <div class="file has-name is-fullwidth doc-file-inner">
+                                                    <label class="file-label">
+                                                        <input class="file-input" type="file" name="document_file_2" accept=".pdf, image/*" id="document_upload_2">
+                                                        <span class="file-cta flighty-file-cta">
+                                                            <span class="file-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+                                                            <span class="file-label">Parcourir...</span>
+                                                        </span>
+                                                        <span class="file-name flighty-file-name {% if client.document_identite_2 %}has-document{% endif %}" id="document_filename_2">
+                                                            {% if client.document_identite_2 %}
+                                                                {{ client.document_identite_2 }}
+                                                            {% else %}
+                                                                Aucun fichier sélectionné
+                                                            {% endif %}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                                {% if client.document_identite_2 %}
+                                                <a href="{{ url_for('static', filename='uploads/documents/' ~ client.document_identite_2) }}" target="_blank" class="button doc-preview-btn" title="Aperçu">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="column is-12 has-text-right doc-delete-wrapper">
+                                    <button type="button" class="button is-small is-ghost has-text-danger btn-delete-doc" data-target="2">
+                                        <i class="fas fa-trash-alt mr-2"></i> Supprimer le document
+                                    </button>
+                                    <input type="hidden" name="delete_doc_2" id="delete_doc_2" value="0">
                                 </div>
                             </div>
                             
                             <div class="has-text-right mt-5">
-                                <button type="button" class="button is-primary" style="border-radius: 12px; font-weight: bold; padding: 0 32px; height: 3em;" onclick="alert('Modifications enregistrées !')">Enregistrer les modifications</button>
+                                <button type="submit" class="button is-primary profil-submit-btn">Enregistrer les modifications</button>
                             </div>
                         </form>
                     </div>
                 </div>
 
                 <div id="tab-preferences" class="content-tab is-hidden">
-                    <h2 class="title is-3 mb-5" style="color: var(--primary); font-weight: 800;">Préférences de Voyage</h2>
+                    <h2 class="title is-3 mb-5 profil-title">Préférences de Voyage</h2>
                     <div class="flighty-card p-5">
                         <div class="has-text-centered py-6">
-                            <i class="fas fa-sliders-h is-size-1 mb-4" style="color: #D1D1D6;"></i>
+                            <i class="fas fa-sliders-h is-size-1 mb-4 pref-icon-empty"></i>
                             <p class="has-text-grey font-weight-bold">Vos préférences de repas et de placement (Hublot/Couloir) apparaîtront ici prochainement.</p>
                         </div>
                     </div>
