@@ -271,7 +271,7 @@ def accueil():
                     'baggage': f"{billet.bagages_sup} en soute"
                 }
 
-    return render_template('client/acceuil.html', destinations=destinations, loyalty_info=loyalty_info, next_flight=next_flight)
+    return render_template('client/acceuil.html', destinations=destinations, loyalty_info=loyalty_info, next_flight=next_flight, airports_data=airports_data, map_routes=map_routes)
 
 @client_bp.route('/profil', methods=['GET', 'POST'])
 def profil():
