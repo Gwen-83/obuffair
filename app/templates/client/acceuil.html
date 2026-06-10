@@ -84,7 +84,7 @@
             
             <div class="column is-4">
                 <h3 class="title is-4 mb-4 section-title">Mon Profil Fidélité</h3>
-                <div class="premium-dark-card mb-5">
+                <div class="premium-dark-card mb-5 {% if loyalty_info %}card-{{ loyalty_info.status | lower }}{% endif %}">
                     <div class="premium-content">
                         {% if session.get('user_id') %}
                         <div class="is-flex is-justify-content-space-between is-align-items-start mb-3">
@@ -93,20 +93,20 @@
                             </div>
                             <p class="loyalty-status">{{ loyalty_info.status if loyalty_info else 'Membre Classic' }}</p>
                         </div>
-                        <p class="title is-4 has-text-white mb-1">{{ session.get('prenom', 'Prénom') }} {{ session.get('nom', 'Nom') }}</p>
+                        <p class="title is-4 mb-1">{{ session.get('prenom', 'Prénom') }} {{ session.get('nom', 'Nom') }}</p>
                         
                         <div class="columns is-mobile mt-5 mb-2">
                             <div class="column">
-                                <p class="heading has-text-grey-light mb-1">Points Fidélité</p>
-                                <p class="title is-5 has-text-white">{{ loyalty_info.points if loyalty_info else '0' }}</p>
+                                <p class="heading mb-1">Points Fidélité</p>
+                                <p class="title is-5">{{ loyalty_info.points if loyalty_info else '0' }}</p>
                             </div>
                             <div class="column">
-                                <p class="heading has-text-grey-light mb-1">Vols (2026)</p>
-                                <p class="title is-5 has-text-white">{{ loyalty_info.flights_year if loyalty_info else '0' }}</p>
+                                <p class="heading mb-1">Vols (2026)</p>
+                                <p class="title is-5">{{ loyalty_info.flights_year if loyalty_info else '0' }}</p>
                             </div>
                         </div>
                         <progress class="progress is-small is-premium" value="{{ loyalty_info.progress_percent if loyalty_info else 0 }}" max="100">{{ loyalty_info.progress_percent if loyalty_info else 0 }}%</progress>
-                        <p class="is-size-7 mt-2 text-white-50">Plus que {{ loyalty_info.points_to_next if loyalty_info else '?' }} points avant le statut {{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</p>
+                        <p class="is-size-7 mt-2">Plus que <strong>{{ loyalty_info.points_to_next if loyalty_info else '?' }}</strong> points avant le statut <strong>{{ loyalty_info.next_tier if loyalty_info else 'Silver' }}</strong></p>
                         {% else %}
                         <div class="is-flex is-justify-content-center mb-4 mt-2">
                             <div class="loyalty-gem-wrapper">
@@ -121,69 +121,51 @@
                         </div>
                         {% endif %}
                     </div>
+                    <p class="m-0 loyalty-watermark">O'Buffair</p>
                 </div>
             </div>
 
             <div class="column is-8">
-                <h3 class="title is-4 mb-4 section-title">Mon Prochain Voyage</h3>
+                <h3 class="title is-4 mb-4 section-title">Mes Prochains Vols</h3>
                 
-                {% if next_flight %}
-                <div class="flighty-card">
-                    <div class="flighty-header">
-                        <div class="flighty-airline">
-                            <i class="fas fa-plane-departure icon-primary"></i> O'Buffair {{ next_flight.flight_number }} • {{ next_flight.date }}
+                {% if prochains_vols %}
+                {% for vol in prochains_vols %}
+                <a href="{{ url_for('client.mes_reservations') }}#details-{{ vol.id_reservation }}" class="next-flight-link is-block mb-4" style="text-decoration: none; color: inherit;">
+                    <div class="flighty-card next-flight-card">
+                        <div class="flighty-header mb-3">
+                            <div class="flighty-airline">
+                                <i class="fas fa-plane-departure primary-icon" style="color: var(--primary);"></i> {{ vol.flight_number }} • {{ vol.date }}
+                                <span class="tag is-info is-light ml-2">{{ vol.nb_passagers }} passager(s)</span>
+                            </div>
+                            <div class="flighty-status {{ vol.status_class }}">{{ vol.status_text }}</div>
                         </div>
-                        <div class="flighty-status status-ontime">{{ next_flight.status }}</div>
+                        
+                        <div class="is-flex is-align-items-center is-justify-content-space-between">
+                            <div class="is-flex is-align-items-center">
+                                <div class="has-text-centered">
+                                    <span class="flighty-iata flighty-iata-large">{{ vol.dep_iata }}</span>
+                                    <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.dep_city }}</div>
+                                </div>
+                                <i class="fas fa-arrow-right mx-4 flighty-gray-icon" style="color: var(--flighty-gray);"></i>
+                                <div class="has-text-centered">
+                                    <span class="flighty-iata flighty-iata-large">{{ vol.arr_iata }}</span>
+                                    <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.arr_city }}</div>
+                                </div>
+                            </div>
+                            <div class="has-text-right">
+                                <div class="flighty-time flighty-time-large">{{ vol.dep_time }} - {{ vol.arr_time }}</div>
+                            </div>
+                            <div class="has-text-right">
+                                <span class="flighty-label" style="font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">PNR</span>
+                                <span class="flighty-value is-size-6 pnr-value" style="font-family: monospace; font-weight: bold;">{{ vol.pnr }}</span>
+                            </div>
+                            <div>
+                                <i class="fas fa-chevron-right flighty-gray-icon" style="color: var(--flighty-gray);"></i>
+                            </div>
+                        </div>
                     </div>
-
-                    <div class="flighty-route">
-                        <div class="route-side">
-                            <div class="flighty-time">{{ next_flight.dep_time }}</div>
-                            <div class="flighty-iata">{{ next_flight.dep_iata }}</div>
-                            <div class="flighty-city">{{ next_flight.dep_city }}</div>
-                        </div>
-                        <div class="flighty-path">
-                            <i class="fas fa-plane"></i>
-                        </div>
-                        <div class="route-side is-right">
-                            <div class="flighty-time">{{ next_flight.arr_time }}</div>
-                            <div class="flighty-iata">{{ next_flight.arr_iata }}</div>
-                            <div class="flighty-city">{{ next_flight.arr_city }}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="has-text-right mb-4 pb-4 ticket-actions-divider">
-                        <a href="{{ url_for('client.gerer_reservation', pnr=next_flight.pnr) }}" class="button is-small is-light is-rounded font-weight-bold">
-                            <i class="fas fa-download mr-2"></i> Mon Billet PDF
-                        </a>
-                    </div>
-                    
-                    <h4 class="title is-5 mb-4 custom-subtitle">Personnaliser mon expérience</h4>
-                    
-                    <div class="option-box">
-                        <div>
-                            <p class="has-text-grey mb-1"><i class="fas fa-chair mr-2"></i> Siège</p>
-                            <p class="current-selection">Siège actuel : <span class="tag is-light">{{ next_flight.seat }}</span></p>
-                        </div>
-                        <button class="button is-primary is-light is-small font-weight-bold">Choisir mon siège</button>
-                    </div>
-
-                    <div class="option-box">
-                        <div>
-                            <p class="has-text-grey mb-1"><i class="fas fa-utensils mr-2"></i> Repas O'buffet</p>
-                            <p class="current-selection">Sélection : <span class="tag is-info is-light">{{ next_flight.meal }}</span></p>
-                        </div>
-                        <button class="button is-primary is-light is-small font-weight-bold">Ajouter un menu</button>
-                    </div>
-
-                    <div class="option-box">
-                        <div>
-                            <p class="has-text-grey mb-1"><i class="fas fa-suitcase-rolling mr-2"></i> Bagages</p>
-                            <p class="current-selection">Inclus : {{ next_flight.baggage }}</p>
-                        </div>
-                        <button class="button is-primary is-light is-small font-weight-bold">Ajouter un bagage</button>
-                    </div>
-                </div>
+                </a>
+                {% endfor %}
                 {% else %}
                 <div class="flighty-card has-text-centered py-6">
                     <i class="fas fa-plane-slash is-size-1 mb-4 icon-empty-state"></i>
@@ -197,6 +179,20 @@
         <!-- Carte globale des routes (Type Volotea) -->
         <div class="map-routes-section mt-6 mb-6">
             <h3 class="title is-3 mb-5 has-text-centered section-title">Notre Réseau</h3>
+            
+            <!-- Sélecteur de mode de carte -->
+            <div class="has-text-centered mb-4">
+                <div class="buttons has-addons is-centered mb-2">
+                    <button id="btn-mode-hub" class="button is-primary is-selected is-rounded is-small font-weight-bold" style="min-width: 120px;">
+                        <i class="fas fa-map-marker-alt mr-2"></i> Par Hub
+                    </button>
+                    <button id="btn-mode-all" class="button is-light is-rounded is-small font-weight-bold" style="min-width: 120px;">
+                        <i class="fas fa-project-diagram mr-2"></i> Toutes les routes
+                    </button>
+                </div>
+                <p id="map-interaction-hint" class="is-size-7 has-text-grey font-weight-bold" style="height: 20px; transition: opacity 0.3s;"></p>
+            </div>
+
             <div id="network-map" class="flighty-card network-map-container"></div>
             <div id="mapRoutesData" data-routes="{{ map_routes|tojson|forceescape }}" class="hidden-data"></div>
         </div>
