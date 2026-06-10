@@ -71,8 +71,6 @@ def dashboard():
         nb_resa_vol = d.get('nb_reservations') or 0
         d['fill_percent'] = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         vols.append(d)
-    #for vol in vols:
-    #    if vol.date_heure_dep_utc 
     return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
 
 @admin_bp.route('/config_avion', methods=['GET', 'POST'])
@@ -544,7 +542,7 @@ def create_vol():
             return jsonify({
                 'success': False,
                 'message': f"Conflit détecté : l'avion {avion_immat} a déjà un vol programmé pendant cette période (Vol #{conflits.id_vol})"
-            }), 409 #code error de con
+            }), 409
         
         nouveau_vol = Vols(
             immatriculation_avion=avion_immat,

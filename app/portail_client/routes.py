@@ -4,7 +4,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 """
 
 from functools import wraps
-from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app, make_response
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app, make_response, jsonify
 from app import db
 from sqlalchemy import func, text
 from sqlalchemy.orm import joinedload
@@ -534,6 +534,96 @@ def support():
                 flash('Une erreur est survenue lors de l’envoi de votre ticket. Veuillez réessayer.', 'danger')
 
     return render_template('client/ticket.html', user_info=user_info, form_data=form_data)
+
+@client_bp.route('/api/available-dates', methods=['GET'])
+def available_dates():
+    """Renvoie les dates disponibles (jusqu'à 2 escales) pour un aller et un retour."""
+    depart = request.args.get('depart')
+    arrivee = request.args.get('arrivee')
+    
+    if not depart or not arrivee:
+        return jsonify({'aller': [], 'retour': []})
+        
+    def get_dates_for_route(dep, arr):
+        valid_dates = set()
+        now_bound = datetime.utcnow() + timedelta(hours=2)
+        
+        # 1. Vols directs
+        direct_flights = db.session.execute(text("""
+            SELECT * FROM vols 
+            WHERE id_aeroport_depart = :origin AND id_aeroport_arrivee = :destination
+            AND date_heure_dep_utc >= :now_bound
+        """), {'origin': dep, 'destination': arr, 'now_bound': now_bound}).mappings().all()
+        
+        for f in direct_flights:
+            f_local = f['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+            valid_dates.add(f_local.strftime('%Y-%m-%d'))
+            
+        # 2. Vols avec 1 Escale
+        first_legs = db.session.execute(text("""
+            SELECT * FROM vols 
+            WHERE id_aeroport_depart = :origin AND id_aeroport_arrivee != :destination
+            AND date_heure_dep_utc >= :now_bound
+        """), {'origin': dep, 'destination': arr, 'now_bound': now_bound}).mappings().all()
+        
+        if first_legs:
+            min_global_dep = min(leg['date_heure_arr_utc'] + timedelta(minutes=40) for leg in first_legs)
+            max_global_dep = max(leg['date_heure_arr_utc'] + timedelta(hours=12) for leg in first_legs)
+            
+            arrival_airports = list(set(leg['id_aeroport_arrivee'] for leg in first_legs))
+            in_clause = ', '.join(f"'{iata}'" for iata in arrival_airports)
+            
+            second_legs_all = db.session.execute(text(f"""
+                SELECT * FROM vols 
+                WHERE id_aeroport_depart IN ({in_clause})
+                AND date_heure_dep_utc >= :min_dep AND date_heure_dep_utc <= :max_dep
+            """), {'min_dep': min_global_dep, 'max_dep': max_global_dep}).mappings().all()
+            
+            potential_two_stops = []
+            for leg1 in first_legs:
+                min_dep = leg1['date_heure_arr_utc'] + timedelta(minutes=40)
+                max_dep = leg1['date_heure_arr_utc'] + timedelta(hours=12)
+                for leg2 in second_legs_all:
+                    if leg2['id_aeroport_depart'] == leg1['id_aeroport_arrivee'] and min_dep <= leg2['date_heure_dep_utc'] <= max_dep:
+                        if leg2['id_aeroport_arrivee'] == dep: continue
+                        if leg2['id_aeroport_arrivee'] == arr:
+                            f_local = leg1['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+                            valid_dates.add(f_local.strftime('%Y-%m-%d'))
+                        else:
+                            potential_two_stops.append((leg1, leg2))
+            
+            # 3. Vols avec 2 Escales
+            if potential_two_stops:
+                min_global_dep_3 = min(leg2['date_heure_arr_utc'] + timedelta(minutes=40) for _, leg2 in potential_two_stops)
+                max_global_dep_3 = max(leg2['date_heure_arr_utc'] + timedelta(hours=12) for _, leg2 in potential_two_stops)
+                arrival_airports_2 = list(set(leg2['id_aeroport_arrivee'] for _, leg2 in potential_two_stops))
+                in_clause_2 = ', '.join(f"'{iata}'" for iata in arrival_airports_2)
+                
+                third_legs_all = db.session.execute(text(f"""
+                    SELECT * FROM vols 
+                    WHERE id_aeroport_depart IN ({in_clause_2})
+                    AND id_aeroport_arrivee = :destination
+                    AND date_heure_dep_utc >= :min_dep AND date_heure_dep_utc <= :max_dep
+                """), {'destination': arr, 'min_dep': min_global_dep_3, 'max_dep': max_global_dep_3}).mappings().all()
+                
+                for leg1, leg2 in potential_two_stops:
+                    min_dep_3 = leg2['date_heure_arr_utc'] + timedelta(minutes=40)
+                    max_dep_3 = leg2['date_heure_arr_utc'] + timedelta(hours=12)
+                    for leg3 in third_legs_all:
+                        if leg3['id_aeroport_depart'] == leg2['id_aeroport_arrivee'] and min_dep_3 <= leg3['date_heure_dep_utc'] <= max_dep_3:
+                            f_local = leg1['date_heure_dep_utc'].replace(tzinfo=timezone.utc).astimezone()
+                            valid_dates.add(f_local.strftime('%Y-%m-%d'))
+
+        return sorted(list(valid_dates))
+
+    try:
+        return jsonify({
+            'aller': get_dates_for_route(depart, arrivee),
+            'retour': get_dates_for_route(arrivee, depart)
+        })
+    except Exception as e:
+        print(f"Error fetching available dates: {e}")
+        return jsonify({'aller': [], 'retour': []})
 
 @client_bp.route('/booking')
 @login_required
