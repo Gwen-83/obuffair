@@ -33,36 +33,21 @@ body {
 .button.is-accent { background-color: var(--accent); color: var(--primary); font-weight: bold; border-radius: 12px; }
 .button.is-accent:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(255, 199, 44, 0.4); }
 
-/* Animations GIF-like pour les destinations */
-@keyframes animFadeText {
-    0%, 20% { opacity: 1; transform: translateY(0); }
-    22% { opacity: 0; transform: translateY(-2px); }
-    25%, 45% { opacity: 1; transform: translateY(0); }
-    47% { opacity: 0; transform: translateY(-2px); }
-    50%, 70% { opacity: 1; transform: translateY(0); }
-    72% { opacity: 0; transform: translateY(-2px); }
-    75%, 95% { opacity: 1; transform: translateY(0); }
-    97% { opacity: 0; transform: translateY(-2px); }
-    100% { opacity: 1; transform: translateY(0); }
+/* Classes pour l'animation JS des aéroports */
+.dynamic-airport-text {
+    display: inline-block;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 1;
+    transform: translateY(0);
 }
-@keyframes animDepartContent {
-    0%, 23% { content: "Paris (CDG)"; }
-    25%, 48% { content: "Lyon (LYS)"; }
-    50%, 73% { content: "Marseille (MRS)"; }
-    75%, 98% { content: "Nice (NCE)"; }
-    100% { content: "Paris (CDG)"; }
+.dynamic-airport-text.fade-out {
+    opacity: 0;
+    transform: translateY(-4px);
 }
-@keyframes animArriveeContent {
-    0%, 23% { content: "Rome (FCO)"; }
-    25%, 48% { content: "Madrid (MAD)"; }
-    50%, 73% { content: "Londres (LHR)"; }
-    75%, 98% { content: "Berlin (BER)"; }
-    100% { content: "Rome (FCO)"; }
+.dynamic-airport-text.fade-in {
+    opacity: 0;
+    transform: translateY(4px);
 }
-.anim-depart { display: inline-block; animation: animFadeText 8s infinite; }
-.anim-depart::after { content: "Paris (CDG)"; animation: animDepartContent 8s infinite; }
-.anim-arrivee { display: inline-block; animation: animFadeText 8s infinite; }
-.anim-arrivee::after { content: "Rome (FCO)"; animation: animArriveeContent 8s infinite; }
 
 /* --- FLIGHTY APP CARDS --- */
 .flighty-card {
@@ -130,14 +115,14 @@ body {
 .destinations-section { margin-top: 1rem; margin-bottom: 4rem; }
 .destinations-carousel {
     display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 1.5rem;
-    scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    scroll-behavior: auto; /* Permet au JS de scroller 1 pixel à la fois */
     -webkit-overflow-scrolling: touch;
 }
 .destinations-carousel::-webkit-scrollbar { display: none; }
 .destinations-carousel { -ms-overflow-style: none; scrollbar-width: none; }
 
 .destination-card {
-    flex: 0 0 280px; scroll-snap-align: start;
+    flex: 0 0 280px;
     border-radius: var(--radius-xl); overflow: hidden; position: relative;
     box-shadow: var(--shadow-soft); cursor: pointer; transition: transform 0.3s;
     height: 380px;
@@ -152,3 +137,27 @@ body {
 .destination-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 1.5rem; color: white; }
 .destination-city { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; line-height: 1.2;}
 .destination-price { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
+
+.map-routes-section .flighty-card {
+    border-radius: var(--radius-xl);
+}
+
+/* --- STYLES DE LA CARTE --- */
+.airport-glow-point {
+    filter: drop-shadow(0 0 5px rgba(0, 42, 92, 0.7));
+}
+
+.airport-iata-label div {
+    background: rgba(255, 255, 255, 0.9); /* Blanc Translucide */
+    color: #002A5C; /* Bleu Marine */
+    font-size: 11px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 42, 92, 0.2);
+    display: inline-block;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    pointer-events: none; /* Laisse passer le clic pour le drag and drop */
+}

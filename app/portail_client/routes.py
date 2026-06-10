@@ -4,7 +4,7 @@ Gère le profil, modifications de réservation et gestion de compte.
 """
 
 from functools import wraps
-from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app
+from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app, make_response
 from app import db
 from sqlalchemy import func, text
 from sqlalchemy.orm import joinedload
@@ -16,6 +16,11 @@ import string, random
 import re
 import os
 from werkzeug.utils import secure_filename
+try:
+    from weasyprint import HTML
+    WEASYPRINT_AVAILABLE = True
+except ImportError:
+    WEASYPRINT_AVAILABLE = False
 
 
 # Blueprint
@@ -119,17 +124,101 @@ def disable_booking_cache(response):
 def accueil():
     """Accueil"""
     
+    # --- Liste des aéroports pour l'animation de recherche ---
+    try:
+        aeroports_db = db.session.execute(text("SELECT id_aeroport, ville, latitude, longitude FROM aeroports")).mappings().all()
+        airports_data = []
+        for a in aeroports_db:
+            airports_data.append({
+                'iata': a['id_aeroport'],
+                'city': a['ville'],
+                'lat': float(a['latitude']) if a['latitude'] is not None else None,
+                'lng': float(a['longitude']) if a['longitude'] is not None else None
+            })
+    except Exception as e:
+        print(f"Erreur SQL Aéroports: {e}")
+        airports_data = []
+
+    # --- Requête pour toutes les routes (Carte Réseau) ---
+    try:
+        routes_db = db.session.execute(text("""
+            SELECT DISTINCT 
+                ad.id_aeroport as dep_iata, ad.latitude as dep_lat, ad.longitude as dep_lng,
+                aa.id_aeroport as arr_iata, aa.latitude as arr_lat, aa.longitude as arr_lng
+            FROM vols v
+            JOIN aeroports ad ON v.id_aeroport_depart = ad.id_aeroport
+            JOIN aeroports aa ON v.id_aeroport_arrivee = aa.id_aeroport
+            WHERE ad.latitude IS NOT NULL AND ad.longitude IS NOT NULL
+              AND aa.latitude IS NOT NULL AND aa.longitude IS NOT NULL
+        """)).mappings().all()
+        
+        map_routes = [{
+            'dep_iata': r['dep_iata'], 'dep_lat': float(r['dep_lat']), 'dep_lng': float(r['dep_lng']), 
+            'arr_iata': r['arr_iata'], 'arr_lat': float(r['arr_lat']), 'arr_lng': float(r['arr_lng'])
+        } for r in routes_db]
+    except Exception as e:
+        print(f"Erreur SQL Carte Routes: {e}")
+        map_routes = []
+
     # --- Requête pour les destinations du carrousel ---
     try:
-        lowest_prices = db.session.query(
+        lowest_prices_query = db.session.query(
+            Aeroport.id_aeroport,
             Aeroport.ville,
+            Aeroport.latitude,
+            Aeroport.longitude,
             func.min(Vols.prix_de_base).label('min_prix')
         ).join(Vols, Vols.id_aeroport_arrivee == Aeroport.id_aeroport)\
-         .group_by(Aeroport.ville)\
-         .order_by(func.min(Vols.prix_de_base))\
-         .limit(6).all()
+         .filter(Vols.date_heure_dep_utc > datetime.utcnow())\
+         .group_by(Aeroport.id_aeroport, Aeroport.ville, Aeroport.latitude, Aeroport.longitude)\
+         .order_by(func.min(Vols.prix_de_base)).all()
          
-        destinations = [{'ville': row.ville, 'prix': int(row.min_prix) if row.min_prix is not None else 0} for row in lowest_prices]
+        map_destinations = []
+        for row in lowest_prices_query:
+            if row.latitude is not None and row.longitude is not None:
+                map_destinations.append({
+                    'iata': row.id_aeroport,
+                    'ville': row.ville,
+                    'lat': float(row.latitude),
+                    'lng': float(row.longitude),
+                    'prix': int(row.min_prix) if row.min_prix is not None else 0
+                })
+
+        # Utilisation de belles photos fixes pour les grandes villes, fallback générique pour le reste
+        city_images_map = {
+            'Rome': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop',
+            'Londres': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop',
+            'Madrid': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop',
+            'Berlin': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop',
+            'Paris': 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=600&auto=format&fit=crop',
+            'Amsterdam': 'https://images.unsplash.com/photo-1517736996303-4eec4a66bb17?q=80&w=600&auto=format&fit=crop'
+        }
+        
+        destinations = []
+        troll_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4u61wav4I9SolemD3pFQHW0iKL8X1ReekEg&s"
+        
+        current_time = datetime.utcnow().timestamp()
+        last_troll_time = session.get('last_troll_time', 0)
+        show_troll = False
+        
+        # Apparition limitée : au hasard toutes les 3 à 5 minutes (180 à 300 sec)
+        if (current_time - last_troll_time) > random.randint(180, 300):
+            show_troll = True
+            session['last_troll_time'] = current_time
+            
+        for row in lowest_prices:
+            base_url = city_images_map.get(row.ville, f"https://loremflickr.com/600/800/{row.ville.replace(' ', '')},cityview/all")
+                
+            destinations.append({
+                'ville': row.ville, 
+                'prix': int(row.min_prix) if row.min_prix is not None else 0,
+                'image_url': base_url
+            })
+            
+        # Si les conditions de temps sont réunies, on remplace UNE image au hasard par le troll
+        if show_troll and destinations:
+            random_idx = random.randint(0, len(destinations) - 1)
+            destinations[random_idx]['image_url'] = troll_url
     except Exception as e:
         print(f"Erreur SQL Carrousel Destinations: {e}")
         destinations = []
@@ -137,10 +226,10 @@ def accueil():
     # Fallback si aucun vol n'est présent dans la BDD ou en cas d'erreur
     if not destinations:
         destinations = [
-            {'ville': 'Rome', 'prix': 124},
-            {'ville': 'Londres', 'prix': 98},
-            {'ville': 'Madrid', 'prix': 85},
-            {'ville': 'Berlin', 'prix': 110}
+            {'ville': 'Rome', 'prix': 124, 'image_url': 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Londres', 'prix': 98, 'image_url': 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Madrid', 'prix': 85, 'image_url': 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?q=80&w=600&auto=format&fit=crop'},
+            {'ville': 'Berlin', 'prix': 110, 'image_url': 'https://images.unsplash.com/photo-1560969184-10fe8719e047?q=80&w=600&auto=format&fit=crop'}
         ]
 
     loyalty_info = None
@@ -426,7 +515,7 @@ def booking_flights():
             session['vol_aller'] = {
                 'id_vol': request.form.get('id_vol_aller_temp'),
                 'classe': request.form.get('classe'),
-                'classes': request.form.getlist('classes[]'),
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
                 'prix': float(request.form.get('prix', 0)),
                 'prix_eco': float(request.form.get('prix_eco', 0)),
                 'prix_biz': float(request.form.get('prix_biz', 0)),
@@ -734,7 +823,7 @@ def booking_passengers():
             vol_final = {
                 'id_vol': request.form.get('id_vol_final'),
                 'classe': request.form.get('classe'),
-                'classes': request.form.getlist('classes[]'),
+                'classes': request.form.getlist('classes[]') or [request.form.get('classe', 'Eco')] * int(session.get('search_params', {}).get('passagers', 1)),
                 'prix': float(request.form.get('prix', 0)),
                 'prix_eco': float(request.form.get('prix_eco', 0)),
                 'prix_biz': float(request.form.get('prix_biz', 0)),
@@ -810,8 +899,14 @@ def booking_options():
     nb_passagers = int(search_params.get('passagers', 1))
     
     passagers_data = session.get('passagers_data', {})
-    classes_aller = vol_aller.get('classes', [vol_aller.get('classe', 'Eco')] * nb_passagers)
-    classes_retour = vol_retour.get('classes', [vol_retour.get('classe', 'Eco')] * nb_passagers) if vol_retour else []
+    
+    classes_aller = vol_aller.get('classes')
+    if not classes_aller:
+        classes_aller = [vol_aller.get('classe', 'Eco')] * nb_passagers
+        
+    classes_retour = vol_retour.get('classes') if vol_retour else []
+    if vol_retour and not classes_retour:
+        classes_retour = [vol_retour.get('classe', 'Eco')] * nb_passagers
         
     passengers = []
     for i in range(1, nb_passagers + 1):
@@ -1161,10 +1256,23 @@ def booking_confirmation(reservation_id):
 @client_bp.route('/download-ticket/<int:reservation_id>')
 @login_required
 def download_ticket(reservation_id):
-    # Placeholder for PDF generation. A real implementation would use a library like WeasyPrint or FPDF.
     reservation = db.session.query(Reservation).filter_by(id_reservation=reservation_id, id_client=session['user_id']).first_or_404()
-    # This is a dummy response to show the link works.
-    return f"<h1>Ticket for Reservation {reservation.pnr}</h1><p>PDF generation is not yet implemented, but the data is ready!</p>"
+    
+    html_content = render_template('client/ticket_pdf.html', reservation=reservation)
+
+    if not WEASYPRINT_AVAILABLE:
+        # Fallback natif : on renvoie le HTML pour que le navigateur génère le PDF lui-même
+        return html_content
+        
+    try:
+        pdf_file = HTML(string=html_content).write_pdf()
+        response = make_response(pdf_file)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'attachment; filename=Obuffair_Ticket_{reservation.pnr}.pdf'
+        return response
+    except Exception as e:
+        # Si WeasyPrint crashe à l'exécution (ex: librairies C défectueuses sur Mac), on utilise le fallback
+        return html_content
 
 @client_bp.route('/mes-reservations', methods=['GET', 'POST'])
 @login_required
@@ -1238,13 +1346,8 @@ def gerer_reservation(pnr):
     """Gérer une réservation spécifique (Master access)"""
     user_id = session.get('user_id')
     
-    # Sécurisation : Seul le client ayant fait la réservation y a accès
-    # On fait un Eager Loading massif pour tout récupérer d'un coup (Vols, Aéroports, Billets, Passagers)
-    reservation = db.session.query(Reservation).options(
-        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
-        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
-        joinedload(Reservation.billets).joinedload(Billet.passager)
-    ).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+    # Sécurisation : Seul le client ayant fait la réservation peut y accéder
+    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
     
     repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
     vols_map = {}

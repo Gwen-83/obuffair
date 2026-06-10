@@ -136,7 +136,11 @@
                     <h3 class="title is-5 m-0" style="color: #FF3B30;"><i class="fas fa-exclamation-triangle mr-2"></i> Annuler la réservation</h3>
                     <p class="is-size-7 has-text-grey mt-2">Cette action est irréversible. Veuillez consulter les conditions tarifaires avant de continuer.</p>
                 </div>
-                <button class="button is-danger is-outlined is-rounded font-weight-bold" disabled>Annuler la réservation</button>
+                <form action="{{ url_for('client.accueil') }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible.');">
+                    <button type="submit" class="button is-danger is-outlined is-rounded font-weight-bold">
+                        <i class="fas fa-times-circle mr-2"></i> Annuler la réservation
+                    </button>
+                </form>
             </div>
         </div>
 

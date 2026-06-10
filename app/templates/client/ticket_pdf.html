@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Billet O'Buffair - {{ reservation.pnr }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #05164d; /* Bleu sombre de type Lufthansa */
+        }
+        .ticket-box {
+            border: 2px solid #05164d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .header {
+            background-color: #ffb700; /* Jaune or type Lufthansa */
+            color: #05164d;
+            padding: 15px 20px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
+        .header .pnr {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .content {
+            padding: 20px;
+        }
+        .row {
+            width: 100%;
+            margin-bottom: 20px;
+            clear: both;
+        }
+        .col {
+            float: left;
+            width: 33%;
+        }
+        .col-half {
+            float: left;
+            width: 50%;
+        }
+        .label {
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .value.large {
+            font-size: 24px;
+        }
+        .barcode {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+        }
+        .barcode img {
+            height: 100px;
+        }
+        .clear {
+            clear: both;
+        }
+        /* Ajustements pour la boîte de dialogue d'impression native */
+        @media print {
+            @page {
+                margin: 0;
+                size: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% for billet in reservation.billets %}
+    <div class="ticket-box">
+        <div class="header">
+            <h1>O'Buffair</h1>
+            <div class="pnr">PNR: {{ reservation.pnr }}</div>
+        </div>
+        <div class="content">
+            <div class="row">
+                <div class="col-half">
+                    <div class="label">Passager / Passenger</div>
+                    <div class="value">{{ billet.passager.nom | upper }} {{ billet.passager.prenom }}</div>
+                </div>
+                <div class="col-half">
+                    <div class="label">Vol / Flight</div>
+                    <div class="value large">OB{{ billet.vol.id_vol }}</div>
+                </div>
+                <div class="clear"></div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="label">De / From</div>
+                    <div class="value large">{{ billet.vol.id_aeroport_depart }}</div>
+                    <div class="value">{{ billet.vol.date_heure_dep_utc.strftime('%d %b %Y %H:%M') }}</div>
+                </div>
+                <div class="col">
+                    <div class="label">À / To</div>
+                    <div class="value large">{{ billet.vol.id_aeroport_arrivee }}</div>
+                    <div class="value">{{ billet.vol.date_heure_arr_utc.strftime('%d %b %Y %H:%M') }}</div>
+                </div>
+                <div class="col">
+                    <div class="label">Classe / Class</div>
+                    <div class="value">{{ billet.classe }}</div>
+                    <div class="label" style="margin-top: 10px;">Siège / Seat</div>
+                    <div class="value">{{ billet.siege or 'Non assigné' }}</div>
+                </div>
+                <div class="clear"></div>
+            </div>
+            <div class="barcode">
+                <div style="font-size: 12px; margin-bottom: 8px; color: #666; font-weight: bold; text-transform: uppercase;">Plus d'informations</div>
+                <!-- QR code agissant en tant que "scan" du boarding pass -->
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ" alt="QR Code">
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    
+    <script>
+        // Ouvre automatiquement la fenêtre pour "Enregistrer en PDF" via le navigateur
+        window.onload = function() { setTimeout(function() { window.print(); }, 300); }
+    </script>
+</body>
+</html>
