@@ -253,6 +253,7 @@ def accueil():
 
     loyalty_info = None
     next_flight = None
+    prochains_vols_data = []
     user_id = session.get('user_id')
     
     if user_id:
@@ -269,7 +270,6 @@ def accueil():
             }
             
             prochains_billets = client_connecte.get_prochains_vols()
-            prochains_vols_data = []
             vols_vus = set()
             now_minus_2h = datetime.utcnow() - timedelta(hours=2)
             
