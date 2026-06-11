@@ -8,14 +8,14 @@ _last_update_time = None
 
 def update_flight_statuses_if_needed():
     """
-    Vérifie si 10 minutes se sont écoulées depuis la dernière exécution.
+    Vérifie si 1 minute s'est écoulée depuis la dernière exécution.
     Si oui, met à jour le statut des vols selon les règles.
     """
     global _last_update_time
     now = datetime.utcnow()
     
-    # On vérifie si 10 minutes se sont écoulées
-    if _last_update_time is not None and now < _last_update_time + timedelta(minutes=10):
+    # On vérifie si 1 minute s'est écoulée (au lieu de 10) pour plus de réactivité sur les départs
+    if _last_update_time is not None and now < _last_update_time + timedelta(minutes=1):
         return
         
     _last_update_time = now
@@ -34,22 +34,29 @@ def update_flight_statuses_if_needed():
             dep = vol.date_heure_dep_utc
             arr = vol.date_heure_arr_utc
             
-            if arr is None or dep is None:
+            if arr is None or dep is None or arr <= dep:
+                continue
+                
+            # Si le vol est marqué manuellement "retardé", on le laisse tel quel 
+            # jusqu'à ce que l'heure d'arrivée prévue soit dépassée.
+            if vol.statut == 'retardé' and now < arr:
                 continue
                 
             # 1. Plus de 30 min après l'arrivée -> terminé
             if now >= arr + timedelta(minutes=30):
                 nouveau_statut = 'terminé'
-            # 2. 15 min après l'arrivée (jusqu'à 30 min) -> débarquement
-            elif arr + timedelta(minutes=15) <= now < arr + timedelta(minutes=30):
+            # 2. Dès l'arrivée jusqu'à 30 min après -> débarquement
+            elif arr <= now < arr + timedelta(minutes=30):
                 nouveau_statut = 'débarquement'
-            # 3. Pendant la durée du vol -> en vol
-            # On inclut jusqu'à 15 minutes après l'arrivée pour faire la jonction
-            elif dep <= now < arr + timedelta(minutes=15):
+            # 3. Pendant le vol (de l'heure de départ à l'heure d'arrivée) -> en vol
+            elif dep <= now < arr:
                 nouveau_statut = 'en vol'
-            # 4. 15 min avant l'heure programmée -> embarquement
-            elif dep - timedelta(minutes=15) <= now < dep:
+            # 4. De 45 min avant l'heure programmée jusqu'au départ -> embarquement
+            elif dep - timedelta(minutes=45) <= now < dep:
                 nouveau_statut = 'embarquement'
+            # 5. Plus de 45 min avant le départ -> à l'heure
+            elif now < dep - timedelta(minutes=45):
+                nouveau_statut = "à l'heure"
             
             # Mise à jour si le statut a changé
             if nouveau_statut != vol.statut:

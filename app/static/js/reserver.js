@@ -44,6 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const formDateAller = document.getElementById('formDateAller');
     const formDateRetour = document.getElementById('formDateRetour');
 
+    // Fonction utilitaire pour extraire la date locale exacte format ISO (YYYY-MM-DD)
+    const getLocalISODate = (d) => {
+        const offset = d.getTimezoneOffset() * 60000;
+        return new Date(d.getTime() - offset).toISOString().split('T')[0];
+    };
+
     // État du calendrier
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Réinitialise l'heure pour comparer uniquement les dates
@@ -70,6 +76,93 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentDate = startDate ? new Date(startDate.getFullYear(), startDate.getMonth(), 1) : new Date(today.getFullYear(), today.getMonth(), 1); 
 
+    // Cache des dates disponibles selon les aéroports
+    let validDates = { aller: [], retour: [] };
+    let hasFetchedDates = false;
+
+    // Vérifie s'il existe des dates de retour valides (globalement ou après une date spécifique)
+    function hasValidReturnDates(afterDate) {
+        if (!validDates.retour || validDates.retour.length === 0) return false;
+        if (!afterDate) return true;
+        const afterIso = getLocalISODate(afterDate);
+        return validDates.retour.some(dateStr => dateStr >= afterIso);
+    }
+
+    // Force l'aller simple avec une animation d'alerte
+    function enforceOneWayWithMessage() {
+        selectTypeVol.value = 'AS';
+        formTypeVol.value = 'AS';
+        
+        selectTypeVol.classList.add('shake-warning');
+        
+        const asOption = Array.from(selectTypeVol.options).find(opt => opt.value === 'AS');
+        const originalText = "Aller simple";
+        
+        asOption.text = (!validDates.retour || validDates.retour.length === 0) ? "Aucun retour opéré" : "Aucun retour après cette date";
+        
+        setTimeout(() => {
+            selectTypeVol.classList.remove('shake-warning');
+            asOption.text = originalText;
+        }, 3000);
+
+        endDate = null;
+        updateSelectionUI();
+        renderCalendar();
+    }
+
+    function fetchAvailableDates() {
+        const dep = formDepart.value;
+        const arr = formArrivee.value;
+        
+        if (dep && arr && dep !== arr) {
+            calendarDays.style.opacity = '0.5';
+            fetch(`/api/available-dates?depart=${dep}&arrivee=${arr}`)
+                .then(res => res.json())
+                .then(data => {
+                    validDates = data;
+                    hasFetchedDates = true;
+                    calendarDays.style.opacity = '1';
+                    
+                    // Annuler la sélection si les dates ne sont plus desservies 
+                    if (startDate && !validDates.aller.includes(getLocalISODate(startDate))) {
+                        startDate = null;
+                        endDate = null;
+                    }
+                    if (endDate && !validDates.retour.includes(getLocalISODate(endDate))) {
+                        endDate = null;
+                    }
+                    
+                    // Vérifier si le retour est impossible suite au fetch
+                    if (selectTypeVol.value === 'AR' && !hasValidReturnDates(startDate)) {
+                        enforceOneWayWithMessage();
+                    } else {
+                        renderCalendar();
+                    }
+                })
+                .catch(err => {
+                    console.error("Erreur récupération dates disponibles :", err);
+                    calendarDays.style.opacity = '1';
+                    validDates = { aller: [], retour: [] };
+                    hasFetchedDates = false;
+                    renderCalendar();
+                });
+        } else {
+            validDates = { aller: [], retour: [] };
+            hasFetchedDates = false;
+            renderCalendar();
+        }
+    }
+
+    // Gestion des boutons mois 
+    const btnPrevMonth = document.getElementById('prevMonth');
+    const btnNextMonth = document.getElementById('nextMonth');
+    if (btnPrevMonth) btnPrevMonth.addEventListener('click', (e) => { 
+        e.preventDefault(); currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); 
+    });
+    if (btnNextMonth) btnNextMonth.addEventListener('click', (e) => { 
+        e.preventDefault(); currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); 
+    });
+
     function renderCalendar() {
         const weekdays = `<div class="weekday">LUN</div><div class="weekday">MAR</div><div class="weekday">MER</div><div class="weekday">JEU</div><div class="weekday">VEN</div><div class="weekday">SAM</div><div class="weekday">DIM</div>`;
         calendarDays.innerHTML = weekdays;
@@ -90,15 +183,36 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarDays.innerHTML += `<div class="day disabled" style="color: transparent;">0</div>`;
         }
 
+        const isOneWay = selectTypeVol.value === 'AS';
+        const isSelectingRetour = !isOneWay && startDate && !endDate;
+
         // Génération des jours
         for (let i = 1; i <= daysInMonth; i++) {
             const dateVal = new Date(year, month, i);
+            const dateStr = getLocalISODate(dateVal);
             
-            // Griser les jours passés de manière dynamique
-            const isDisabled = dateVal < today ? 'disabled' : '';
+            let isPast = dateVal < today;
+            let noFlights = false;
+
+            // Vérification selon le fetch asynchrone
+            if (hasFetchedDates) {
+                if (isSelectingRetour) {
+                    if (dateVal < startDate) {
+                        isPast = true; // Retourne pas dans le passé
+                    } else {
+                        noFlights = !validDates.retour.includes(dateStr);
+                    }
+                } else {
+                    noFlights = !validDates.aller.includes(dateStr);
+                }
+            }
+
+            const isDisabled = (isPast || noFlights) ? 'disabled' : '';
             
             const dayEl = document.createElement('div');
             dayEl.className = `day ${isDisabled}`;
+            if (noFlights && !isPast) dayEl.title = "Aucun vol n'opère à cette date";
+            
             dayEl.dataset.date = dateVal.toISOString();
             dayEl.innerText = i;
 
@@ -119,10 +233,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             if (!startDate || (startDate && endDate)) {
                 // Nouvelle sélection
+                if (!hasValidReturnDates(date)) {
+                    startDate = date;
+                    endDate = null;
+                    enforceOneWayWithMessage();
+                    return;
+                }
                 startDate = date;
                 endDate = null;
             } else if (date < startDate) {
                 // Clic avant la date de début : on inverse intelligemment pour créer une plage
+                if (!hasValidReturnDates(date)) {
+                    startDate = date;
+                    endDate = null;
+                    enforceOneWayWithMessage();
+                    return;
+                }
                 endDate = startDate;
                 startDate = date;
             } else {
@@ -131,12 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         updateSelectionUI();
+        renderCalendar();
     }
 
     function updateSelectionUI() {
         // Mise à jour visuelle du calendrier (Effet Pilule)
         document.querySelectorAll('.day').forEach(el => {
-            if(el.classList.contains('disabled')) return;
+            if(!el.dataset.date) return; // Ignorer uniquement les cases vides (début du mois)
             
             const elDate = new Date(el.dataset.date);
             el.classList.remove('selected', 'in-range', 'range-start', 'range-end');
@@ -180,12 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputArrivee.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
         inputDepart.style.borderColor = isSameAirport ? 'red' : '#E5E5EA';
 
-        // Mise à jour des inputs cachés pour le backend (Correction Fuseau Horaire)
-        const getLocalISODate = (d) => {
-            const offset = d.getTimezoneOffset() * 60000;
-            return new Date(d.getTime() - offset).toISOString().split('T')[0];
-        };
-
         if (startDate) formDateAller.value = getLocalISODate(startDate);
         if (endDate) formDateRetour.value = getLocalISODate(endDate);
         else formDateRetour.value = '';
@@ -219,6 +340,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 iataDisp.innerText = ap.iata;
                 cityDisp.innerText = ap.city;
                 dropdown.style.display = 'none';
+                startDate = null;
+                endDate = null;
+                fetchAvailableDates();
                 updateSelectionUI();
             });
             dropdown.appendChild(div);
@@ -265,11 +389,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- SYNCHRONISATION DU TYPE DE VOL ---
     
     selectTypeVol.addEventListener('change', (e) => {
+        // Empêcher la sélection de l'aller-retour s'il n'y a pas de vols de retour
+        if (e.target.value === 'AR' && hasFetchedDates && !hasValidReturnDates(startDate)) {
+            enforceOneWayWithMessage();
+            return;
+        }
+        
         formTypeVol.value = e.target.value;
         // Réinitialiser les dates et l'UI du calendrier lors d'un changement
         startDate = null;
         endDate = null;
         updateSelectionUI();
+        renderCalendar();
     });
 
     // --- OUVERTURE/FERMETURE DU DROPDOWN PASSAGERS ---
@@ -308,5 +439,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INITIALISATION AU CHARGEMENT DE LA PAGE ---
 
-    renderCalendar();
+    fetchAvailableDates();
 });

@@ -24,9 +24,17 @@ body {
 .navbar.is-primary { background-color: var(--primary); }
 
 .hero-booking {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    background: linear-gradient(-45deg, var(--primary), var(--primary-light), var(--secondary), #001B40);
+    background-size: 400% 400%;
+    animation: slowGradientHero 25s ease infinite;
     padding: 4rem 1.5rem 5rem;
     color: white;
+}
+
+@keyframes slowGradientHero {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .button.is-primary { background-color: var(--primary); }
@@ -84,6 +92,49 @@ body {
 .progress.is-premium { background-color: rgba(255,255,255,0.1); }
 .progress.is-premium::-webkit-progress-value { background-color: var(--accent); }
 .progress.is-premium::-moz-progress-bar { background-color: var(--accent); }
+
+/* --- Thème cohérent O'Buffair pour les cartes de fidélité --- */
+.loyalty-watermark {
+    position: absolute; 
+    bottom: 20px; 
+    right: 32px; 
+    font-weight: 900; 
+    font-size: 2.4rem; 
+    letter-spacing: -1px; 
+    line-height: 1; 
+    user-select: none; 
+    pointer-events: none; 
+    z-index: 0;
+}
+.card-silver {
+    background: linear-gradient(135deg, #E5E5EA 0%, #FFFFFF 30%, #D1D1D6 80%, #98989D 100%) !important;
+    border: 1px solid #98989D !important;
+}
+.card-silver p, .card-silver .title, .card-silver .heading, .card-silver .loyalty-status { color: var(--flighty-text) !important; }
+.card-silver p.is-size-7, .card-silver .text-white-50, .card-silver .text-white-70, .card-silver .heading { color: rgba(28, 28, 30, 0.7) !important; }
+.card-silver .loyalty-plane, .card-silver .loyalty-medal-wrapper { color: var(--flighty-gray) !important; opacity: 0.5 !important; }
+.card-silver .loyalty-watermark { opacity: 0.12 !important; }
+.card-silver .progress.is-premium { background-color: rgba(0, 0, 0, 0.1); }
+
+.card-gold {
+    background: linear-gradient(135deg, #FDE68A 0%, #FFF9D2 30%, #F5C64B 80%, #D49B00 100%) !important;
+    border: 1px solid #E4B227 !important;
+}
+.card-gold p, .card-gold .title, .card-gold .heading, .card-gold .loyalty-status { color: var(--primary) !important; }
+.card-gold p.is-size-7, .card-gold .text-white-50, .card-gold .text-white-70, .card-gold .heading { color: rgba(0, 42, 92, 0.75) !important; }
+.card-gold .loyalty-plane, .card-gold .loyalty-medal-wrapper { color: var(--primary) !important; opacity: 0.40 !important; }
+.card-gold .loyalty-watermark { color: var(--primary) !important; opacity: 0.18 !important; }
+.card-gold .progress.is-premium { background-color: rgba(0, 42, 92, 0.15); }
+
+.card-platinum {
+    background: linear-gradient(135deg, #D4E6F1 0%, #FFFFFF 30%, #AED6F1 80%, #7FB3D5 100%) !important;
+    border: 1px solid #7FB3D5 !important;
+}
+.card-platinum p, .card-platinum .title, .card-platinum .heading, .card-platinum .loyalty-status { color: var(--primary) !important; }
+.card-platinum p.is-size-7, .card-platinum .text-white-50, .card-platinum .text-white-70, .card-platinum .heading { color: rgba(0, 42, 92, 0.75) !important; }
+.card-platinum .loyalty-plane, .card-platinum .loyalty-medal-wrapper { color: var(--primary) !important; opacity: 0.40 !important; }
+.card-platinum .loyalty-watermark { color: var(--primary) !important; opacity: 0.18 !important; }
+.card-platinum .progress.is-premium { background-color: rgba(0, 42, 92, 0.15); }
 
 /* Flight route summary */
 .flighty-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -146,6 +197,22 @@ body {
 .airport-glow-point {
     filter: drop-shadow(0 0 5px rgba(0, 42, 92, 0.7));
 }
+.airport-glow-point.active-hub {
+    filter: drop-shadow(0 0 8px rgba(255, 199, 44, 0.8));
+}
+.airport-glow-point.clickable {
+    cursor: pointer;
+    transition: fill 0.2s, stroke 0.2s, stroke-width 0.2s;
+}
+.airport-glow-point.clickable:hover {
+    fill: var(--accent) !important;
+    stroke: var(--accent) !important;
+}
+.hub-tooltip {
+    background: rgba(0, 42, 92, 0.9); color: white;
+    border: none; border-radius: 6px; font-weight: 700;
+    font-size: 11px; box-shadow: var(--shadow-soft);
+}
 
 .airport-iata-label div {
     background: rgba(255, 255, 255, 0.9); /* Blanc Translucide */
@@ -159,5 +226,51 @@ body {
     white-space: nowrap;
     backdrop-filter: blur(4px);
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    pointer-events: none; /* Laisse passer le clic pour le drag and drop */
+    transition: all 0.2s ease;
+}
+.airport-iata-label.clickable div {
+    cursor: pointer;
+}
+.airport-iata-label.clickable div:hover {
+    border-color: var(--accent);
+    background: white;
+    transform: scale(1.1);
+}
+
+/* --- NOUVELLES CLASSES EXTRAITES DE L'HTML --- */
+.acceuil-container { max-width: 1200px; }
+.hero-title { font-weight: 800; }
+.hero-subtitle { font-weight: 500; }
+.hidden-data { display: none; }
+.link-unstyled { text-decoration: none; }
+.icon-primary { color: var(--primary); }
+.btn-tall { height: 3em; }
+.section-title { color: var(--primary); font-weight: 800; }
+
+.loyalty-medal-wrapper { font-size: 2.5rem; color: var(--accent); }
+.loyalty-status {
+    color: var(--accent);
+    font-weight: 800;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.text-white-50 { color: rgba(255,255,255,0.5); }
+.text-white-70 { color: rgba(255,255,255,0.7); }
+.text-white-80 { color: rgba(255,255,255,0.8); }
+.link-underline { text-decoration: underline; }
+.loyalty-gem-wrapper { font-size: 3rem; color: var(--accent); }
+
+.route-side { width: 100px; }
+.route-side.is-right { text-align: right; }
+.ticket-actions-divider { border-bottom: 1px solid #E5E5EA; }
+.custom-subtitle { color: var(--flighty-text); font-weight: 700; }
+.icon-empty-state { color: #E5E5EA; }
+
+.network-map-container {
+    height: 450px;
+    padding: 0;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
 }

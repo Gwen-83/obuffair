@@ -71,8 +71,6 @@ def dashboard():
         nb_resa_vol = d.get('nb_reservations') or 0
         d['fill_percent'] = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         vols.append(d)
-    #for vol in vols:
-    #    if vol.date_heure_dep_utc 
     return render_template('admin/html/dashboard.html', nb_vols=nb_vols, nb_resa=nb_resa, vols=vols)
 
 @admin_bp.route('/config_avion', methods=['GET', 'POST'])
@@ -487,27 +485,44 @@ def support_detail(id_ticket):
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required
 def get_vols():
-    vols = Vols.query.all()
+    vols_rows = db.session.execute(text("""
+        SELECT v.*,
+               a.modele,
+               (a.nb_rangees * a.largeur_rangee) AS capacite_totale,
+               COALESCE(SUM(CASE WHEN r.statut = 'Confirmee' THEN 1 ELSE 0 END), 0) AS nb_reservations
+        FROM vols v
+        LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
+        LEFT JOIN billets b ON b.id_vol = v.id_vol
+        LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
+        GROUP BY v.id_vol, a.immatriculation, a.modele
+    """)).mappings().all()
+
     events = []
-    for v in vols:
+    for v in vols_rows:
         bg_color = '#002A5C'
-        if v.statut == 'retardé': bg_color = '#F57C00'
-        elif v.statut == 'annulé': bg_color = '#C62828'
-        elif v.statut == 'embarquement': bg_color = '#2E7D32'
+        if v['statut'] == 'retardé': bg_color = '#F57C00'
+        elif v['statut'] == 'annulé': bg_color = '#C62828'
+        elif v['statut'] == 'embarquement': bg_color = '#2E7D32'
+        
+        capacite = v['capacite_totale'] or 0
+        nb_resa_vol = v['nb_reservations'] or 0
+        fill_percent = int((nb_resa_vol / capacite) * 100) if capacite > 0 else 0
         
         events.append({
-            'id': v.id_vol,
-            'title': f"{v.id_aeroport_depart} ✈ {v.id_aeroport_arrivee}",
-            'start': v.date_heure_dep_utc.isoformat() + 'Z',
-            'end': v.date_heure_arr_utc.isoformat() + 'Z' if v.date_heure_arr_utc else None,
+            'id': v['id_vol'],
+            'title': f"{v['id_aeroport_depart']} ✈ {v['id_aeroport_arrivee']}",
+            'start': v['date_heure_dep_utc'].isoformat() + 'Z',
+            'end': v['date_heure_arr_utc'].isoformat() + 'Z' if v['date_heure_arr_utc'] else None,
             'backgroundColor': bg_color,
             'borderColor': '#FFC72C',
+            'resourceId': v['modele'],
             'extendedProps': {
-                'avion': v.immatriculation_avion,
-                'depart': v.id_aeroport_depart,
-                'arrivee': v.id_aeroport_arrivee,
-                'prix': str(v.prix_de_base),
-                'statut': v.statut
+                'avion': v['immatriculation_avion'],
+                'depart': v['id_aeroport_depart'],
+                'arrivee': v['id_aeroport_arrivee'],
+                'prix': str(v['prix_de_base']),
+                'statut': v['statut'],
+                'fill_percent': fill_percent
             }
         })
     return jsonify(events)
@@ -544,7 +559,7 @@ def create_vol():
             return jsonify({
                 'success': False,
                 'message': f"Conflit détecté : l'avion {avion_immat} a déjà un vol programmé pendant cette période (Vol #{conflits.id_vol})"
-            }), 409 #code error de con
+            }), 409
         
         nouveau_vol = Vols(
             immatriculation_avion=avion_immat,

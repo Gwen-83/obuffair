@@ -1,6 +1,6 @@
 {% extends "components/base.html" %} {% block title %}Planification des Vols{%
 endblock %} {% block extra_css %}
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.js"></script>
 <style>
   /* Meilleure gestion des événements simultanés */
   .fc {
@@ -8,20 +8,25 @@ endblock %} {% block extra_css %}
   }
 
   .fc-event {
-    cursor: pointer;
+    cursor: move;
     transition:
       transform 0.2s,
       box-shadow 0.2s;
     border-radius: 4px;
-    padding: 4px 6px;
+    padding: 2px 6px;
     font-weight: 500;
-    border: 2px solid;
+    border: 3px solid; /* Bordure plus épaisse pour mieux voir le statut */
   }
 
   .fc-event:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
     z-index: 10;
+  }
+  
+  .fc-timeline-event {
+      min-height: 38px; /* Hauteur minimale pour 2 lignes de texte */
+      line-height: 1.3;
   }
 
   /* Meilleure lisibilité pour les événements chevauchants */
@@ -50,6 +55,37 @@ endblock %} {% block extra_css %}
     white-space: normal;
     word-wrap: break-word;
   }
+
+  /* Style du Toggle Switch (Antoine fait chier) */
+  .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; }
+  .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+  input:checked + .slider { background-color: var(--primary); }
+  input:focus + .slider { box-shadow: 0 0 1px var(--primary); }
+  input:checked + .slider:before { transform: translateX(24px); }
+  .slider.round { border-radius: 26px; }
+  .slider.round:before { border-radius: 50%; }
+  
+  .fc-datagrid-cell-cushion { font-weight: bold; color: var(--primary); }
+  .fc-timeline-slot-label { font-size: 0.8rem; }
+  
+  /* Zone grisée pour la fermeture de nuit (Heures non-ouvrées) */
+  .fc-non-business {
+    background-color: rgba(142, 142, 147, 0.15) !important;
+  }
+
+  /* Style pour l'icône d'avertissement de rotation courte */
+  .turnaround-warning {
+      color: #FFDD57; /* Jaune accent */
+      margin-right: 5px;
+      font-size: 0.8em;
+      animation: pulse-warning 2s infinite ease-in-out;
+  }
+  @keyframes pulse-warning {
+      0%, 100% { transform: scale(1); opacity: 0.8; }
+      50% { transform: scale(1.25); opacity: 1; }
+  }
 </style>
 {% endblock %} {% block content %}
 <section class="section">
@@ -72,7 +108,16 @@ endblock %} {% block extra_css %}
       </button>
     </div>
 
-    <div class="box mb-6" style="border-top: 4px solid var(--primary)">
+    <div class="box mb-6" style="border-top: 4px solid var(--primary); overflow: hidden;">
+      <!-- Toggle Switch -->
+      <div class="field mb-4 is-flex is-align-items-center">
+          <label class="switch is-rounded">
+              <input type="checkbox" id="viewToggle">
+              <span class="slider round"></span>
+          </label>
+          <span class="ml-3 font-weight-bold" style="color: var(--primary);"><i class="fas fa-layer-group mr-2"></i> Antoine fait chier (Vue Gantt)</span>
+      </div>
+      
       <div id="calendar"></div>
     </div>
 
@@ -322,21 +367,53 @@ endblock %} {% block extra_css %}
 {% endblock %} {% block extra_js %}
 <script>
   let calendar;
+  
+  // Liste des modèles d'avions uniques pour générer les sections du Gantt
+  {% set modeles = [] %}
+  {% for avion in avions %}
+      {% if avion.modele not in modeles %}
+          {% set _ = modeles.append(avion.modele) %}
+      {% endif %}
+  {% endfor %}
+  const avionsResources = [
+    {% for mod in modeles %}
+    { id: '{{ mod }}', title: '{{ mod }}' },
+    {% endfor %}
+  ];
 
   document.addEventListener("DOMContentLoaded", function () {
     const calendarEl = document.getElementById("calendar");
 
     calendar = new FullCalendar.Calendar(calendarEl, {
+      schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives', // Retrait du filigrane
+      customButtons: {
+        nowButton: {
+          text: 'Maintenant',
+          click: function() {
+            calendar.today(); // Navigue vers la date du jour
+            const nowStr = new Date().toISOString().substring(11, 19);
+            calendar.scrollToTime(nowStr); // Centre la vue sur l'heure actuelle
+          }
+        }
+      },
       initialView: "timeGridWeek",
       headerToolbar: {
-        left: "prev,next today",
+        left: "prev,next nowButton",
         center: "title",
         right: "dayGridMonth,timeGridWeek,timeGridDay", // Permet de basculer en vue "Mois" pour bouger les vols entre les semaines
       },
       locale: "fr",
       timeZone: "UTC", // RESOLUTION BUG : Force le calendrier à traiter les heures en UTC Strict
       slotMinTime: "00:00:00", // RESOLUTION BUG : Démarre à minuit pile pour ne pas cacher les vols matinaux
-      slotLabelInterval: "00:15", // Affiche les créneaux toutes les 15 minutes
+      scrollTime: new Date().toISOString().substring(11, 19), // Focus par défaut sur l'heure actuelle
+      nowIndicator: true, // Affiche le curseur en direct
+      businessHours: {
+        daysOfWeek: [ 0, 1, 2, 3, 4, 5, 6 ], // Répéter pour tous les jours
+        startTime: '06:00', // Ouverture aéroport
+        endTime: '22:00'    // Fermeture aéroport / Couvre feu
+      },
+      slotDuration: "00:30:00", // Vue standard par demi-heure
+      slotLabelInterval: "01:00",
       allDaySlot: false,
       editable: true, // Autorise le Drag & Drop graphique
       droppable: true,
@@ -350,14 +427,120 @@ endblock %} {% block extra_css %}
         meridiem: "short",
         omitZeroMinute: false,
       },
-      events: "/admin/api/vols",
+      
+      // Configuration Spécifique Gantt (Scheduler)
+      resources: avionsResources,
+      resourceAreaWidth: '15%',
+      resourceAreaHeaderContent: 'Modèle',
+      views: {
+          resourceTimelineDay: { 
+              buttonText: 'Jour (Gantt)',
+              slotDuration: '00:15',
+              slotLabelInterval: '01:00',
+              slotLabelFormat: { hour: '2-digit', minute: '2-digit' }
+          },
+          resourceTimelineWeek: { 
+              buttonText: 'Sem. (Gantt)',
+              slotDuration: { days: 1 },
+              slotLabelInterval: { days: 1 },
+              slotLabelFormat: [
+                  { month: 'long', year: 'numeric' },
+                  { weekday: 'short', day: 'numeric' }
+              ]
+          },
+          resourceTimelineMonth: { 
+              buttonText: 'Mois (Gantt)',
+              slotDuration: { weeks: 1 },
+              slotLabelInterval: { weeks: 1 },
+              slotLabelFormat: [
+                  { month: 'long', year: 'numeric' },
+                  { week: 'short' }
+              ]
+          }
+      },
+      slotMinWidth: 18, // Très petite largeur pour permettre la compression
+      
+      events: function(fetchInfo, successCallback, failureCallback) {
+          fetch('/admin/api/vols')
+              .then(response => response.json())
+              .then(rawEvents => {
+                  const MIN_TURNAROUND_MINUTES = 45;
+                  const flightsByAircraft = {};
+                  
+                  rawEvents.forEach(event => {
+                      const aircraftId = event.extendedProps.avion;
+                      if (!flightsByAircraft[aircraftId]) {
+                          flightsByAircraft[aircraftId] = [];
+                      }
+                      flightsByAircraft[aircraftId].push(event);
+                  });
+
+                  for (const aircraftId in flightsByAircraft) {
+                      const aircraftFlights = flightsByAircraft[aircraftId];
+                      aircraftFlights.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                      for (let i = 0; i < aircraftFlights.length - 1; i++) {
+                          const end = new Date(aircraftFlights[i].end);
+                          const start = new Date(aircraftFlights[i+1].start);
+                          const turnaroundMinutes = (start - end) / (1000 * 60);
+                          
+                          if (turnaroundMinutes >= 0 && turnaroundMinutes < MIN_TURNAROUND_MINUTES) {
+                              // On marque le *prochain* vol comme ayant une rotation courte
+                              aircraftFlights[i+1].extendedProps.isTightTurnaround = true;
+                          }
+                      }
+                  }
+                  successCallback(rawEvents);
+              })
+              .catch(error => failureCallback(error));
+      },
+      
+      // Rendu HTML sur-mesure pour afficher le % de remplissage directement dans la barre du vol
+      eventContent: function(arg) {
+            const props = arg.event.extendedProps;
+            const fill = props.fill_percent || 0;
+            const avion = props.avion || 'N/A';
+
+            let fillStyle = 'background: rgba(255,255,255,0.2); color: white;';
+            if (fill > 90) fillStyle = 'background: #ff3860; color: white;';
+            else if (fill > 75) fillStyle = 'background: #ffdd57; color: #363636;';
+
+            const turnaroundWarning = props.isTightTurnaround ? `<span class="turnaround-warning" title="Rotation au sol courte"><i class="fas fa-exclamation-triangle"></i></span>` : '';
+
+            const html = `
+                <div style="height: 100%; display: flex; flex-direction: column; justify-content: center; overflow: hidden;" title="Statut : ${props.statut || 'N/A'}">
+                    <div style="font-weight: 700; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; display: flex; align-items: center;">
+                        ${turnaroundWarning}
+                        <span style="background: rgba(0,0,0,0.2); padding: 1px 4px; border-radius: 4px; margin-right: 4px; font-size: 0.7rem;">${avion}</span>
+                        ${arg.event.title}
+                    </div>
+                    <div style="font-size: 0.75rem; display: flex; justify-content: flex-end; align-items: center; margin-top: 2px;">
+                        <span style="${fillStyle} padding: 1px 5px; border-radius: 4px; font-weight: 700;" title="Taux de remplissage">${fill}%</span>
+                    </div>
+                </div>`;
+            return { html: html };
+      },
+      
+      // Application dynamique du code couleur de statut sur la bordure
+      eventDidMount: function(info) {
+          const status = info.event.extendedProps.statut;
+          let outlineColor = '#FFC72C'; // Par défaut (Jaune / Accent)
+          
+          if (status === "à l'heure") outlineColor = '#34C759'; // Vert
+          else if (status === "terminé" || status === "termine") outlineColor = '#8E8E93'; // Gris
+          else if (status === "retardé") outlineColor = '#FF3B30'; // Rouge
+          else if (status === "annulé") outlineColor = '#1C1C1E'; // Noir / Très foncé
+          else if (status === "embarquement" || status === "en vol" || status === "debarquement") outlineColor = '#32ADE6'; // Bleu clair
+          
+          info.el.style.borderColor = outlineColor;
+      },
 
       // Callbacks Drag & Drop et Redimensionnement
       eventDrop: function (info) {
-        updateVolTime(info.event);
+        updateVolTime(info);
       },
       eventResize: function (info) {
-        updateVolTime(info.event);
+        updateVolTime(info);
       },
 
       // Clic sur un vol du calendrier -> Ouvre l'édition
@@ -445,16 +628,54 @@ endblock %} {% block extra_css %}
             btn.classList.remove("is-loading");
           });
       });
+      
+    // Gestion du basculement Antoine fait chier (Calendrier <-> Gantt)
+    const viewToggle = document.getElementById('viewToggle');
+    if (viewToggle) {
+        viewToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                calendar.setOption('headerToolbar', {
+                    left: "prev,next nowButton",
+                    center: "title",
+                    right: "resourceTimelineMonth,resourceTimelineWeek,resourceTimelineDay"
+                });
+                calendar.changeView('resourceTimelineWeek');
+                const nowStr = new Date().toISOString().substring(11, 19);
+                calendar.scrollToTime(nowStr);
+            } else {
+                calendar.setOption('headerToolbar', {
+                    left: "prev,next nowButton",
+                    center: "title",
+                    right: "dayGridMonth,timeGridWeek,timeGridDay"
+                });
+                calendar.changeView('timeGridWeek');
+                const nowStr = new Date().toISOString().substring(11, 19);
+                calendar.scrollToTime(nowStr);
+            }
+        });
+    }
   });
 
   // Envoi asynchrone des modifications d'horaires (Drag & Drop)
-  function updateVolTime(event) {
+  function updateVolTime(info) {
+    const event = info.event;
+    
+    // Bloquer le drag & drop entre différents modèles d'avion
+    if (info.oldResource && event.getResources()[0] && event.getResources()[0].id !== info.oldResource.id) {
+        alert("Changement de modèle par glisser-déposer non autorisé. Veuillez éditer le vol pour changer d'appareil.");
+        info.revert();
+        return;
+    }
+
+    const avionId = event.extendedProps.avion;
+
     fetch(`/admin/api/vols/${event.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         start: event.start ? event.start.toISOString().slice(0, 19) : null,
         end: event.end ? event.end.toISOString().slice(0, 19) : null,
+        avion: avionId
       }),
     })
       .then((r) => {

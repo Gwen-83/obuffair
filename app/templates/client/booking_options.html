@@ -10,6 +10,7 @@
     <div class="columns is-variable is-6">
         
         <div class="column is-6" style="display: flex; flex-direction: column;">
+            {% set session_opts = session.get('options', {}).get('passagers', []) %}
             <div class="mb-4">
                 <h3 class="title is-4 mb-2" style="color: var(--primary);">
                     <span id="aircraft-model-display"></span>Choix des sièges
@@ -68,6 +69,10 @@
             
             <div class="passenger-cards-container {% if nb_passagers > 4 %}scrollable-passengers{% endif %}">
                 {% for p in passengers %}
+                {% set p_opt = session_opts[p.index] if session_opts|length > p.index else {} %}
+                {% set bag_val = p_opt.get('bagages', '0').split('_')[0] if p_opt.get('bagages') else '0' %}
+                {% set rep_val = p_opt.get('repas', 'standard') %}
+                
                 <div class="flighty-card passenger-option-card mb-4 p-5" id="pass-card-{{ p.index }}" onclick="selectPassenger({{ p.num }})">
                     <div class="is-flex is-justify-content-space-between is-align-items-flex-start mb-2">
                         <div>
@@ -80,12 +85,13 @@
                     <input type="hidden" name="classe_aller_{{ p.num }}" id="input_classe_aller_{{ p.num }}" value="{{ p.classe_aller }}">
                     <input type="hidden" name="classe_retour_{{ p.num }}" id="input_classe_retour_{{ p.num }}" value="{{ p.classe_retour }}">
                     <input type="hidden" name="prix_upgrade_{{ p.index }}" id="prix_upgrade_{{ p.index }}" value="0">
+                    <input type="hidden" id="init_repas_{{ p.num }}" value="{{ rep_val }}">
 
                     {% for leg in aller_legs %}
-                    <input type="hidden" name="siege_aller_{{ loop.index0 }}_{{ p.num }}" id="siege_aller_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="aller" data-idx="{{ loop.index0 }}" value="">
+                    <input type="hidden" name="siege_aller_{{ loop.index0 }}_{{ p.num }}" id="siege_aller_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="aller" data-idx="{{ loop.index0 }}" value="{{ p_opt.get('sieges_aller', [])[loop.index0] if p_opt.get('sieges_aller', [])|length > loop.index0 else '' }}">
                     {% endfor %}
                     {% for leg in retour_legs %}
-                    <input type="hidden" name="siege_retour_{{ loop.index0 }}_{{ p.num }}" id="siege_retour_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="retour" data-idx="{{ loop.index0 }}" value="">
+                    <input type="hidden" name="siege_retour_{{ loop.index0 }}_{{ p.num }}" id="siege_retour_{{ loop.index0 }}_{{ p.num }}" class="seat-input" data-pass="{{ p.num }}" data-type="retour" data-idx="{{ loop.index0 }}" value="{{ p_opt.get('sieges_retour', [])[loop.index0] if p_opt.get('sieges_retour', [])|length > loop.index0 else '' }}">
                     {% endfor %}
 
                     <div class="passenger-options mt-4 pt-4" style="border-top: 1px solid rgba(0,0,0,0.05);" onclick="event.stopPropagation()">
@@ -95,10 +101,10 @@
                             </span>
                             <div class="is-flex is-align-items-center" id="bagage_controls_{{ p.num }}" style="flex-shrink: 0;">
                                 <button type="button" class="button is-small is-rounded is-white shadow-sm" onclick="event.stopPropagation(); updateBagages({{ p.num }}, -1)" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; padding: 0;">-</button>
-                                <span class="has-text-weight-bold is-size-7 mx-3" id="bagages_count_{{ p.num }}">0</span>
+                                <span class="has-text-weight-bold is-size-7 mx-3" id="bagages_count_{{ p.num }}">{{ bag_val }}</span>
                                 <button type="button" class="button is-small is-rounded is-white shadow-sm" onclick="event.stopPropagation(); updateBagages({{ p.num }}, 1)" style="border: 1px solid #E5E5EA; width: 24px; height: 24px; padding: 0;">+</button>
                             </div>
-                            <input type="hidden" name="bagages_{{ p.num }}" id="input_bagages_{{ p.num }}" value="0">
+                            <input type="hidden" name="bagages_{{ p.num }}" id="input_bagages_{{ p.num }}" value="{{ bag_val }}">
                         </div>
                         <div class="is-flex is-justify-content-space-between is-align-items-center">
                             <span class="is-size-7 font-weight-bold"><i class="fas fa-utensils mr-2 option-icon"></i> Repas à bord</span>
@@ -113,9 +119,20 @@
                 {% endfor %}
             </div>
             
-            <div class="is-flex is-justify-content-space-between is-align-items-center mt-5 mb-4 p-5" style="background: white; box-shadow: var(--shadow-soft); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
-                <span class="has-text-weight-bold is-size-5" style="letter-spacing: -0.5px;">Total à payer</span>
-                <span class="has-text-weight-bold is-size-3" style="color: var(--primary); letter-spacing: -1px;" id="grand_total_display">{{ "%.2f"|format((session.get("vol_aller", {}).get("prix", 0) + session.get("vol_retour", {}).get("prix", 0)) * nb_passagers) }} €</span>
+            <div class="mt-5">
+                {% if session.get('modifying_pnr') %}
+                <div id="modificationWarning" class="notification is-warning is-light mb-4 is-size-7" style="display: none; border-radius: 8px;">
+                    <i class="fas fa-info-circle mr-1"></i> O'Buffair n'effectue pas de remboursement sur les options moins chères modifiées après l'achat initial.
+                </div>
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-2 px-3" id="originalTotalRow">
+                    <span class="has-text-grey font-weight-bold is-size-6">Montant original</span>
+                    <span class="has-text-weight-bold is-size-6">{{ "%.2f"|format(session.get('original_total', 0)) }} €</span>
+                </div>
+                {% endif %}
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-4 p-5" style="background: white; box-shadow: var(--shadow-soft); border-radius: 16px; border: 1px solid rgba(0,0,0,0.02);">
+                    <span class="has-text-weight-bold is-size-5" style="letter-spacing: -0.5px;">{% if session.get('modifying_pnr') %}Reste à payer{% else %}Total à payer{% endif %}</span>
+                    <span class="has-text-weight-bold is-size-3" style="color: {% if session.get('modifying_pnr') %}#34C759{% else %}var(--primary){% endif %}; letter-spacing: -1px;" id="grand_total_display">...</span>
+                </div>
             </div>
             
             <div class="has-text-right mt-2">
@@ -162,10 +179,13 @@
 </div>
 
 <div id="bookingOptionsData"
-     data-passengers="{{ passengers | tojson | forceescape }}"
-     data-base-prices-aller="{{ {'Eco': session.get('vol_aller', {}).get('prix_eco', 0), 'Business': session.get('vol_aller', {}).get('prix_biz', 0), 'First': session.get('vol_aller', {}).get('prix_first', 0)} | tojson | forceescape }}"
-     data-base-prices-retour="{{ {'Eco': session.get('vol_retour', {}).get('prix_eco', 0), 'Business': session.get('vol_retour', {}).get('prix_biz', 0), 'First': session.get('vol_retour', {}).get('prix_first', 0)} | tojson | forceescape }}"
-     data-current-leg-type='{% if aller_legs %}aller{% else %}retour{% endif %}'>
+     data-passengers='{{ passengers | tojson | safe }}'
+     data-base-prices-aller='{"Eco": {{ session.get("vol_aller", {}).get("prix_eco", 0) }}, "Business": {{ session.get("vol_aller", {}).get("prix_biz", 0) }}, "First": {{ session.get("vol_aller", {}).get("prix_first", 0) }}}'
+     data-base-prices-retour='{"Eco": {{ session.get("vol_retour", {}).get("prix_eco", 0) }}, "Business": {{ session.get("vol_retour", {}).get("prix_biz", 0) }}, "First": {{ session.get("vol_retour", {}).get("prix_first", 0) }}}'
+     data-current-leg-type='{% if aller_legs %}aller{% else %}retour{% endif %}'
+     data-is-modification='{{ "true" if session.get("modifying_pnr") else "false" }}'
+     data-original-total='{{ session.get("original_total", 0) }}'
+     data-highlight="{{ highlight_option or '' }}">
 </div>
 
 <script src="{{ url_for('static', filename='js/booking_options.js') }}"></script>

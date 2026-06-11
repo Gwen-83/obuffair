@@ -20,6 +20,28 @@
 .select select { border-radius: 12px; border: 1px solid #E5E5EA; font-weight: 600; color: var(--flighty-text); height: 2.8em; box-shadow: none !important;}
 .select select:focus { border-color: var(--primary); }
 
+/* Inputs de recherche centralisés */
+.flighty-search-input {
+    border-radius: 12px; 
+    height: 2.8em; 
+    font-weight: 600; 
+    box-shadow: none; 
+    border: 1px solid #E5E5EA;
+}
+
+/* Animation: Aucun retour disponible */
+@keyframes shakeWarning {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-5px); border-color: #ff3860; color: #ff3860; }
+    40%, 80% { transform: translateX(5px); border-color: #ff3860; color: #ff3860; }
+}
+
+.shake-warning {
+    animation: shakeWarning 0.5s ease-in-out;
+    border-color: #ff3860 !important;
+    color: #ff3860 !important;
+}
+
 /* Calendrier Flighty Style (iOS native look) */
 .flighty-calendar-card { 
     background: white; border-radius: var(--radius-xl); 
@@ -50,7 +72,7 @@
 }
 
 /* État "Dans la plage" (Pilule continue) */
-.day.in-range { color: var(--primary); }
+.day.in-range:not(.disabled) { color: var(--primary); }
 .day.in-range::before, .day.range-start::before, .day.range-end::before {
     content: ''; position: absolute; top: 0; bottom: 0; left: -4px; right: -4px;
     background: rgba(0, 42, 92, 0.08); z-index: -2;

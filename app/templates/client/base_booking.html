@@ -10,9 +10,22 @@
 {% block content %}
     <div class="booking-stepper">
         <div class="stepper-container">
+            {% set is_modification = session.get('modifying_pnr') is not none %}
+
+            {% if is_modification %}
+            <span class="step" style="cursor: not-allowed; color: #8E8E93; text-decoration: none;">
+                <div class="step-icon" style="background-color: #8E8E93; border-color: #8E8E93; color: white;"><i class="fas fa-search"></i></div> Recherche
+            </span>
+            <div class="step-line" style="background-color: #8E8E93;"></div>
+            <span class="step" style="cursor: not-allowed; color: #8E8E93; text-decoration: none;">
+                <div class="step-icon" style="background-color: #8E8E93; border-color: #8E8E93; color: white;"><i class="fas fa-plane"></i></div> Vols
+            </span>
+            {% else %}
             <a href="{{ url_for('client.booking') }}" class="step {% if step >= 1 %}is-active{% endif %}" style="text-decoration: none;"><div class="step-icon"><i class="fas fa-search"></i></div> Recherche</a>
             <div class="step-line {% if step >= 2 %}is-active{% endif %}"></div>
             <a href="{{ url_for('client.booking_flights') }}" class="step {% if step >= 2 %}is-active{% endif %}" style="text-decoration: none;"><div class="step-icon">1</div> Vols</a>
+            {% endif %}
+            
             <div class="step-line {% if step >= 3 %}is-active{% endif %}"></div>
             <a href="{{ url_for('client.booking_passengers') }}" class="step {% if step >= 3 %}is-active{% endif %}" style="text-decoration: none;"><div class="step-icon">2</div> Passagers</a>
             <div class="step-line {% if step >= 4 %}is-active{% endif %}"></div>
@@ -23,10 +36,19 @@
             {% set search_params = session.get('search_params', {}) %}
             {% set nb_passagers = search_params.get('passagers', 1) | int %}
             {% set cart_total = session.get('total_panier', 0) | float %}
+            {% set original_total = session.get('original_total', 0) | float %}
 
             <div class="cart-total">
                 <div class="cart-total-label">Total ({{ nb_passagers }} passager{% if nb_passagers > 1 %}s{% endif %})</div>
-                <div class="cart-total-price">{{ "%.2f"|format(cart_total) }} €</div>
+                {% if is_modification %}
+                    {% if cart_total < original_total %}
+                        <div class="cart-total-price">0.00 €</div>
+                    {% else %}
+                        <div class="cart-total-price">+ {{ "%.2f"|format(cart_total - original_total) }} €</div>
+                    {% endif %}
+                {% else %}
+                    <div class="cart-total-price">{{ "%.2f"|format(cart_total) }} €</div>
+                {% endif %}
             </div>
         </div>
     </div>
