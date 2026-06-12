@@ -5,7 +5,8 @@ Gère le profil, modifications de réservation et gestion de compte.
 
 from functools import wraps
 from flask import Blueprint, render_template, request, session, url_for, redirect, flash, current_app, make_response, jsonify
-from app import db
+from flask_mail import Message
+from app import db, mail
 from sqlalchemy import func, text
 from sqlalchemy.orm import joinedload
 from app.model import Aeroport, Vols, User, Support, Reservation, Passager, Billet
@@ -253,6 +254,7 @@ def accueil():
 
     loyalty_info = None
     next_flight = None
+    prochains_vols_data = []
     user_id = session.get('user_id')
     
     if user_id:
@@ -269,7 +271,6 @@ def accueil():
             }
             
             prochains_billets = client_connecte.get_prochains_vols()
-            prochains_vols_data = []
             vols_vus = set()
             now_minus_2h = datetime.utcnow() - timedelta(hours=2)
             
@@ -1533,3 +1534,53 @@ def init_modification(pnr):
     if request.args.get('target') == 'classe':
         return redirect(url_for('client.booking_flights'))
     return redirect(url_for('client.booking_options'))
+
+@client_bp.route('/annuler-reservation/<pnr>', methods=['POST'])
+@login_required
+def annuler_reservation(pnr):
+    """Annuler une réservation et tenter d'envoyer un e-mail de confirmation"""
+    user_id = session.get('user_id')
+    
+    # 1. Récupération de la réservation
+    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+    client_connecte = db.session.get(User, user_id)
+
+    # 2. Vérification du statut actuel
+    if reservation.statut == 'Annulee':
+        flash("Cette réservation est déjà annulée.", "warning")
+        return redirect(url_for('client.mes_reservations'))
+
+    try:
+        # 3. Mise à jour du statut en BDD ET COMMIT IMMÉDIAT
+        reservation.statut = 'Annulee'
+        db.session.commit()
+        
+        # 4. Préparation et envoi de l'e-mail dans un try/except séparé
+        try:
+            msg = Message(
+                subject=f"O'Buffair - Confirmation d'annulation de votre vol (PNR: {reservation.pnr})",
+                recipients=[client_connecte.email],
+                sender=current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@obuffair.com')
+            )
+            
+            # On passe 'now' au template pour éviter une potentielle erreur Jinja
+            msg.html = render_template(
+                'emails/annulation_vol.html', 
+                client=client_connecte, 
+                reservation=reservation,
+                now=datetime.now()
+            )
+            
+            mail.send(msg)
+            flash(f"Votre réservation {reservation.pnr} a bien été annulée. Un e-mail de confirmation vous a été envoyé.", "success")
+            
+        except Exception as mail_error:
+            print(f"L'annulation a réussi, mais l'envoi d'email a échoué (normal en local) : {mail_error}")
+            flash(f"Votre réservation {reservation.pnr} a bien été annulée (L'envoi de l'e-mail a échoué car vous êtes en local).", "success")
+
+    except Exception as db_error:
+        db.session.rollback()
+        print(f"Erreur base de données lors de l'annulation : {db_error}")
+        flash("Une erreur technique est survenue lors de l'annulation.", "danger")
+
+    return redirect(url_for('client.mes_reservations'))

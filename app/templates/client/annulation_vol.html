@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Annulation de vol O'Buffair</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f7fa;
+        margin: 0;
+        padding: 0;
+        color: #333333;
+      }
+      .container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+      }
+      .header {
+        background-color: #1e3a8a; /* Bleu institutionnel (à adapter selon votre charte) */
+        padding: 30px 20px;
+        text-align: center;
+      }
+      .header h1 {
+        color: #ffffff;
+        margin: 0;
+        font-size: 24px;
+      }
+      .content {
+        padding: 30px;
+        line-height: 1.6;
+      }
+      .pnr-box {
+        background-color: #f8fafc;
+        border-left: 4px solid #ef4444; /* Rouge pour l'annulation */
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 0 4px 4px 0;
+      }
+      .pnr-box strong {
+        font-size: 18px;
+        color: #0f172a;
+      }
+      .footer {
+        background-color: #f1f5f9;
+        padding: 20px;
+        text-align: center;
+        font-size: 12px;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+      }
+      .btn-support {
+        display: inline-block;
+        background-color: #1e3a8a;
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        margin-top: 15px;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Confirmation d'annulation</h1>
+      </div>
+      <div class="content">
+        <p>Bonjour <strong>{{ client.prenom }} {{ client.nom }}</strong>,</p>
+
+        <p>
+          Nous vous confirmons avoir bien pris en compte votre demande
+          d'annulation concernant votre prochain voyage avec O'Buffair.
+        </p>
+
+        <div class="pnr-box">
+          Référence de réservation (PNR) : <br />
+          <strong>{{ reservation.pnr }}</strong>
+        </div>
+
+        <p>
+          Votre réservation a été définitivement annulée dans notre système. Si
+          cette annulation donne droit à un remboursement ou à un avoir selon
+          les conditions tarifaires de votre billet, notre service financier
+          vous contactera sous 5 jours ouvrés.
+        </p>
+
+        <p>
+          Si vous avez annulé par erreur ou si vous avez des questions
+          concernant le remboursement, n'hésitez pas à contacter notre support
+          client.
+        </p>
+
+        <center>
+          <a
+            href="{{ url_for('client.support', _external=True) }}"
+            class="btn-support"
+            >Contacter le support</a
+          >
+        </center>
+      </div>
+      <div class="footer">
+        &copy; {{ now.year if now else '2026' }} O'Buffair. Tous droits
+        réservés.<br />
+        Ceci est un e-mail automatique, merci de ne pas y répondre directement.
+      </div>
+    </div>
+  </body>
+</html>

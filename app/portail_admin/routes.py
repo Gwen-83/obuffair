@@ -3,7 +3,7 @@ Routes admin : CRUD vols/avions/aéroports, configuration tarifaire, dashboards 
 Gère aussi les droits d'accès et logs d'audit.
 """
 
-from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, flash, abort, current_app
 from app.portail_auth.decorators import admin_required
 from app import db
 from app.model import Avion, Vols, Support, Aeroport, User
@@ -12,6 +12,7 @@ from sqlalchemy import text
 from types import SimpleNamespace
 from datetime import datetime
 from app.algos.yield_management import calculer_prix
+from app.portail_admin.emails_utils import send_flight_cancellation_email
 
 _aeroports_schema_verified = False
 
@@ -655,40 +656,53 @@ def count_reservations_vol(id_vol):
     """), {"id_vol": id_vol}).fetchone()
     return jsonify({"nb_reservations": row[0] if row else 0})
 
-
 @admin_bp.route('/api/vols/<int:id_vol>', methods=['DELETE'])
 @admin_required
 def delete_vol(id_vol):
-    """API : Supprimer un vol et toutes ses réservations/billets associés"""
-    vol = Vols.query.get(id_vol)
+    """API : Supprimer un vol, annuler ses réservations associées et notifier les clients"""
+    vol = db.session.get(Vols, id_vol)
     if not vol:
         return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
+        
     try:
-        # 1. Récupère les id_reservation liés aux billets de ce vol
-        resa_ids = db.session.execute(text("""
-            SELECT DISTINCT b.id_reservation
+        # 1. Récupérer les informations des clients impactés AVANT la suppression
+        # Utilisation de .mappings() pour accéder aux colonnes par leur nom comme un dictionnaire
+        impacted_data = db.session.execute(text("""
+            SELECT DISTINCT c.email, c.prenom, c.nom, r.pnr, r.id_reservation
             FROM billets b
-            WHERE b.id_vol = :id_vol
-        """), {"id_vol": id_vol}).fetchall()
-        resa_ids = [r[0] for r in resa_ids]
+            JOIN reservations r ON b.id_reservation = r.id_reservation
+            JOIN clients c ON r.id_client = c.id_client
+            WHERE b.id_vol = :id_vol AND r.statut != 'Annulee'
+        """), {"id_vol": id_vol}).mappings().fetchall()
 
-        # 2. Supprime les billets du vol
-        db.session.execute(text("DELETE FROM billets WHERE id_vol = :id_vol"), {"id_vol": id_vol})
+        resa_ids = [row['id_reservation'] for row in impacted_data]
 
-        # 3. Supprime les réservations qui n'ont plus aucun billet
+        # 2. Envoyer les emails de notification avec la même méthode que l'auth
+        for data in impacted_data:
+            send_flight_cancellation_email(
+                user_email=data['email'],
+                prenom=data['prenom'],
+                nom=data['nom'],
+                pnr=data['pnr'],
+                app=current_app
+            )
+
+        # 3. Supprimer les données en base si des réservations sont touchées
         if resa_ids:
-            db.session.execute(text("""
-                DELETE FROM reservations
-                WHERE id_reservation IN :ids
-                  AND id_reservation NOT IN (
-                      SELECT DISTINCT id_reservation FROM billets
-                  )
-            """), {"ids": tuple(resa_ids) if len(resa_ids) > 1 else (resa_ids[0],)})
+            # Astuce SQLAlchemy : un IN nécessite un tuple. Si 1 seul élément, on force la virgule (id,)
+            resa_tuple = tuple(resa_ids) if len(resa_ids) > 1 else (resa_ids[0],)
+            
+            # On supprime TOUS les billets liés à ces réservations
+            db.session.execute(text("DELETE FROM billets WHERE id_reservation IN :ids"), {"ids": resa_tuple})
+            
+            # On supprime les réservations
+            db.session.execute(text("DELETE FROM reservations WHERE id_reservation IN :ids"), {"ids": resa_tuple})
 
-        # 4. Supprime le vol lui-même
+        # 4. Enfin, on supprime le vol
         db.session.delete(vol)
         db.session.commit()
         return jsonify({'success': True})
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
