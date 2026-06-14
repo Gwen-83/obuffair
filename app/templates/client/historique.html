@@ -39,6 +39,7 @@
                 </div>
             </div>
 
+            {% if resa.statut != 'Annulee' %}
             <div class="p-5" style="background-color: white; opacity: 0.75; filter: grayscale(50%);">
                 <div class="flighty-card mb-4 p-0" style="border-radius: 12px; box-shadow: none; border: 1px solid rgba(0, 42, 92, 0.08); background: #F8FAFC; overflow: hidden;">
                     <div class="p-4">
@@ -128,6 +129,7 @@
                     </div>
                 </div>
             </div>
+            {% endif %}
         </div>
         {% else %}
         <div class="flighty-card has-text-centered py-6">

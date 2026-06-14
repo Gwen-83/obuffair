@@ -136,14 +136,33 @@
                     <h3 class="title is-5 m-0" style="color: #FF3B30;"><i class="fas fa-exclamation-triangle mr-2"></i> Annuler la réservation</h3>
                     <p class="is-size-7 has-text-grey mt-2">Cette action est irréversible. Veuillez consulter les conditions tarifaires avant de continuer.</p>
                 </div>
-                <form action="{{ url_for('client.annuler_reservation', pnr=reservation.pnr) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible.');">
-                    <button type="submit" class="button is-danger is-outlined is-rounded font-weight-bold">
-                        <i class="fas fa-times-circle mr-2"></i> Annuler la réservation
-                    </button>
-                </form>
+                <button type="button" class="button is-danger is-outlined is-rounded font-weight-bold" onclick="document.getElementById('cancelModal').classList.add('is-active');">
+                    <i class="fas fa-times-circle mr-2"></i> Annuler la réservation
+                </button>
             </div>
         </div>
 
-    </div>
+    </div>  
 </section>
+
+<!-- Modal d'annulation -->
+<div id="cancelModal" class="modal">
+    <div class="modal-background" onclick="document.getElementById('cancelModal').classList.remove('is-active');"></div>
+    <div class="modal-card" style="border-radius: 12px; overflow: hidden;">
+        <header class="modal-card-head" style="background-color: #FF3B30; border-bottom: none;">
+            <p class="modal-card-title has-text-white font-weight-bold is-size-5"><i class="fas fa-exclamation-triangle mr-2"></i>Confirmer l'annulation</p>
+            <button class="delete" aria-label="close" onclick="document.getElementById('cancelModal').classList.remove('is-active');"></button>
+        </header>
+        <section class="modal-card-body">
+            <p class="mb-3">Êtes-vous sûr de vouloir annuler la réservation <strong>{{ reservation.pnr }}</strong> ?</p>
+            <p class="has-text-danger is-size-7 font-weight-bold">Cette action est irréversible.</p>
+        </section>
+        <footer class="modal-card-foot" style="justify-content: flex-end; background-color: #F8FAFC; border-top: 1px solid rgba(0,0,0,0.05);">
+            <button class="button is-light is-rounded font-weight-bold" onclick="document.getElementById('cancelModal').classList.remove('is-active');">Annuler</button>
+            <form action="{{ url_for('client.annuler_reservation', pnr=reservation.pnr) }}" method="POST" style="margin: 0;">
+                <button type="submit" class="button is-danger is-rounded font-weight-bold">Confirmer l'annulation</button>
+            </form>
+        </footer>
+    </div>
+</div>
 {% endblock %}
