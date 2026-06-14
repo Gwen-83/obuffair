@@ -10,7 +10,7 @@ from app.model import Avion, Vols, Support, Aeroport, User
 from app.portail_admin.forms import FormAjouterAvion, FormAeroport
 from sqlalchemy import text
 from types import SimpleNamespace
-from datetime import datetime
+from datetime import datetime, timezone
 from app.algos.yield_management import calculer_prix
 from app.portail_admin.emails_utils import send_flight_cancellation_email
 
@@ -534,13 +534,15 @@ def create_vol():
     """API : Créer un nouveau vol"""
     data = request.json
     try:
-        def clean_iso_date(date_str):
-            if not date_str:
-                return None
-            return date_str.replace('Z', '').split('.')[0]
+        def parse_date_to_utc(date_str):
+            if not date_str: return None
+            dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            if dt.tzinfo is not None:
+                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
         
-        start_time = datetime.fromisoformat(clean_iso_date(data['start']))
-        end_time = datetime.fromisoformat(clean_iso_date(data['end']))
+        start_time = parse_date_to_utc(data['start'])
+        end_time = parse_date_to_utc(data['end'])
         avion_immat = data['avion']
         
         # Pas de chevauchement d'horaire
@@ -592,19 +594,21 @@ def update_vol(id_vol):
         return jsonify({'success': False, 'message': 'Vol introuvable'}), 404
         
     try:
-        def clean_iso_date(date_str):
-            if not date_str:
-                return None
-            return date_str.replace('Z', '').split('.')[0]
-        
+        def parse_date_to_utc(date_str):
+            if not date_str: return None
+            dt = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            if dt.tzinfo is not None:
+                dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+            return dt
+            
         nouvel_avion = data.get('avion', vol.immatriculation_avion)
         nouveau_start = vol.date_heure_dep_utc
         nouveau_end = vol.date_heure_arr_utc
         
         if 'start' in data and data['start']:
-            nouveau_start = datetime.fromisoformat(clean_iso_date(data['start']))
+            nouveau_start = parse_date_to_utc(data['start'])
         if 'end' in data and data['end']:
-            nouveau_end = datetime.fromisoformat(clean_iso_date(data['end']))
+            nouveau_end = parse_date_to_utc(data['end'])
         
         # Vérification des conflits avec l'ORM
         conflits = Vols.query.filter(
@@ -688,21 +692,3 @@ def delete_vol(id_vol):
             )
 
         # 3. Supprimer les données en base si des réservations sont touchées
-        if resa_ids:
-            # Astuce SQLAlchemy : un IN nécessite un tuple. Si 1 seul élément, on force la virgule (id,)
-            resa_tuple = tuple(resa_ids) if len(resa_ids) > 1 else (resa_ids[0],)
-            
-            # On supprime TOUS les billets liés à ces réservations
-            db.session.execute(text("DELETE FROM billets WHERE id_reservation IN :ids"), {"ids": resa_tuple})
-            
-            # On supprime les réservations
-            db.session.execute(text("DELETE FROM reservations WHERE id_reservation IN :ids"), {"ids": resa_tuple})
-
-        # 4. Enfin, on supprime le vol
-        db.session.delete(vol)
-        db.session.commit()
-        return jsonify({'success': True})
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'message': str(e)}), 400
