@@ -18,27 +18,28 @@
         </div>
         
         {% for resa in reservations %}
-        <div class="flighty-card p-0 mb-6" style="border-radius: 16px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); background: white;">
-            <!-- En-tête de la réservation -->
-            <div class="is-flex is-justify-content-space-between is-align-items-center p-4" style="background-color: rgba(0, 42, 92, 0.03); border-bottom: 1px solid rgba(0, 42, 92, 0.08);">
+        <div class="flighty-card p-0 mb-6" style="border-radius: 16px; overflow: hidden; border: 1px solid {% if resa.statut == 'Annulee' %}rgba(255, 59, 48, 0.4){% else %}rgba(0,0,0,0.05){% endif %}; box-shadow: 0 4px 15px rgba(0,0,0,0.02); background: white;">
+            
+            <div class="is-flex is-justify-content-space-between is-align-items-center p-4" style="background-color: {% if resa.statut == 'Annulee' %}rgba(255, 59, 48, 0.05){% else %}rgba(0, 42, 92, 0.03){% endif %}; border-bottom: 1px solid {% if resa.statut == 'Annulee' %}rgba(255, 59, 48, 0.15){% else %}rgba(0, 42, 92, 0.08){% endif %};">
                 <div>
                     <div class="is-flex is-align-items-center mb-1">
-                        <h3 class="title is-5 m-0 mr-3" style="color: var(--primary);">Réservation</h3>
-                        <span class="tag" style="background-color: white; color: var(--primary); font-family: monospace; font-size: 1rem; font-weight: 700; border: 1px solid rgba(0, 42, 92, 0.15); box-shadow: 0 2px 4px rgba(0, 42, 92, 0.05);">{{ resa.pnr }}</span>
+                        <h3 class="title is-5 m-0 mr-3" style="color: {% if resa.statut == 'Annulee' %}#FF3B30{% else %}var(--primary){% endif %};">
+                            {% if resa.statut == 'Annulee' %}<i class="fas fa-ban mr-2"></i>{% endif %}Réservation
+                        </h3>
+                        <span class="tag" style="background-color: white; color: {% if resa.statut == 'Annulee' %}#FF3B30{% else %}var(--primary){% endif %}; font-family: monospace; font-size: 1rem; font-weight: 700; border: 1px solid {% if resa.statut == 'Annulee' %}rgba(255, 59, 48, 0.3){% else %}rgba(0, 42, 92, 0.15){% endif %}; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);">{{ resa.pnr }}</span>
                     </div>
                     <p class="is-size-7 has-text-grey mt-2 is-flex is-align-items-center">
                         <i class="fas fa-calendar-check mr-2"></i> Effectuée le {{ resa.date_resa }} 
                         <span class="mx-3" style="color: rgba(0, 42, 92, 0.15);">|</span> 
-                        Statut : <span class="tag is-light {% if resa.statut == 'Confirmee' %}is-success{% else %}is-warning{% endif %} is-rounded ml-2" style="font-size: 0.7rem; font-weight: 600;">{{ resa.statut }}</span>
+                        Statut : <span class="tag is-light {% if resa.statut == 'Confirmee' %}is-success{% elif resa.statut == 'Annulee' %}is-danger{% else %}is-warning{% endif %} is-rounded ml-2" style="font-size: 0.7rem; font-weight: 600;">{{ resa.statut }}</span>
                     </p>
                 </div>
-                <a href="{{ url_for('client.gerer_reservation', pnr=resa.pnr) }}" class="button is-primary is-outlined is-rounded font-weight-bold is-small">
-                    Gérer la réservation
+                <a href="{{ url_for('client.gerer_reservation', pnr=resa.pnr) }}" class="button {% if resa.statut == 'Annulee' %}is-danger is-light{% else %}is-primary is-outlined{% endif %} is-rounded font-weight-bold is-small">
+                    {% if resa.statut == 'Annulee' %}Voir l'historique{% else %}Gérer la réservation{% endif %}
                 </a>
             </div>
 
-            <!-- Contenu de la réservation -->
-            <div class="p-5" style="background-color: white;">
+            <div class="p-5" style="background-color: white; {% if resa.statut == 'Annulee' %}opacity: 0.55; filter: grayscale(100%);{% endif %}">
                 <div class="flighty-card mb-4 p-0" style="border-radius: 12px; box-shadow: none; border: 1px solid rgba(0, 42, 92, 0.08); background: #F8FAFC; overflow: hidden;">
                     <div class="p-4">
                         {% set aller_vols = resa.vols | selectattr('journey_type', 'equalto', 'aller') | list %}
@@ -63,12 +64,13 @@
                                 </div>
                                 <div class="is-flex is-align-items-center">
                                     <span class="is-size-7 has-text-grey font-weight-bold mr-3"><i class="fas fa-users mr-1"></i> {{ dep_vol.passagers|length }} passager(s)</span>
+                                    {% if resa.statut != 'Annulee' %}
                                     <div class="tag is-light font-weight-bold {% if dep_vol.status_class == 'status-ontime' %}is-success{% else %}is-warning{% endif %} is-small">{{ dep_vol.status_text }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                             
                             <div class="is-flex is-align-items-center is-justify-content-space-between" style="width: 100%; overflow-x: auto; padding-bottom: 0.5rem;">
-                                <!-- Départ -->
                                 <div class="has-text-centered" style="min-width: 70px;">
                                     <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ dep_vol.dep_time }}</div>
                                     <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ dep_vol.dep_iata }}</div>
@@ -83,7 +85,6 @@
                                 </div>
 
                                 {% if not loop.last %}
-                                <!-- Escale -->
                                 <div class="has-text-centered" style="min-width: 110px;">
                                     <div class="is-flex is-justify-content-center is-align-items-center" style="color: var(--primary); font-weight: 700; gap: 6px;">
                                         <span class="is-size-5">{{ journey[i].arr_time }}</span>
@@ -96,7 +97,6 @@
                                 {% endif %}
                                 {% endfor %}
 
-                                <!-- Arrivée -->
                                 <div class="has-text-centered" style="min-width: 70px;">
                                     <div class="is-size-4 has-text-weight-bold" style="color: var(--primary);">{{ arr_vol.arr_time }}</div>
                                     <div class="is-size-3 mt-1" style="font-weight: 800; letter-spacing: -1px; color: var(--flighty-text);">{{ arr_vol.arr_iata }}</div>
@@ -114,7 +114,6 @@
                     </button>
                 </div>
 
-                <!-- Détails Passagers -->
                 <div class="boarding-passes-wrapper" id="details-{{ resa.id_reservation }}" style="background-color: rgba(0, 42, 92, 0.02); padding: 1.5rem; margin-top: 0.5rem; border-radius: 12px; border: 1px solid rgba(0, 42, 92, 0.08);">
                     <h4 class="title is-6 mb-4" style="color: var(--primary); border-bottom: 1px solid rgba(0, 42, 92, 0.08); padding-bottom: 0.75rem;">
                         <i class="fas fa-users mr-2"></i> Informations Passagers
