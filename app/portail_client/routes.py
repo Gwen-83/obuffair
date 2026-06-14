@@ -18,7 +18,7 @@ from app.algos.booking import (
     create_reservation_in_db, update_reservation_in_db, 
     group_flights_by_journey
 )
-import string, random
+import random
 import re
 import os
 import requests
@@ -1377,7 +1377,7 @@ def mes_reservations():
             
     return render_template('client/mes_reservations.html', reservations=reservations_data)
 
-@client_bp.route('/gerer-reservation/<pnr>', methods=['GET', 'POST'])
+@client_bp.route('/gerer-reservation/<pnr>', methods=['GET'])
 @login_required
 def gerer_reservation(pnr):
     """Gérer une réservation spécifique (Master access)"""
