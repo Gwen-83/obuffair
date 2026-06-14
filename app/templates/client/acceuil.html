@@ -121,7 +121,9 @@
                         </div>
                         {% endif %}
                     </div>
+                    {% if session.get('user_id') %}
                     <p class="m-0 loyalty-watermark">O'Buffair</p>
+                    {% endif %}
                 </div>
             </div>
 
