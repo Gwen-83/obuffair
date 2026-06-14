@@ -40,7 +40,7 @@ O'Buffair{% endblock %} {% block content %}
             {% if ticket.statut != 'resolu' %}
             <form
               method="post"
-              action="{{ url_for('admin.mark_resolved', ticket_id=ticket.id_ticket) }}"
+              action="{{ url_for('admin.mark_resolved', id_ticket=ticket.id_ticket) }}"
               style="display: inline"
             >
               <button class="button is-success" type="submit">
@@ -50,7 +50,7 @@ O'Buffair{% endblock %} {% block content %}
             {% endif %}
             <form
               method="post"
-              action="{{ url_for('admin.close_ticket', ticket_id=ticket.id_ticket) }}"
+              action="{{ url_for('admin.mark_resolved', id_ticket=ticket.id_ticket) }}"
               style="display: inline"
             >
               <button class="button is-light">Fermer</button>

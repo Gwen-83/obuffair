@@ -49,7 +49,7 @@ admin_bp = Blueprint('admin', __name__, url_prefix='/admin')
 @admin_required
 def dashboard():
     """Tableau de bord administrateur"""
-    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols ")).fetchone()
+    nb_vols = db.session.execute(db.text("SELECT COUNT(*) FROM vols v WHERE DATE(v.date_heure_dep_utc) = CURDATE() ")).fetchone()
     nb_resa = db.session.execute(db.text("SELECT COUNT(*) FROM reservations WHERE statut = 'Confirmee' ")).fetchone()
     # Récupérer vols + model avion + capacité tot et nbr de résa/vol
     vols_rows = db.session.execute(text("""
@@ -61,7 +61,9 @@ def dashboard():
         LEFT JOIN avions a ON a.immatriculation = v.immatriculation_avion
         LEFT JOIN billets b ON b.id_vol = v.id_vol
         LEFT JOIN reservations r ON b.id_reservation = r.id_reservation
+        WHERE DATE(v.date_heure_dep_utc) = CURDATE()
         GROUP BY v.id_vol
+        ORDER BY v.date_heure_dep_utc ASC
     """)).mappings().all()
 
     # calcul pourcentage remplissage/vol
@@ -482,6 +484,39 @@ def support_detail(id_ticket):
     ticket.date_creation = ticket.date_creation.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_creation, 'strftime') else ticket.date_creation
     ticket.date_modification = ticket.date_modification.strftime('%Y-%m-%d %H:%M') if hasattr(ticket.date_modification, 'strftime') else ticket.date_modification
     return render_template('admin/html/support_detail.html', ticket=ticket, user_email=user_email)
+
+@admin_bp.route('/support/<int:id_ticket>/resolve', methods=['POST'])
+@admin_required
+def mark_resolved(id_ticket):
+    """Marquer un ticket comme résolu"""
+    ticket = db.session.get(Support, id_ticket)
+    if not ticket:
+        flash('Ticket introuvable.', 'danger')
+        return redirect(url_for('admin.support'))
+
+    ticket.statut = 'resolu'
+    ticket.date_modification = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Le ticket #{id_ticket} a été marqué comme résolu.', 'success')
+    return redirect(url_for('admin.support_detail', id_ticket=id_ticket))
+
+
+@admin_bp.route('/support/<int:id_ticket>/close', methods=['POST'])
+@admin_required
+def close_ticket(id_ticket):
+    """Fermer un ticket"""
+    ticket = db.session.get(Support, id_ticket)
+    if not ticket:
+        flash('Ticket introuvable.', 'danger')
+        return redirect(url_for('admin.support'))
+
+    ticket.statut = 'ferme'
+    ticket.date_modification = datetime.utcnow()
+    db.session.commit()
+    
+    flash(f'Le ticket #{id_ticket} a été fermé.', 'success')
+    return redirect(url_for('admin.support_detail', id_ticket=id_ticket))
 
 @admin_bp.route('/api/vols', methods=['GET'])
 @admin_required
