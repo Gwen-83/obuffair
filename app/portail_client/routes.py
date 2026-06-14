@@ -8,7 +8,7 @@ from flask import Blueprint, render_template, request, session, url_for, redirec
 from flask_mail import Message
 from app import db, mail
 from sqlalchemy import func, text
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, selectinload
 from app.model import Aeroport, Vols, User, Support, Reservation, Passager, Billet
 from datetime import datetime, timedelta, timezone
 from app.algos.search import search_itineraries
@@ -270,44 +270,74 @@ def accueil():
                 'flights_year': client_connecte.reservations.filter_by(statut='Confirmee').count()
             }
             
-            prochains_billets = client_connecte.get_prochains_vols()
-            vols_vus = set()
             now_minus_2h = datetime.utcnow() - timedelta(hours=2)
             
-            if prochains_billets:
-                for billet in prochains_billets:
-                    vol = billet.vol
-                    if vol.date_heure_dep_utc < now_minus_2h:
+            upcoming_reservations = db.session.query(Reservation).options(
+                selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
+                selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee)
+            ).join(Billet).join(Vols).filter(
+                Reservation.id_client == user_id,
+                Reservation.statut == 'Confirmee',
+                Vols.date_heure_dep_utc >= now_minus_2h
+            ).distinct().all()
+
+            journeys = []
+            for resa in upcoming_reservations:
+                aller_vols, retour_vols = group_flights_by_journey(resa.billets)
+                for journey_vols in [aller_vols, retour_vols]:
+                    if not journey_vols:
                         continue
-                        
-                    resa = billet.reservation
-                    unique_key = f"{resa.id_reservation}_{vol.id_vol}"
-                    if unique_key in vols_vus:
-                        continue
-                    vols_vus.add(unique_key)
-                    
-                    nb_passagers = sum(1 for b in resa.billets if b.id_vol == vol.id_vol)
-                    dep_time_local = get_local_time(vol.date_heure_dep_utc, vol.id_aeroport_depart)
-                    arr_time_local = get_local_time(vol.date_heure_arr_utc, vol.id_aeroport_arrivee)
-                    
-                    prochains_vols_data.append({
-                        'id_reservation': resa.id_reservation,
-                        'flight_number': f"OB{vol.id_vol}",
-                        'date': dep_time_local.strftime('%d/%m/%Y'),
-                        'status_text': "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize(),
-                        'status_class': "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed",
-                        'dep_iata': vol.id_aeroport_depart,
-                        'dep_city': vol.aeroport_depart.ville if vol.aeroport_depart else '',
-                        'nb_passagers': nb_passagers,
-                        'arr_iata': vol.id_aeroport_arrivee,
-                        'arr_city': vol.aeroport_arrivee.ville if vol.aeroport_arrivee else '',
-                        'dep_time': dep_time_local.strftime('%H:%M'),
-                        'arr_time': arr_time_local.strftime('%H:%M'),
-                        'pnr': resa.pnr or "En attente"
+                    if journey_vols[0].date_heure_dep_utc >= now_minus_2h:
+                        journeys.append((resa, journey_vols))
+
+            journeys.sort(key=lambda j: j[1][0].date_heure_dep_utc)
+
+            for resa, journey_vols in journeys:
+                first_vol = journey_vols[0]
+                last_vol = journey_vols[-1]
+                
+                nb_passagers = sum(1 for b in resa.billets if b.id_vol == first_vol.id_vol)
+                
+                dep_time_local = get_local_time(first_vol.date_heure_dep_utc, first_vol.id_aeroport_depart)
+                arr_time_local = get_local_time(last_vol.date_heure_arr_utc, last_vol.id_aeroport_arrivee)
+                
+                statuses = [v.statut.lower() for v in journey_vols]
+                if "annulé" in statuses:
+                    status_text = "Annulé"
+                    status_class = "status-delayed"
+                elif "retardé" in statuses:
+                    status_text = "Retardé"
+                    status_class = "status-delayed"
+                else:
+                    status_text = "À l'heure" if first_vol.statut.lower() == "à l'heure" else first_vol.statut.capitalize()
+                    status_class = "status-ontime" if first_vol.statut.lower() == "à l'heure" else "status-delayed"
+                
+                etapes = []
+                for v in journey_vols:
+                    etapes.append({
+                        'iata': v.id_aeroport_depart,
+                        'city': v.aeroport_depart.ville if v.aeroport_depart else ''
                     })
-                    
-                    if len(prochains_vols_data) >= 3:
-                        break
+                etapes.append({
+                    'iata': last_vol.id_aeroport_arrivee,
+                    'city': last_vol.aeroport_arrivee.ville if last_vol.aeroport_arrivee else ''
+                })
+
+                prochains_vols_data.append({
+                    'id_reservation': resa.id_reservation,
+                    'flight_number': f"OB{first_vol.id_vol}",
+                    'date': dep_time_local.strftime('%d/%m/%Y'),
+                    'status_text': status_text,
+                    'status_class': status_class,
+                    'etapes': etapes,
+                    'nb_passagers': nb_passagers,
+                    'dep_time': dep_time_local.strftime('%H:%M'),
+                    'arr_time': arr_time_local.strftime('%H:%M'),
+                    'pnr': resa.pnr or "En attente"
+                })
+                
+                if len(prochains_vols_data) >= 3:
+                    break
 
     return render_template('client/acceuil.html', destinations=destinations, loyalty_info=loyalty_info, prochains_vols=prochains_vols_data, airports_data=airports_data, map_routes=map_routes)
 
@@ -385,56 +415,76 @@ def profil():
         flash('Vos informations ont été mises à jour avec succès.', 'success')
         return redirect(url_for('client.profil'))
         
-    prochains_billets = client_connecte.get_prochains_vols()
     prochains_vols_data = []
-    vols_vus = set()  # Pour éviter d'afficher le même vol X fois si X passagers
     
     now_minus_2h = datetime.utcnow() - timedelta(hours=2)
     
-    if prochains_billets:
-        for billet in prochains_billets:
-            vol = billet.vol
-            if vol.date_heure_dep_utc < now_minus_2h:
-                continue
-                
-            resa = billet.reservation
-            
-            # Clé unique pour regrouper par réservation ET par vol (pour les escales)
-            unique_key = f"{resa.id_reservation}_{vol.id_vol}"
-            if unique_key in vols_vus:
-                continue
-            vols_vus.add(unique_key)
-            
-            # Calcul du nombre de passagers rattachés à cette réservation pour ce vol
-            nb_passagers = sum(1 for b in resa.billets if b.id_vol == vol.id_vol)
+    upcoming_reservations = db.session.query(Reservation).options(
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee)
+    ).join(Billet).join(Vols).filter(
+        Reservation.id_client == user_id,
+        Reservation.statut == 'Confirmee',
+        Vols.date_heure_dep_utc >= now_minus_2h
+    ).distinct().all()
 
-            dep_time_local = get_local_time(vol.date_heure_dep_utc, vol.id_aeroport_depart)
-            arr_time_local = get_local_time(vol.date_heure_arr_utc, vol.id_aeroport_arrivee)
+    journeys = []
+    for resa in upcoming_reservations:
+        aller_vols, retour_vols = group_flights_by_journey(resa.billets)
+        for journey_vols in [aller_vols, retour_vols]:
+            if not journey_vols:
+                continue
+            if journey_vols[0].date_heure_dep_utc >= now_minus_2h:
+                journeys.append((resa, journey_vols))
 
-            date_vol = dep_time_local.strftime('%d/%m/%Y')
-            
-            status_text = "À l'heure" if vol.statut.lower() == "à l'heure" else vol.statut.capitalize()
-            status_class = "status-ontime" if vol.statut.lower() == "à l'heure" else "status-delayed"
-            
-            prochains_vols_data.append({
-                'id_reservation': resa.id_reservation,
-                'flight_number': f"OB{vol.id_vol}",
-                'date': date_vol,
-                'status_text': status_text,
-                'status_class': status_class,
-                'dep_iata': vol.id_aeroport_depart,
-                'dep_city': vol.aeroport_depart.ville if vol.aeroport_depart else '',
-                'nb_passagers': nb_passagers,
-                'arr_iata': vol.id_aeroport_arrivee,
-                'arr_city': vol.aeroport_arrivee.ville if vol.aeroport_arrivee else '',
-                'dep_time': dep_time_local.strftime('%H:%M'),
-                'arr_time': arr_time_local.strftime('%H:%M'),
-                'pnr': resa.pnr or "En attente"
+    journeys.sort(key=lambda j: j[1][0].date_heure_dep_utc)
+
+    for resa, journey_vols in journeys:
+        first_vol = journey_vols[0]
+        last_vol = journey_vols[-1]
+        
+        nb_passagers = sum(1 for b in resa.billets if b.id_vol == first_vol.id_vol)
+        
+        dep_time_local = get_local_time(first_vol.date_heure_dep_utc, first_vol.id_aeroport_depart)
+        arr_time_local = get_local_time(last_vol.date_heure_arr_utc, last_vol.id_aeroport_arrivee)
+        
+        statuses = [v.statut.lower() for v in journey_vols]
+        if "annulé" in statuses:
+            status_text = "Annulé"
+            status_class = "status-delayed"
+        elif "retardé" in statuses:
+            status_text = "Retardé"
+            status_class = "status-delayed"
+        else:
+            status_text = "À l'heure" if first_vol.statut.lower() == "à l'heure" else first_vol.statut.capitalize()
+            status_class = "status-ontime" if first_vol.statut.lower() == "à l'heure" else "status-delayed"
+        
+        etapes = []
+        for v in journey_vols:
+            etapes.append({
+                'iata': v.id_aeroport_depart,
+                'city': v.aeroport_depart.ville if v.aeroport_depart else ''
             })
-            
-            # Limiter à l'affichage des 3 prochains vols
-            if len(prochains_vols_data) >= 3:
-                break
+        etapes.append({
+            'iata': last_vol.id_aeroport_arrivee,
+            'city': last_vol.aeroport_arrivee.ville if last_vol.aeroport_arrivee else ''
+        })
+
+        prochains_vols_data.append({
+            'id_reservation': resa.id_reservation,
+            'flight_number': f"OB{first_vol.id_vol}",
+            'date': dep_time_local.strftime('%d/%m/%Y'),
+            'status_text': status_text,
+            'status_class': status_class,
+            'etapes': etapes,
+            'nb_passagers': nb_passagers,
+            'dep_time': dep_time_local.strftime('%H:%M'),
+            'arr_time': arr_time_local.strftime('%H:%M'),
+            'pnr': resa.pnr or "En attente"
+        })
+        
+        if len(prochains_vols_data) >= 3:
+            break
             
     return render_template('client/profil.html', client=client_connecte, prochains_vols=prochains_vols_data)
 
@@ -1265,9 +1315,9 @@ def mes_reservations():
     
     # Récupérer les réservations de l'utilisateur
     user_reservations = db.session.query(Reservation).options(
-        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
-        joinedload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
-        joinedload(Reservation.billets).joinedload(Billet.passager)
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
+        selectinload(Reservation.billets).joinedload(Billet.passager)
     ).filter_by(id_client=user_id).order_by(Reservation.date_reservation.desc()).all()
     
     reservations_data = []
@@ -1533,54 +1583,4 @@ def init_modification(pnr):
     
     if request.args.get('target') == 'classe':
         return redirect(url_for('client.booking_flights'))
-    return redirect(url_for('client.booking_options'))
-
-@client_bp.route('/annuler-reservation/<pnr>', methods=['POST'])
-@login_required
-def annuler_reservation(pnr):
-    """Annuler une réservation et tenter d'envoyer un e-mail de confirmation"""
-    user_id = session.get('user_id')
-    
-    # 1. Récupération de la réservation
-    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
-    client_connecte = db.session.get(User, user_id)
-
-    # 2. Vérification du statut actuel
-    if reservation.statut == 'Annulee':
-        flash("Cette réservation est déjà annulée.", "warning")
-        return redirect(url_for('client.mes_reservations'))
-
-    try:
-        # 3. Mise à jour du statut en BDD ET COMMIT IMMÉDIAT
-        reservation.statut = 'Annulee'
-        db.session.commit()
-        
-        # 4. Préparation et envoi de l'e-mail dans un try/except séparé
-        try:
-            msg = Message(
-                subject=f"O'Buffair - Confirmation d'annulation de votre vol (PNR: {reservation.pnr})",
-                recipients=[client_connecte.email],
-                sender=current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@obuffair.com')
-            )
-            
-            # On passe 'now' au template pour éviter une potentielle erreur Jinja
-            msg.html = render_template(
-                'emails/annulation_vol.html', 
-                client=client_connecte, 
-                reservation=reservation,
-                now=datetime.now()
-            )
-            
-            mail.send(msg)
-            flash(f"Votre réservation {reservation.pnr} a bien été annulée. Un e-mail de confirmation vous a été envoyé.", "success")
-            
-        except Exception as mail_error:
-            print(f"L'annulation a réussi, mais l'envoi d'email a échoué (normal en local) : {mail_error}")
-            flash(f"Votre réservation {reservation.pnr} a bien été annulée (L'envoi de l'e-mail a échoué car vous êtes en local).", "success")
-
-    except Exception as db_error:
-        db.session.rollback()
-        print(f"Erreur base de données lors de l'annulation : {db_error}")
-        flash("Une erreur technique est survenue lors de l'annulation.", "danger")
-
-    return redirect(url_for('client.mes_reservations'))
+    return redire

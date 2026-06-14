@@ -141,11 +141,13 @@ body {
 .flighty-airline { font-size: 14px; font-weight: 700; color: var(--flighty-gray); display: flex; align-items: center; gap: 8px;}
 .flighty-status { padding: 4px 12px; border-radius: 12px; font-weight: 800; font-size: 12px; text-transform: uppercase; }
 .status-ontime { background: #E5F8EB; color: #248A3D; }
+.status-delayed { background: #FFF4E5; color: #E67E22; }
 
 .flighty-route { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
 .flighty-iata { font-size: 40px; font-weight: 800; color: var(--flighty-text); letter-spacing: -1px; line-height: 1; }
 .flighty-time { font-size: 20px; font-weight: 700; color: var(--flighty-text); margin-bottom: 4px; }
 .flighty-city { font-size: 13px; color: var(--flighty-gray); font-weight: 600; margin-top: 4px; }
+.flighty-value { font-size: 18px; font-weight: 800; color: var(--flighty-text); }
 
 .flighty-path {
     flex-grow: 1; margin: 20px 24px 0 24px; height: 2px;
@@ -274,3 +276,13 @@ body {
     position: relative;
     z-index: 1;
 }
+
+/* Cartes Prochains Vols (Harmonisation Profil) */
+.next-flight-link { text-decoration: none; display: block; color: inherit; }
+.next-flight-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+.next-flight-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-premium); }
+.flighty-iata-large { font-size: 28px; }
+.flighty-time-large { font-size: 18px; margin-bottom: 0; }
+.flighty-gray-icon { color: var(--flighty-gray); }
+.pnr-value { font-family: monospace; font-weight: bold; }
+.primary-icon { color: var(--primary); }

@@ -128,15 +128,18 @@
             </div>
 
             <div class="column is-8">
-                <h3 class="title is-4 mb-4 section-title">Mes Prochains Vols</h3>
+                <div class="is-flex is-justify-content-space-between is-align-items-center mb-4">
+                    <h3 class="title is-4 m-0 section-title">Mes Prochains Vols</h3>
+                    <a href="{{ url_for('client.mes_reservations') }}" class="button is-small is-light font-weight-bold" style="border-radius: 20px;">Toutes mes réservations</a>
+                </div>
                 
                 {% if prochains_vols %}
                 {% for vol in prochains_vols %}
-                <a href="{{ url_for('client.mes_reservations') }}#details-{{ vol.id_reservation }}" class="next-flight-link is-block mb-4" style="text-decoration: none; color: inherit;">
+                <a href="{{ url_for('client.mes_reservations') }}#details-{{ vol.id_reservation }}" class="next-flight-link is-block mb-4">
                     <div class="flighty-card next-flight-card">
                         <div class="flighty-header mb-3">
                             <div class="flighty-airline">
-                                <i class="fas fa-plane-departure primary-icon" style="color: var(--primary);"></i> {{ vol.flight_number }} • {{ vol.date }}
+                                <i class="fas fa-plane-departure primary-icon"></i> {{ vol.flight_number }} • {{ vol.date }}
                                 <span class="tag is-info is-light ml-2">{{ vol.nb_passagers }} passager(s)</span>
                             </div>
                             <div class="flighty-status {{ vol.status_class }}">{{ vol.status_text }}</div>
@@ -144,25 +147,25 @@
                         
                         <div class="is-flex is-align-items-center is-justify-content-space-between">
                             <div class="is-flex is-align-items-center">
+                                {% for etape in vol.etapes %}
                                 <div class="has-text-centered">
-                                    <span class="flighty-iata flighty-iata-large">{{ vol.dep_iata }}</span>
-                                    <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.dep_city }}</div>
+                                    <span class="flighty-iata flighty-iata-large">{{ etape.iata }}</span>
+                                    <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ etape.city }}</div>
                                 </div>
-                                <i class="fas fa-arrow-right mx-4 flighty-gray-icon" style="color: var(--flighty-gray);"></i>
-                                <div class="has-text-centered">
-                                    <span class="flighty-iata flighty-iata-large">{{ vol.arr_iata }}</span>
-                                    <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.arr_city }}</div>
-                                </div>
+                                {% if not loop.last %}
+                                <i class="fas fa-arrow-right mx-4 flighty-gray-icon"></i>
+                                {% endif %}
+                                {% endfor %}
                             </div>
                             <div class="has-text-right">
                                 <div class="flighty-time flighty-time-large">{{ vol.dep_time }} - {{ vol.arr_time }}</div>
                             </div>
                             <div class="has-text-right">
-                                <span class="flighty-label" style="font-size: 11px; color: var(--flighty-gray); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">PNR</span>
-                                <span class="flighty-value is-size-6 pnr-value" style="font-family: monospace; font-weight: bold;">{{ vol.pnr }}</span>
+                                <span class="flighty-label" style="margin-bottom: 4px;">PNR</span>
+                                <span class="flighty-value is-size-6 pnr-value">{{ vol.pnr }}</span>
                             </div>
                             <div>
-                                <i class="fas fa-chevron-right flighty-gray-icon" style="color: var(--flighty-gray);"></i>
+                                <i class="fas fa-chevron-right flighty-gray-icon"></i>
                             </div>
                         </div>
                     </div>

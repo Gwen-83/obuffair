@@ -103,15 +103,15 @@
                             
                             <div class="is-flex is-align-items-center is-justify-content-space-between">
                                 <div class="is-flex is-align-items-center">
+                                    {% for etape in vol.etapes %}
                                     <div class="has-text-centered">
-                                        <span class="flighty-iata flighty-iata-large">{{ vol.dep_iata }}</span>
-                                        <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.dep_city }}</div>
+                                        <span class="flighty-iata flighty-iata-large">{{ etape.iata }}</span>
+                                        <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ etape.city }}</div>
                                     </div>
+                                    {% if not loop.last %}
                                     <i class="fas fa-arrow-right mx-4 flighty-gray-icon"></i>
-                                    <div class="has-text-centered">
-                                        <span class="flighty-iata flighty-iata-large">{{ vol.arr_iata }}</span>
-                                        <div class="is-size-7 has-text-grey" style="margin-top: -2px;">{{ vol.arr_city }}</div>
-                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
                                 </div>
                                 <div class="has-text-right">
                                     <div class="flighty-time flighty-time-large">{{ vol.dep_time }} - {{ vol.arr_time }}</div>
