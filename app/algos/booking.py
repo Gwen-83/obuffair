@@ -62,7 +62,7 @@ def sync_loyalty_points(user):
                     
                 total_euros += prix_billet
 
-        pts = int(total_euros * 10)
+        pts = int(total_euros)
         if user.points_fidelite_accumules != pts or user.points_fidelite != pts:
             user.points_fidelite = pts
             user.points_fidelite_accumules = pts

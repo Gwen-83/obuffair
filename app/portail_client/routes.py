@@ -18,7 +18,7 @@ from app.algos.booking import (
     create_reservation_in_db, update_reservation_in_db, 
     group_flights_by_journey
 )
-import string, random
+import random
 import re
 import os
 import requests
@@ -1223,9 +1223,9 @@ def booking_payment():
                 cart_total = float(session.get('total_panier', 0))
                 if modifying_pnr:
                     diff = cart_total - float(session.get('original_total', 0))
-                    pts_gagnes = int(diff * 10) if diff > 0 else 0
+                    pts_gagnes = int(diff) if diff > 0 else 0
                 else:
-                    pts_gagnes = int(cart_total * 10)
+                    pts_gagnes = int(cart_total)
                     
                 if pts_gagnes > 0:
                     flash(f'Paiement réussi ! Réservation confirmée. Vous venez de gagner {pts_gagnes} Miles !', 'success')
@@ -1318,7 +1318,7 @@ def mes_reservations():
         selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
         selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
         selectinload(Reservation.billets).joinedload(Billet.passager)
-    ).filter_by(id_client=user_id).order_by(Reservation.date_reservation.desc()).all()
+    ).filter_by(id_client=user_id).all()
     
     reservations_data = []
     
@@ -1326,6 +1326,19 @@ def mes_reservations():
     repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
     
     for resa in user_reservations:
+        all_vols = [b.vol for b in resa.billets if b.vol]
+        
+        if not all_vols:
+            continue
+            
+        all_vols.sort(key=lambda v: v.date_heure_dep_utc)
+        last_flight_date = all_vols[-1].date_heure_dep_utc
+        first_flight_date = all_vols[0].date_heure_dep_utc
+        
+        # On n'affiche pas les réservations annulées ou dont le dernier vol est dans le passé
+        if resa.statut == 'Annulee' or last_flight_date < datetime.utcnow():
+            continue
+
         aller_vols_obj, _ = group_flights_by_journey(resa.billets)
         aller_ids = {v.id_vol for v in aller_vols_obj}
 
@@ -1334,7 +1347,8 @@ def mes_reservations():
             'pnr': resa.pnr or 'N/A',
             'date_resa': resa.date_reservation.strftime('%d/%m/%Y') if resa.date_reservation else '',
             'statut': resa.statut,
-            'vols': []
+            'vols': [],
+            'first_flight_date': first_flight_date
         }
         
         vols_map = {}
@@ -1375,7 +1389,96 @@ def mes_reservations():
         resa_dict['vols'] = sorted(list(vols_map.values()), key=lambda x: x['sort_time'])
         reservations_data.append(resa_dict)
             
+    # On trie par date de voyage la plus proche (vol à venir)
+    reservations_data.sort(key=lambda x: x['first_flight_date'])
+    
     return render_template('client/mes_reservations.html', reservations=reservations_data)
+
+@client_bp.route('/historique', methods=['GET'])
+@login_required
+def historique():
+    """Historique des réservations (passées ou annulées)"""
+    if session.get('modifying_pnr') or session.get('search_params'):
+        clear_booking_session()
+        
+    user_id = session.get('user_id')
+    
+    # Récupérer les réservations de l'utilisateur
+    user_reservations = db.session.query(Reservation).options(
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_depart),
+        selectinload(Reservation.billets).joinedload(Billet.vol).joinedload(Vols.aeroport_arrivee),
+        selectinload(Reservation.billets).joinedload(Billet.passager)
+    ).filter_by(id_client=user_id).all()
+    
+    reservations_data = []
+    repas_map = {0: 'Standard', 1: 'Premium', 2: 'Végétarien', 3: 'Gastronomique'}
+    
+    for resa in user_reservations:
+        all_vols = [b.vol for b in resa.billets if b.vol]
+        
+        last_flight_date = datetime.min
+        if all_vols:
+            all_vols.sort(key=lambda v: v.date_heure_dep_utc)
+            last_flight_date = all_vols[-1].date_heure_dep_utc
+        else:
+            last_flight_date = resa.date_reservation
+            
+        # Ne garder que les réservations annulées ou dont le dernier vol est dans le passé
+        if resa.statut != 'Annulee' and last_flight_date >= datetime.utcnow():
+            continue
+
+        aller_vols_obj, _ = group_flights_by_journey(resa.billets)
+        aller_ids = {v.id_vol for v in aller_vols_obj}
+
+        resa_dict = {
+            'id_reservation': resa.id_reservation,
+            'pnr': resa.pnr or 'N/A',
+            'date_resa': resa.date_reservation.strftime('%d/%m/%Y') if resa.date_reservation else '',
+            'statut': resa.statut,
+            'vols': [],
+            'last_flight_date': last_flight_date
+        }
+        
+        vols_map = {}
+        for billet in resa.billets:
+            vol = billet.vol
+            if not vol: continue
+            
+            if vol.id_vol not in vols_map:
+                dep_time_local = get_local_time(vol.date_heure_dep_utc, vol.id_aeroport_depart)
+                arr_time_local = get_local_time(vol.date_heure_arr_utc, vol.id_aeroport_arrivee)
+                
+                vols_map[vol.id_vol] = {
+                    'flight_number': f"OB{vol.id_vol}",
+                    'date': dep_time_local.strftime('%d %B %Y'),
+                    'dep_time': dep_time_local.strftime('%H:%M'),
+                    'dep_iata': vol.id_aeroport_depart,
+                    'dep_city': vol.aeroport_depart.ville if vol.aeroport_depart else vol.id_aeroport_depart,
+                    'arr_time': arr_time_local.strftime('%H:%M'),
+                    'arr_iata': vol.id_aeroport_arrivee,
+                    'arr_city': vol.aeroport_arrivee.ville if vol.aeroport_arrivee else vol.id_aeroport_arrivee,
+                    'status_text': 'Terminé' if resa.statut != 'Annulee' else 'Annulé',
+                    'journey_type': 'aller' if vol.id_vol in aller_ids else 'retour',
+                    'sort_time': vol.date_heure_dep_utc,
+                    'passagers': []
+                }
+                
+            vols_map[vol.id_vol]['passagers'].append({
+                'nom': billet.passager.nom if billet.passager else 'N/A',
+                'prenom': billet.passager.prenom if billet.passager else 'N/A',
+                'classe': billet.classe,
+                'seat': billet.siege or 'Non assigné',
+                'meal': repas_map.get(billet.options_repas, 'Standard'),
+                'baggage': f"{billet.bagages_sup} en soute"
+            })
+            
+        resa_dict['vols'] = sorted(list(vols_map.values()), key=lambda x: x['sort_time'])
+        reservations_data.append(resa_dict)
+    
+    # On trie l'historique par date de vol la plus récente
+    reservations_data.sort(key=lambda x: x['last_flight_date'], reverse=True)
+        
+    return render_template('client/historique.html', reservations=reservations_data)
 
 @client_bp.route('/gerer-reservation/<pnr>', methods=['GET', 'POST'])
 @login_required
@@ -1583,4 +1686,28 @@ def init_modification(pnr):
     
     if request.args.get('target') == 'classe':
         return redirect(url_for('client.booking_flights'))
-    return redire
+    return redirect(url_for('client.booking_options'))
+
+@client_bp.route('/annuler-reservation/<pnr>', methods=['GET', 'POST'])
+@login_required
+def annuler_reservation(pnr):
+    """Annuler une réservation existante depuis l'espace client"""
+    user_id = session.get('user_id')
+    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+    
+    if reservation.statut != 'Annulee':
+        reservation.statut = 'Annulee'
+        
+        # Libérer les sièges pour remettre les places en vente
+        for billet in reservation.billets:
+            db.session.delete(billet)
+            
+        db.session.commit()
+        
+        client_connecte = db.session.get(User, user_id)
+        if client_connecte:
+            sync_loyalty_points(client_connecte)
+            
+        flash(f'La réservation {pnr} a bien été annulée.', 'success')
+        
+    return redirect(url_for('client.mes_reservations'))
