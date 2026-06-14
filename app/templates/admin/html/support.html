@@ -180,7 +180,7 @@ O'Buffair{% endblock %} {% block content %}
               <a
                 class="button is-small is-info"
                 title="Voir le détail"
-                href="{{ url_for('admin.support_detail', ticket_id=ticket.id_ticket) }}"
+                href="{{ url_for('admin.support_detail', id_ticket=ticket.id_ticket) }}"
               >
                 <span class="icon is-small"><i class="fas fa-eye"></i></span>
                 <span>Voir</span>
