@@ -72,14 +72,6 @@ def create_app():
     def styleguide():
         """Afficher la charte UI / Design System"""
         return render_template('styleguide.html', now=datetime.now())
-    
-    @app.route('/test')
-    def client_test():
-        """Page de test simple pour afficher l'output"""
-        # Make sure this line says .test and NOT .recherche_vol
-        from app.portail_client.test import get_test_output 
-        output_string = get_test_output()
-        return render_template('client/test.html', output=output_string)
 
     @app.errorhandler(403)
     def forbidden(error):

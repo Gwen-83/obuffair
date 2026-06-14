@@ -100,11 +100,9 @@
                     <h4 class="title is-5 m-0" style="color: var(--primary);">
                         <i class="fas fa-users mr-2"></i> Informations Passagers et Options
                     </h4>
-                    {% if reservation.statut != 'Annulee' %}
                     <a href="{{ url_for('client.init_modification', pnr=reservation.pnr, target='options') }}" class="button is-accent is-rounded font-weight-bold px-4" style="box-shadow: 0 4px 10px rgba(255, 199, 44, 0.3);">
                         <i class="fas fa-edit mr-2"></i> Modifier la réservation
                     </a>
-                    {% endif %}
                 </div>
                 
                 <div class="passenger-list">
@@ -132,12 +130,11 @@
         </div>
 
         <!-- Zone de danger -->
-        {% if reservation.statut != 'Annulee' %}
         <div class="flighty-card p-4 mt-5 danger-zone" style="border-radius: 16px; border: 1px solid rgba(255, 59, 48, 0.3); background-color: rgba(255, 59, 48, 0.04);">
             <div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 1rem;">
                 <div>
                     <h3 class="title is-5 m-0" style="color: #FF3B30;"><i class="fas fa-exclamation-triangle mr-2"></i> Annuler la réservation</h3>
-                    <p class="is-size-7 has-text-grey mt-2">Cette action est irréversible. Un e-mail de confirmation vous sera envoyé. Veuillez consulter les conditions tarifaires avant de continuer.</p>
+                    <p class="is-size-7 has-text-grey mt-2">Cette action est irréversible. Veuillez consulter les conditions tarifaires avant de continuer.</p>
                 </div>
                 <form action="{{ url_for('client.annuler_reservation', pnr=reservation.pnr) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ? Cette action est irréversible.');">
                     <button type="submit" class="button is-danger is-outlined is-rounded font-weight-bold">
@@ -146,14 +143,6 @@
                 </form>
             </div>
         </div>
-        {% else %}
-        <div class="flighty-card p-4 mt-5" style="border-radius: 16px; border: 1px solid rgba(255, 59, 48, 0.3); background-color: rgba(255, 59, 48, 0.04);">
-            <div class="has-text-centered">
-                <h3 class="title is-5 m-0" style="color: #FF3B30;"><i class="fas fa-ban mr-2"></i> Réservation annulée</h3>
-                <p class="is-size-7 has-text-grey mt-2">Ce voyage a été annulé et n'apparaîtra plus dans vos prochains vols.</p>
-            </div>
-        </div>
-        {% endif %}
 
     </div>
 </section>

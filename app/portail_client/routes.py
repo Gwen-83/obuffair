@@ -18,7 +18,7 @@ from app.algos.booking import (
     create_reservation_in_db, update_reservation_in_db, 
     group_flights_by_journey
 )
-import string, random
+import random
 import re
 import os
 import requests
@@ -1686,4 +1686,28 @@ def init_modification(pnr):
     
     if request.args.get('target') == 'classe':
         return redirect(url_for('client.booking_flights'))
-    return redire
+    return redirect(url_for('client.booking_options'))
+
+@client_bp.route('/annuler-reservation/<pnr>', methods=['GET', 'POST'])
+@login_required
+def annuler_reservation(pnr):
+    """Annuler une réservation existante depuis l'espace client"""
+    user_id = session.get('user_id')
+    reservation = db.session.query(Reservation).filter_by(pnr=pnr, id_client=user_id).first_or_404()
+    
+    if reservation.statut != 'Annulee':
+        reservation.statut = 'Annulee'
+        
+        # Libérer les sièges pour remettre les places en vente
+        for billet in reservation.billets:
+            db.session.delete(billet)
+            
+        db.session.commit()
+        
+        client_connecte = db.session.get(User, user_id)
+        if client_connecte:
+            sync_loyalty_points(client_connecte)
+            
+        flash(f'La réservation {pnr} a bien été annulée.', 'success')
+        
+    return redirect(url_for('client.mes_reservations'))
