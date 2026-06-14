@@ -692,15 +692,15 @@ def delete_vol(id_vol):
             )
 
         # 3. Supprimer les données en base si des réservations sont touchées
-                if resa_ids:
-                    db.session.execute(text("UPDATE reservations SET statut = 'Annulee' WHERE id_reservation IN :resa_ids"), {"resa_ids": tuple(resa_ids)})
-                
-                db.session.execute(text("DELETE FROM billets WHERE id_vol = :id_vol"), {"id_vol": id_vol})
-                db.session.delete(vol)
-                db.session.commit()
-                
-                return jsonify({'success': True})
-                
+        if resa_ids:
+            db.session.execute(text("UPDATE reservations SET statut = 'Annulee' WHERE id_reservation IN :resa_ids"), {"resa_ids": tuple(resa_ids)})
+        
+        db.session.execute(text("DELETE FROM billets WHERE id_vol = :id_vol"), {"id_vol": id_vol})
+        db.session.delete(vol)
+        db.session.commit()
+        
+        return jsonify({'success': True})
+        
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': str(e)}), 400
